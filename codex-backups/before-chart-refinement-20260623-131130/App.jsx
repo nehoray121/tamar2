@@ -1,0 +1,3573 @@
+﻿import React, { useState, useEffect } from 'react';
+import Icon from './components/common/Icon.jsx';
+
+
+        // --- MOCK DATA ---
+        const mockTasks = [
+            { id: 'M-17-938', date: '12 ביוני 2026', phone: 'לא זמין', name: 'עטיה נהוראי', room: '333333333333', priority: 'נמוכה-3', desc: 'הפנייה פתוחה', status: 'open' },
+            { id: 'M-18-260', date: '15 בפברואר 2026', phone: 'לא זמין', name: 'c9812512', room: '333333333333', priority: 'נמוכה-3', desc: 'הפנייה פתוחה', status: 'open' },
+            { id: '7983179', date: '29 בדצמבר 2025', phone: 'לא זמין', name: 'רוזה כהן', room: 'c9812512', priority: 'גבוהה-1', desc: 'הפנייה נסגרה', status: 'closed' }
+        ];
+
+        // --- COMMON COMPONENTS ---
+        const Button = ({ children, variant = 'primary', className = '', ...props }) => {
+            const baseStyle = "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors";
+            const variants = {
+                primary: "bg-brand-blue text-white hover:bg-blue-800",
+                outline: "border border-brand-blue text-brand-blue hover:bg-blue-50 bg-white",
+                ghost: "text-gray-600 bg-white border border-gray-300 hover:bg-gray-50",
+            };
+            return <button className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>{children}</button>;
+        };
+
+        const Badge = ({ children, type }) => {
+            const styles = {
+                active: "bg-[#22C55E] text-white",
+                high: "bg-[#FEE2E2] text-[#DC2626] border border-[#FCA5A5]",
+                medium: "bg-[#FEF3C7] text-[#D97706] border border-[#FCD34D]",
+                low: "bg-[#FCE7F3] text-[#EC4899] border border-[#FBCFE8]"
+            };
+            return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${styles[type] || styles.active}`}>{children}</span>;
+        };
+
+        const Input = ({ label, icon, containerClassName = "mb-3", className = "", ...props }) => (
+            <div className={containerClassName}>
+                {label && <label className="block text-xs font-bold text-gray-700 mb-1.5">{label}</label>}
+                <div className="relative">
+                    <input className={`w-full bg-white border border-gray-200 rounded-lg py-2.5 px-3 text-xs focus:outline-none focus:border-brand-blue transition-all shadow-sm ${icon ? 'pl-9' : ''} ${className}`} {...props} />
+                    {icon && <div className="absolute left-2.5 top-2.5 text-gray-400"><Icon name={icon} className="w-3.5 h-3.5" /></div>}
+                </div>
+            </div>
+        );
+
+        const Select = ({ label, options, containerClassName = "mb-3", className = "", ...props }) => (
+            <div className={containerClassName}>
+                {label && <label className="block text-xs font-bold text-gray-700 mb-1.5">{label}</label>}
+                <select className={`w-full bg-white border border-gray-200 rounded-lg py-2.5 px-3 text-xs appearance-none focus:outline-none focus:border-brand-blue transition-all shadow-sm ${className}`} {...props}>
+                    {options.map(o => <option key={o.value || o} value={o.value || o}>{o.label || o}</option>)}
+                </select>
+            </div>
+        );
+
+        // --- 1. ENVIRONMENT SELECTION MODAL ---
+        const EnvironmentSelectionModal = ({ onConfirm, onClose, isAdmin }) => {
+            const [selectedId, setSelectedId] = useState(null);
+            
+            const envs = [
+                { id: 1, name: 'תקשוב', date: '24 ביוני 2026' },
+                { id: 2, name: 'ביסלח', date: '24 ביוני 2026' },
+                { id: 3, name: 'ג\'ולים', date: '24 ביוני 2026' },
+                { id: 4, name: 'שיבטה', date: '24 ביוני 2026' },
+                { id: 5, name: 'השתלמות זרוע יבשה', date: '24 ביוני 2026' },
+                { id: 6, name: 'מחשוב', date: '24 ביוני 2026' },
+            ];
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 glass-modal animate-fade-in">
+                    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+                        
+                        {/* Header */}
+                        <div className="flex flex-col items-center justify-center pt-8 pb-4 relative shrink-0">
+                            <button onClick={onClose} className="absolute top-6 left-6 text-gray-400 hover:text-gray-700 bg-gray-50 border border-gray-100 p-2 rounded-full transition-colors shadow-sm">
+                                <Icon name="close" className="w-4 h-4" />
+                            </button>
+                            <div className="absolute top-6 right-6 text-brand-mainBlue">
+                                <Icon name="globe" className="w-6 h-6" />
+                            </div>
+                            <h2 className="text-[28px] font-black text-[#1E3A8A] tracking-tight">בחירת סביבה</h2>
+                            <p className="text-gray-500 font-bold text-sm mt-1">15 סביבות עבודה זמינות</p>
+                            
+                            <div className="w-full max-w-2xl px-6 mt-6 relative">
+                                <input 
+                                    className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl py-3 px-4 pl-10 text-sm focus:outline-none focus:border-[#1E4DB7] transition-all shadow-sm font-semibold text-gray-700" 
+                                    placeholder="חפש סביבה לפי שם..." 
+                                />
+                                <Icon name="search" className="w-4 h-4 absolute left-10 top-3.5 text-[#1E4DB7]" />
+                            </div>
+                        </div>
+
+                        {/* Grid Body */}
+                        <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-gray-50/30">
+                            <div className="grid grid-cols-3 gap-6 max-w-4xl mx-auto">
+                                {envs.map(env => (
+                                    <div 
+                                        key={env.id} 
+                                        onClick={() => setSelectedId(env.id)}
+                                        className={`bg-white border rounded-2xl p-5 cursor-pointer transition-all shadow-sm flex flex-col items-center justify-center min-h-[120px] gap-3 relative ${
+                                            selectedId === env.id ? 'border-[#1E4DB7] ring-1 ring-[#1E4DB7] bg-blue-50/30' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2 text-[#1E3A8A] font-extrabold text-lg">
+                                            {env.name} <Icon name="building" className="w-5 h-5 text-[#1E4DB7]" />
+                                        </div>
+                                        <div className="text-[10px] text-gray-400 font-bold flex items-center gap-1 absolute bottom-3 left-4">
+                                            <Icon name="calendar" className="w-3 h-3" /> {env.date}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Admin Create Environment Option */}
+                                {isAdmin && (
+                                    <div className="bg-[#F8FAFC] border-2 border-dashed border-gray-300 rounded-2xl p-5 flex flex-col items-center justify-center min-h-[120px] gap-3">
+                                        <input 
+                                            className="w-full bg-white border border-gray-200 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-[#1E4DB7] text-center font-bold"
+                                            placeholder="הכנס שם סביבה..."
+                                        />
+                                        <Button className="w-full text-xs py-2">יצירת סביבה חדשה</Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-8 py-5 border-t border-gray-100 flex justify-center gap-4 bg-white shrink-0">
+                            <Button variant="ghost" onClick={onClose} className="px-8 rounded-xl font-bold">בטל</Button>
+                            <Button 
+                                onClick={() => selectedId && onConfirm(envs.find(e => e.id === selectedId))} 
+                                className={`px-10 rounded-xl font-bold ${!selectedId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={!selectedId}
+                            >
+                                <Icon name="check" className="w-4 h-4" /> אשר מעבר
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- CREATE ITEM MODAL ---
+        const CreateItemModal = ({ type, onClose, onSave }) => {
+            const title = type === 'sub_env' ? 'יצירת תת סביבה' : 'יצירת חדר חדש';
+            const placeholder1 = type === 'sub_env' ? 'שם התת סביבה' : 'שם החדר';
+            const placeholder2 = 'תיאור קצר (אופציונלי)';
+
+            return (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 glass-modal animate-fade-in">
+                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl relative flex flex-col overflow-hidden">
+                        {/* Header */}
+                        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
+                            <h2 className="text-xl font-black text-[#1E3A8A]">{title}</h2>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-700 bg-white border border-gray-200 p-1.5 rounded-lg transition-colors shadow-sm">
+                                <Icon name="close" className="w-4 h-4" />
+                            </button>
+                        </div>
+                        
+                        {/* Body */}
+                        <div className="p-6 flex flex-col gap-4">
+                            <Input label={<span className="text-gray-700 font-bold">{placeholder1} <span className="text-red-500">*</span></span>} placeholder={`הכנס ${placeholder1}...`} containerClassName="mb-0" className="h-11 text-sm" />
+                            <div className="flex flex-col">
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">{placeholder2}</label>
+                                <textarea className="w-full bg-white border border-gray-200 rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:border-brand-mainBlue transition-all shadow-sm resize-none h-24" placeholder="הקלידו כאן..."></textarea>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+                            <Button variant="ghost" onClick={onClose} className="px-6 text-xs font-bold">ביטול</Button>
+                            <Button onClick={() => { onSave(); onClose(); }} className="px-8 text-xs font-bold">שמור וצור</Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // --- 2. HIERARCHY VIEW (Sub-envs & Rooms) ---
+        const HierarchyView = ({ onOpenEnvModal, onOpenUserManagement, onRoomSelect }) => {
+            const [level, setLevel] = useState('sub_envs'); // 'sub_envs' | 'rooms'
+            const [showCreateModal, setShowCreateModal] = useState(null); // 'sub_env' | 'room' | null
+
+            const subEnvs = [
+                { id: 1, name: 'תפעול ומידע רשתי' },
+                { id: 2, name: 'כשירויות' },
+                { id: 3, name: 'טסטינג 2025' },
+                { id: 4, name: 'אג״מ' },
+                { id: 5, name: 'השתלמות' }
+            ];
+
+            const roomsList = [
+                { id: 1, name: 'בדיקות כפולות' },
+                { id: 2, name: 'בדיקות' },
+                { id: 3, name: 'מנדיי' },
+                { id: 4, name: 'לשכת מטא״פ' },
+                { id: 5, name: 'טסט' }
+            ];
+
+            return (
+                <div className="h-full flex flex-col bg-brand-bg relative overflow-hidden">
+                    {/* Top Blue Banner */}
+                    <div className="bg-[#5B8FD4] rounded-b-[40px] pt-10 pb-16 px-12 text-center relative shrink-0 shadow-sm overflow-hidden z-10">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+                        <div className="absolute bottom-0 left-10 w-40 h-40 bg-[#1E3A8A]/20 rounded-full blur-2xl transform -translate-y-1/2"></div>
+                        
+                        <h1 className="text-4xl font-black text-[#1E3A8A] tracking-tight relative z-10">ברוכים הבאים לתפעול מערכות רישתיות</h1>
+                        
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-white p-3 rounded-2xl shadow-md border border-gray-100 z-20">
+                            <div className="bg-blue-50 text-[#1E4DB7] p-2 rounded-xl">
+                                <Icon name="target" className="w-8 h-8" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Content Layout */}
+                    <div className="flex-1 flex gap-8 p-8 mt-4 min-h-0 overflow-hidden">
+                        
+                        {/* Right Panel (Info & Actions) - First in RTL */}
+                        <div className="w-[32%] shrink-0 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
+                            {/* Action Buttons Top Right */}
+                            {level === 'sub_envs' ? (
+                                <div className="flex flex-col gap-3">
+                                    <button 
+                                        onClick={() => setShowCreateModal('sub_env')}
+                                        className="self-start text-[#1E4DB7] bg-white border border-[#1E4DB7] px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-50 transition flex items-center gap-2"
+                                    >
+                                        <Icon name="plus" className="w-4 h-4" /> יצירת תת-סביבה
+                                    </button>
+                                    <div className="bg-[#1E3A8A] text-white rounded-xl px-5 py-4 shadow-md w-full">
+                                        <h3 className="font-extrabold text-sm mb-1">יעילות ופרודוקטיביות</h3>
+                                        <p className="text-xs text-blue-200 opacity-80">מערכת מתקדמת לניהול רשתי</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    <button 
+                                        onClick={() => setLevel('sub_envs')}
+                                        className="text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2"
+                                    >
+                                        <Icon name="arrowRight" className="w-4 h-4" /> חזור לתתי-סביבות
+                                    </button>
+                                    <button 
+                                        onClick={onOpenUserManagement}
+                                        className="text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2"
+                                    >
+                                        <Icon name="users" className="w-4 h-4" /> ניהול משתמשים
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowCreateModal('room')}
+                                        className="text-white bg-[#1E4DB7] border border-transparent px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-800 transition flex items-center gap-2"
+                                    >
+                                        <Icon name="plus" className="w-4 h-4" /> יצירת חדר
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Informational Text */}
+                            <div className="mt-4">
+                                <h2 className="text-2xl font-black text-[#1E3A8A] mb-3 leading-tight">
+                                    {level === 'sub_envs' ? 'הסביבות הפתוחות עבורך' : 'החדרים הזמינים עבורך'}
+                                </h2>
+                                <p className="text-sm font-semibold text-[#1E4DB7] mb-8 leading-relaxed pr-1">
+                                    מערכת מבצעית לניהול פניות, משימות וחדרים. כיוון דיגיטלי שמרכז את כל הפעילות במקום אחד.
+                                </p>
+
+                                <div className="space-y-6">
+                                    <div className="flex gap-4 items-start">
+                                        <div className="bg-[#1E4DB7] text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">1</div>
+                                        <div>
+                                            <h4 className="font-extrabold text-[#1E3A8A] text-sm mb-1">יומן מבצעי</h4>
+                                            <p className="text-xs text-gray-500 font-semibold leading-relaxed">תצוגה חיה של המצב בשטח. כל פנייה נכנסת מתועדת. ניתן לעקוב אחר הסטטוס שלה, המערכת מאפשרת מעקב רציף אחר כל תקלה.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 items-start">
+                                        <div className="bg-[#1E4DB7] text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">2</div>
+                                        <div>
+                                            <h4 className="font-extrabold text-[#1E3A8A] text-sm mb-1">ניהול חדרים וסביבות</h4>
+                                            <p className="text-xs text-gray-500 font-semibold leading-relaxed">כל חדר מייצג צוות. לאחר בחירת חדר, ניתן לצפות, לפתוח, לסגור ולהעביר פניות בין חדרים. בנוסף קיימת אופציה לשייך משימות לבעלי תפקידים רלוונטים.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 items-start">
+                                        <div className="bg-[#1E4DB7] text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">3</div>
+                                        <div>
+                                            <h4 className="font-extrabold text-[#1E3A8A] text-sm mb-1">הגדרות מתקדמות</h4>
+                                            <p className="text-xs text-gray-500 font-semibold leading-relaxed">בחדר ניתן לבצע התאמה של שדות, צורת ניהול, תהליכים ותבניות לפי סוג הפעילות הרצויה, תוך כדי שמירה על סדר וסטנדרטיזציה בין פניות דומות.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Left Panel (Grid) - Second in RTL */}
+                        <div className="flex-1 flex flex-col min-h-0 bg-white/40 rounded-3xl border border-gray-200/60 shadow-inner p-6 backdrop-blur-sm relative">
+                            
+                            {/* Grid Header Actions */}
+                            <div className="flex justify-between items-center mb-6 shrink-0">
+                                <button 
+                                    onClick={onOpenEnvModal}
+                                    className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2"
+                                >
+                                    <Icon name="arrowDownUp" className="w-3.5 h-3.5 text-[#1E4DB7]" /> החלף סביבה
+                                </button>
+                                
+                                {level === 'sub_envs' ? (
+                                    <button className="bg-white border border-gray-200 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2">
+                                        גלול מטה לשאר הסביבות <Icon name="chevronDown" className="w-3.5 h-3.5" />
+                                    </button>
+                                ) : (
+                                    <div className="bg-white border border-blue-200 text-[#1E4DB7] px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2">
+                                        החדרים פעילים ומוכנים <Icon name="check" className="w-3.5 h-3.5" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Cards Grid */}
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                                <div className="grid grid-cols-2 gap-5">
+                                    {(level === 'sub_envs' ? subEnvs : roomsList).map(item => (
+                                        <div key={item.id} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col relative group">
+                                            <div className="flex justify-between items-start mb-6">
+                                                <Badge type="active">פעילה</Badge>
+                                                <Icon name="globe" className="w-5 h-5 text-[#1E3A8A]" />
+                                            </div>
+                                            <h3 className="text-center font-black text-gray-800 text-lg mb-6">{item.name}</h3>
+                                            <button 
+                                                onClick={() => {
+                                                    if (level === 'sub_envs') {
+                                                        setLevel('rooms');
+                                                    } else {
+                                                        // פתיחת חדר (מעבר לדשבורד/מערכת פנימית)
+                                                        onRoomSelect(item);
+                                                    }
+                                                }}
+                                                className="mt-auto w-full bg-gray-50 text-gray-600 border border-gray-200 py-2.5 rounded-xl text-xs font-bold hover:bg-[#1E4DB7] hover:text-white hover:border-transparent transition-colors shadow-sm"
+                                            >
+                                                {level === 'sub_envs' ? 'פתח תת-סביבה' : 'פתח חדר'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* מודאל ליצירת תת-סביבה/חדר חדש */}
+                    {showCreateModal && (
+                        <CreateItemModal 
+                            type={showCreateModal} 
+                            onClose={() => setShowCreateModal(null)} 
+                            onSave={() => console.log('Saved!')} 
+                        />
+                    )}
+                </div>
+            );
+        };
+
+
+        // --- 3. USER MANAGEMENT VIEW ---
+        const UserManagementView = () => {
+            const users = [
+                { name: 'עטיה נהוראי', id: 'c9812512', role: 'מתכנת' },
+                { name: 'משה כהן', id: 's8624034', role: 'קמ"ד דיגיטל' },
+                { name: 'גל אילוז', id: 's7646130', role: 'רמ"ד לוחמה דיגיטל' },
+                { name: 'בר עילאי סופר', id: 's8762961', role: 'מתכנת' },
+                { name: 'יונתן יוסים', id: 's9267560', role: 'מתכנת' },
+                { name: 'סוניה טופיקוב', id: 's9249530', role: 'קלדנית' },
+                { name: 'יעקב-קו גלאם', id: 's7524855', role: 'מתכנת' }
+            ];
+
+            return (
+                <div className="h-full flex flex-col p-8 wave-bg min-h-0">
+                    <div className="mb-8 shrink-0 border-b border-gray-200 pb-6 flex justify-between items-end">
+                        <div>
+                            <h1 className="text-[28px] font-black text-[#1E3A8A] mb-2 tracking-tight">ניהול משתמשי הסביבה</h1>
+                            <p className="text-sm font-bold text-[#1E4DB7]">כאן ניתן ליצור משתמש ולערוך הרשאות של משתמשים קיימים</p>
+                        </div>
+                        
+                        <div className="w-[400px] relative">
+                            <input 
+                                className="w-full bg-white border border-gray-200 rounded-full py-2.5 px-5 pr-10 text-sm focus:outline-none focus:border-[#1E4DB7] transition-all shadow-sm font-bold text-gray-700 placeholder-gray-400" 
+                                placeholder="חיפוש לפי שם או מספר אישי" 
+                            />
+                            <Icon name="search" className="w-4 h-4 absolute right-4 top-3 text-gray-400" />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
+                        <div className="grid grid-cols-4 gap-6">
+                            {/* Create New User Card */}
+                            <div className="bg-transparent border-2 border-dashed border-[#CBD5E1] rounded-3xl p-6 flex flex-col items-center justify-center min-h-[220px] cursor-pointer hover:bg-white hover:border-[#1E4DB7] transition-all group shadow-sm">
+                                <div className="w-14 h-14 rounded-full border border-gray-300 flex items-center justify-center mb-4 group-hover:border-[#1E4DB7] group-hover:bg-blue-50 transition-colors bg-white shadow-sm">
+                                    <Icon name="plus" className="w-6 h-6 text-gray-500 group-hover:text-[#1E4DB7]" />
+                                </div>
+                                <h3 className="font-extrabold text-gray-800 text-lg mb-1 group-hover:text-[#1E4DB7]">צור משתמש חדש</h3>
+                                <p className="text-xs text-gray-500 font-bold">לחץ על מנת לעבור לדף יצירה</p>
+                            </div>
+
+                            {/* Existing Users */}
+                            {users.map((u, i) => (
+                                <div key={i} className="bg-white/80 border border-gray-200 rounded-3xl p-5 flex flex-col items-center justify-center min-h-[220px] shadow-sm hover:shadow-md hover:border-[#1E4DB7] transition-all">
+                                    <div className="w-12 h-12 rounded-full border border-gray-200 bg-white flex items-center justify-center mb-3 shadow-sm text-gray-400">
+                                        <Icon name="user" className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="font-extrabold text-gray-800 text-[15px]">{u.name}</h3>
+                                    <div className="flex items-center gap-1.5 text-[#1E4DB7] text-[11px] font-bold mt-1.5 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                                        <span dir="ltr">{u.id}</span>
+                                        <span className="text-[#1E4DB7]">#</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-gray-500 text-[11px] font-bold mt-2.5">
+                                        <Icon name="building" className="w-3.5 h-3.5 text-[#1E4DB7]" />
+                                        {u.role}
+                                    </div>
+                                    <button className="mt-5 bg-[#1E4DB7] text-white px-8 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-800 transition shadow-sm">
+                                        ערוך
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="mt-4 pt-4 border-t border-gray-200 flex justify-center items-center gap-4 shrink-0">
+                         <button className="bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-lg shadow-sm text-xs font-bold hover:bg-gray-50 hover:text-[#1E4DB7] transition flex items-center gap-1">
+                             הבא &lt;
+                         </button>
+                         <div className="bg-blue-50 border border-blue-200 text-[#1E4DB7] px-8 py-1.5 rounded-xl shadow-sm text-xs font-bold flex flex-col items-center">
+                             <span>עמוד 1 מתוך 13</span>
+                             <span className="text-[9px] font-semibold opacity-80 mt-0.5 text-gray-600">מציג 8 מתוך 98 משתמשים</span>
+                         </div>
+                         <button className="bg-white border border-gray-100 text-gray-400 px-5 py-2 rounded-lg shadow-sm text-xs font-bold cursor-not-allowed flex items-center gap-1">
+                             &gt; קודם
+                         </button>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // --- NEW COMPLAINT VIEW (Fully Match "image_bf91cb.jpg", Fit-to-screen) ---
+        const NewComplaintView = () => {
+            const [activeTab, setActiveTab] = useState('form');
+
+            const FormContent = () => (
+                <div className="flex gap-5 h-full min-h-0 pt-0 pb-0">
+                    {/* Right Column (System Fields) - now first in RTL */}
+                    <div className="flex-[0.98] max-w-[430px] bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col min-h-0 overflow-hidden relative">
+                        <div className="px-4 py-1.5 border-b border-gray-100 flex justify-between items-center shrink-0 bg-gray-50/30">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <h3 className="font-bold text-lg text-brand-text whitespace-nowrap">שדות מערכת</h3>
+                                <span className="text-[11px] font-bold text-brand-text whitespace-nowrap border-r border-gray-200 pr-3">
+                                    פותח פנייה: <span className="font-bold text-gray-800">עטיה נהוראי</span>
+                                </span>
+                            </div>
+                            <span className="inline-flex items-center gap-1 whitespace-nowrap bg-brand-blue text-white px-3 py-1.5 rounded-md text-[10px] font-bold"><b>5</b><span>חובה</span></span>
+                        </div>
+                        <div className="p-3 flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
+                            <Input label={<span className="text-red-600 font-bold">מספר אישי של הלקוח *</span>} placeholder="הכנס/י מספר אישי של הלקוח" icon="user" containerClassName="mb-0 shrink-0" className="text-right h-[40px] px-4 text-[13px]" />
+                            <Input label={<span className="text-red-600 font-bold">שם הלקוח *</span>} placeholder="הכנס/י שם הלקוח" icon="user" containerClassName="mb-0 shrink-0" className="text-right h-[40px] px-4 text-[13px]" />
+                            <Input label={<span className="text-red-600 font-bold">טלפון ליצירת קשר *</span>} placeholder="הכנס/י טלפון ליצירת קשר" icon="phone" containerClassName="mb-0 shrink-0" className="text-right h-[40px] px-4 text-[13px]" />
+                            <Input label={<span className="text-red-600 font-bold">רמת דחיפות *</span>} placeholder="נמוכה-3" containerClassName="mb-0 shrink-0" className="text-right font-bold h-[40px] px-4 text-[13px]" />
+                            
+                            <div className="flex-1 min-h-[118px] flex flex-col pt-0">
+                                <label className="block text-xs font-bold text-red-600 mb-1 text-right shrink-0">תיאור התקלה *</label>
+                                <textarea className="w-full flex-1 min-h-[105px] bg-white border border-gray-200 shadow-sm rounded-lg py-3 px-4 text-[13px] focus:outline-none focus:border-brand-blue resize-y leading-5" placeholder="הכנס/י תיאור התקלה"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Left Column (Room Fields) - now second in RTL */}
+                    <div className="flex-[1.4] bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col min-h-0 overflow-hidden relative">
+                        {/* Header Box */}
+                        <div className="px-4 py-1.5 border-b border-gray-100 flex justify-between items-center shrink-0 bg-gray-50/30">
+                            <div className="flex items-center gap-3">
+                                <h3 className="font-bold text-lg text-brand-text">שדות חדר</h3>
+                                <Select options={["בחירת חדר"]} containerClassName="mb-0" className="w-28 py-1.5 text-xs text-gray-500 font-bold bg-white" />
+                            </div>
+                            <div className="flex items-center gap-2 flex-nowrap">
+                                <Button variant="outline" className="text-[11px] py-1.5 px-3 border-brand-blue text-brand-blue whitespace-nowrap">בצע שיוך אישי</Button>
+                                <span className="inline-flex items-center gap-1 whitespace-nowrap border border-gray-300 text-gray-500 text-[10px] font-bold px-3 py-1.5 rounded-md bg-white"><b>0/10</b><span>סה&quot;כ שדות</span></span>
+                                <span className="inline-flex items-center gap-1 whitespace-nowrap bg-brand-blue text-white text-[10px] font-bold px-3 py-1.5 rounded-md"><b>2</b><span>אופציונליים</span></span>
+                                <span className="inline-flex items-center gap-1 whitespace-nowrap bg-brand-blue text-white text-[10px] font-bold px-3 py-1.5 rounded-md"><b>1</b><span>חובה</span></span>
+                            </div>
+                        </div>
+                        
+                        {/* Form Fields Grid */}
+                        <div className="p-4 flex-1 overflow-hidden min-h-0">
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4 h-full content-start">
+                                {/* Left Side of Room Fields */}
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col">
+                                        <label className="block text-xs font-bold text-gray-700 mb-1.5 text-right">אופן טיפול בפנייה</label>
+                                        <textarea className="w-full h-[48px] min-h-[48px] bg-white border border-gray-200 shadow-sm rounded-lg py-2.5 px-4 text-[13px] focus:outline-none focus:border-brand-blue resize-y leading-5" placeholder="הכנס/י אופן טיפול בפנייה"></textarea>
+                                    </div>
+                                    <Input label="מיקום" placeholder="הכנס/י מיקום" containerClassName="mb-0" className="text-right h-[48px] px-4 text-[13px]" />
+                                </div>
+                                {/* Right Side of Room Fields */}
+                                <div className="flex flex-col gap-4">
+                                    <Input label={<span className="text-red-600 font-bold">גורם מטפל *</span>} placeholder="מנדיי" containerClassName="mb-0" className="text-right font-bold text-gray-800 h-[48px] px-4 text-[13px]" />
+                                    <Input label="שיוך אנשים / נציג מטפל" placeholder="בחר משתמש לשיוך..." containerClassName="mb-0" className="text-right h-[48px] px-4 text-[13px]" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="p-4 wave-bg h-full flex flex-col min-h-0">
+                    
+                    {/* Header Top Center - compact 2 rows only */}
+                    <div className="text-center mb-1 shrink-0">
+                        <h1 className="text-[20px] leading-6 font-black text-brand-text tracking-tight whitespace-nowrap">טופס פנייה חדשה : M-19-1780831307772</h1>
+                        <div className="h-5 flex items-center justify-center gap-3 text-[11px] leading-5 font-semibold text-gray-500 whitespace-nowrap">
+                            <span className="text-brand-blue font-bold">חדר נוכחי - מנדיי</span>
+                            <span className="text-gray-300">|</span>
+                            <span>מלא את השדות ליצירת פנייה חדשה, שים לב לשדות חובה <span className="text-red-600 font-bold">(* שדות חובה)</span></span>
+                        </div>
+                    </div>
+
+                    {/* Central Tabs Area */}
+                    <div className="flex justify-center border-b border-gray-200 shrink-0 mb-1.5 gap-20 px-10 h-10 items-end">
+                        <button onClick={() => setActiveTab('form')} className={`h-full px-4 pt-3 pb-3 text-[14px] flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === 'form' ? 'tab-active' : 'tab-inactive font-bold'}`}>
+                            טופס <Icon name="filePlus" className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setActiveTab('chat')} className={`h-full px-4 pt-3 pb-3 text-[14px] flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === 'chat' ? 'tab-active' : 'tab-inactive font-bold'}`}>
+                            צ'אט <Icon name="chat" className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setActiveTab('external')} className={`h-full px-4 pt-3 pb-3 text-[14px] flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === 'external' ? 'tab-active' : 'tab-inactive font-bold'}`}>
+                            שליחה לחדר חיצוני <Icon name="send" className="w-4 h-4 transform -rotate-45" />
+                        </button>
+                    </div>
+
+                    {/* Main Content Render */}
+                    <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                        {(activeTab === 'form' || activeTab === 'external') && <FormContent />}
+                        
+                        {activeTab === 'chat' && (
+                            <div className="h-full flex flex-col items-center justify-center p-6 min-h-0 bg-white rounded-2xl border border-gray-200 shadow-sm mx-4 mb-2">
+                                <div className="w-full max-w-xl mx-auto flex flex-col h-full min-h-0">
+                                    <div className="text-center mb-4 border-b border-gray-100 pb-3 shrink-0">
+                                        <h2 className="text-base font-bold text-gray-800">דיון בנושא M-19-1780831307772</h2>
+                                    </div>
+                                    <div className="flex-1 bg-gray-50/80 rounded-xl border border-dashed border-gray-200 mb-4 flex flex-col items-center justify-center min-h-0">
+                                         <Icon name="chat" className="w-8 h-8 text-gray-300 mb-2" />
+                                         <p className="text-gray-400 font-bold text-xs">אין הודעות בדיון זה</p>
+                                    </div>
+                                    <div className="relative w-full shrink-0">
+                                        <textarea className="w-full bg-white border border-gray-300 rounded-xl py-2.5 px-3 pr-10 text-xs focus:outline-none focus:border-brand-blue shadow-sm h-12 resize-none font-bold text-gray-700" placeholder="כתוב הודעה חדשה..."></textarea>
+                                        <button className="absolute right-2 bottom-2 text-white bg-brand-lightBlue p-1.5 rounded-lg shadow-sm hover:bg-brand-blue transition">
+                                            <Icon name="send" className="w-3.5 h-3.5 transform rotate-180" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Action Footer */}
+                    <div className="flex gap-3 mt-1 shrink-0 justify-end px-2">
+                        <Button variant="ghost" className="px-5 py-1 text-[11px] font-bold rounded-md shadow-sm">בטל פנייה</Button>
+                        <Button variant="outline" className="px-5 py-1 text-[11px] font-bold rounded-md shadow-sm border-brand-blue text-brand-blue">פרסם ושמור</Button>
+                        <Button className="px-7 py-1 text-[11px] font-bold rounded-md shadow-sm">פרסם פנייה</Button>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // --- DASHBOARD DATA & COMPONENTS ---
+        const dashboardPriorities = [
+            { label: 'נמוכה-3', level: 3, color: 'bg-pink-50 text-pink-700 ring-pink-100', chartColor: '#EC4899' },
+            { label: 'בינונית-2', level: 2, color: 'bg-amber-50 text-amber-700 ring-amber-100', chartColor: '#F59E0B' },
+            { label: 'גבוהה-1', level: 1, color: 'bg-rose-50 text-rose-700 ring-rose-100', chartColor: '#EF4444' }
+        ];
+
+        const dashboardAssignees = ['מנדיי', 'צוות תמיכה', 'אוטומציה'];
+
+        const dashboardDeterministicRandom = (seed) => {
+            const x = Math.sin(seed * 999) * 10000;
+            return x - Math.floor(x);
+        };
+
+        const dashboardPad = (value) => String(value).padStart(2, '0');
+
+        const parseDashboardDate = (dateString) => {
+            const parts = dateString.split('-').map(Number);
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        };
+
+        const formatDashboardDate = (dateString, options) => {
+            return parseDashboardDate(dateString).toLocaleDateString('he-IL', options);
+        };
+
+        const generateDashboardMockData = () => {
+            const requesters = ['עטיה נהוראי', 'משה כהן', 'דנה לוי', 'רועי שמש', 'אבי כץ', 'מיכל דוד', 'דניאל כהן'];
+            const subjects = ['בעיה בהרשאות', 'עדכון פרטי משתמש', 'בקשת תמיכה', 'תקלה בתהליך', 'פתיחת משימה חדשה', 'בירור סטטוס', 'חיבור לאוטומציה'];
+            const descriptions = [
+                'הפנייה דורשת בדיקה ראשונית ותיאום מול הגורם המטפל.',
+                'נדרש טיפול נקודתי והשלמת נתונים חסרים לפני סגירה.',
+                'התקבלה פנייה חדשה וממתינה לאישור המשך טיפול.',
+                'הנושא נמצא בבדיקה מול הצוות הרלוונטי.'
+            ];
+
+            return Array.from({ length: 150 }, (_, i) => {
+                const priority = dashboardPriorities[Math.floor(dashboardDeterministicRandom(i + 7) * dashboardPriorities.length)];
+                const date = new Date(2026, 3, 1 + Math.floor(dashboardDeterministicRandom(i + 23) * 115));
+                if (i < 8) {
+                    date.setTime(new Date().getTime());
+                }
+
+                return {
+                    id: `M-16-${100 + i}`,
+                    requester: requesters[Math.floor(dashboardDeterministicRandom(i + 11) * requesters.length)],
+                    phone: dashboardDeterministicRandom(i + 13) > 0.3 ? `05${Math.floor(dashboardDeterministicRandom(i + 15) * 10)}-${Math.floor(1000000 + dashboardDeterministicRandom(i + 17) * 9000000)}` : 'לא זמין',
+                    location: `${Math.floor(111111111 + dashboardDeterministicRandom(i + 19) * 888888888)}`,
+                    priority: priority.label,
+                    priorityLevel: priority.level,
+                    priorityColor: priority.color,
+                    chartColor: priority.chartColor,
+                    date: `${date.getFullYear()}-${dashboardPad(date.getMonth() + 1)}-${dashboardPad(date.getDate())}`,
+                    status: dashboardDeterministicRandom(i + 29) > 0.34 ? 'open' : 'closed',
+                    assignee: dashboardAssignees[Math.floor(dashboardDeterministicRandom(i + 31) * dashboardAssignees.length)],
+                    subject: subjects[Math.floor(dashboardDeterministicRandom(i + 37) * subjects.length)],
+                    description: descriptions[Math.floor(dashboardDeterministicRandom(i + 41) * descriptions.length)]
+                };
+            });
+        };
+
+        const dashboardInquiries = generateDashboardMockData();
+        const DASHBOARD_KPI_STORAGE_KEY = 'tamar-dashboard-kpi-layout';
+        const DEFAULT_DASHBOARD_KPI_IDS = ['open', 'overdue', 'urgent', 'unassigned', 'averageTime', 'recentlyHandled'];
+
+        const sanitizeDashboardKpiIds = (ids, availableIds = DEFAULT_DASHBOARD_KPI_IDS) => {
+            const uniqueIds = [];
+
+            (Array.isArray(ids) ? ids : []).forEach(id => {
+                if (availableIds.includes(id) && !uniqueIds.includes(id)) {
+                    uniqueIds.push(id);
+                }
+            });
+
+            availableIds.forEach(id => {
+                if (!uniqueIds.includes(id) && uniqueIds.length < 4) {
+                    uniqueIds.push(id);
+                }
+            });
+
+            return uniqueIds.slice(0, Math.min(6, availableIds.length));
+        };
+
+        const loadDashboardKpiLayout = () => {
+            if (typeof window === 'undefined') return DEFAULT_DASHBOARD_KPI_IDS;
+
+            try {
+                const storedValue = window.localStorage.getItem(DASHBOARD_KPI_STORAGE_KEY);
+                if (!storedValue) return DEFAULT_DASHBOARD_KPI_IDS;
+
+                const parsedValue = JSON.parse(storedValue);
+                const candidateIds = Array.isArray(parsedValue) ? parsedValue : parsedValue?.visibleIds;
+                return sanitizeDashboardKpiIds(candidateIds);
+            } catch (error) {
+                return DEFAULT_DASHBOARD_KPI_IDS;
+            }
+        };
+
+        const persistDashboardKpiLayout = (visibleIds) => {
+            if (typeof window === 'undefined') return;
+            window.localStorage.setItem(DASHBOARD_KPI_STORAGE_KEY, JSON.stringify({ visibleIds }));
+        };
+
+        const moveDashboardKpiId = (ids, fromIndex, toIndex) => {
+            if (toIndex < 0 || toIndex >= ids.length || fromIndex === toIndex) return ids;
+            const reorderedIds = [...ids];
+            const [movedId] = reorderedIds.splice(fromIndex, 1);
+            reorderedIds.splice(toIndex, 0, movedId);
+            return reorderedIds;
+        };
+
+        const formatDashboardShortName = (fullName) => {
+            const [firstName = '', lastName = ''] = fullName.split(' ');
+            return lastName ? `${firstName} ${lastName.charAt(0)}.` : fullName;
+        };
+
+        const filterDashboardInquiries = (inquiries, filters) => {
+            return inquiries.filter(item => {
+                if (filters.category !== 'all' && item.assignee !== filters.category) return false;
+                if (filters.dateFrom && item.date < filters.dateFrom) return false;
+                if (filters.dateTo && item.date > filters.dateTo) return false;
+                return true;
+            });
+        };
+
+        const groupDashboardInquiries = (inquiries, grouping) => {
+            const groups = new Map();
+
+            inquiries.forEach(item => {
+                const date = parseDashboardDate(item.date);
+                let label = '';
+                let sortKey = item.date;
+
+                if (grouping === 'daily') {
+                    label = date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' });
+                } else if (grouping === 'weekly') {
+                    const firstDay = new Date(date.getFullYear(), 0, 1);
+                    const week = Math.ceil((((date - firstDay) / 86400000) + firstDay.getDay() + 1) / 7);
+                    label = `שבוע ${week}`;
+                    sortKey = `${date.getFullYear()}-${dashboardPad(week)}`;
+                } else {
+                    label = date.toLocaleDateString('he-IL', { month: 'short', year: 'numeric' });
+                    sortKey = `${date.getFullYear()}-${dashboardPad(date.getMonth() + 1)}`;
+                }
+
+                if (!groups.has(label)) {
+                    groups.set(label, { label, total: 0, items: [], sortKey });
+                }
+
+                const group = groups.get(label);
+                group.total += 1;
+                group.items.push(item);
+            });
+
+            return Array.from(groups.values());
+        };
+
+        const sortDashboardGroups = (groups, sortOrder) => {
+            return [...groups].sort((a, b) => {
+                const totalSort = sortOrder === 'desc' ? b.total - a.total : a.total - b.total;
+                return totalSort || a.sortKey.localeCompare(b.sortKey);
+            });
+        };
+
+        const exportDashboardCsv = (groups) => {
+            const headers = ['קבוצה', 'סה״כ בקבוצה', 'מספר פנייה', 'תאריך', 'גורם מטפל', 'דחיפות', 'סטטוס', 'טלפון', 'שם הפונה', 'מיקום', 'נושא'];
+            const rows = groups.flatMap(group => group.items.map(item => [
+                group.label,
+                group.total,
+                item.id,
+                item.date,
+                item.assignee,
+                item.priority,
+                item.status === 'open' ? 'פתוחה' : 'סגורה',
+                item.phone,
+                item.requester,
+                item.location,
+                item.subject
+            ]));
+
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            ].join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ייצוא_פניות_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        };
+
+        const DashboardBadge = ({ children, className = '' }) => (
+            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ring-1 ${className}`}>{children}</span>
+        );
+
+        const DashboardCard = ({ children, className = '' }) => (
+            <section className={`relative min-h-0 overflow-hidden rounded-[28px] border border-white/80 bg-white/95 shadow-[0_18px_55px_rgba(15,23,42,0.08)] ${className}`}>
+                <div className="relative z-10 flex h-full min-h-0 flex-col">{children}</div>
+            </section>
+        );
+
+        const DashboardToolbarPill = ({ children, className = '' }) => (
+            <div className={`flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition-all focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100/70 ${className}`}>
+                {children}
+            </div>
+        );
+
+        const DashboardSegmentedButton = ({ label, isActive, onClick }) => (
+            <button
+                type="button"
+                onClick={onClick}
+                className={`rounded-xl px-4 py-2 text-sm font-black transition-all active:scale-95 ${
+                    isActive
+                        ? 'bg-gradient-to-l from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+            >
+                {label}
+            </button>
+        );
+
+        const DashboardSelectPill = ({ label, icon, value, onChange, options }) => (
+            <DashboardToolbarPill>
+                <Icon name={icon} className="w-4 h-4 text-blue-500 shrink-0" />
+                <span className="whitespace-nowrap text-xs font-black text-slate-500">{label}</span>
+                <select
+                    value={value}
+                    onChange={(event) => onChange(event.target.value)}
+                    className="min-w-[132px] cursor-pointer border-0 bg-transparent text-sm font-black text-slate-800 outline-none"
+                >
+                    {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+                <Icon name="chevronDown" className="w-3.5 h-3.5 text-slate-400" />
+            </DashboardToolbarPill>
+        );
+
+        const DashboardDateInput = ({ label, value, onChange }) => (
+            <DashboardToolbarPill>
+                <Icon name="calendar" className="w-4 h-4 text-blue-500 shrink-0" />
+                <span className="whitespace-nowrap text-xs font-black text-slate-500">{label}</span>
+                <input
+                    type="date"
+                    value={value}
+                    onInput={(event) => onChange(event.target.value)}
+                    onChange={(event) => onChange(event.target.value)}
+                    className="cursor-pointer border-0 bg-transparent text-sm font-black text-slate-800 outline-none"
+                />
+            </DashboardToolbarPill>
+        );
+
+        const KpiCard = ({ title, subtitle, value, icon, accent, mode = 'dashboard', actionIcon, actionLabel, onAction, isActionDisabled = false }) => {
+            const palette = {
+                blue: {
+                    value: 'text-blue-600',
+                    icon: 'text-blue-500',
+                    iconBg: 'bg-blue-50',
+                    iconBorder: 'border-blue-100',
+                    border: 'border-blue-100',
+                    shadow: 'shadow-[0_12px_28px_rgba(59,130,246,0.10)]'
+                },
+                emerald: {
+                    value: 'text-emerald-600',
+                    icon: 'text-emerald-600',
+                    iconBg: 'bg-emerald-50',
+                    iconBorder: 'border-emerald-100',
+                    border: 'border-emerald-100',
+                    shadow: 'shadow-[0_12px_28px_rgba(16,185,129,0.10)]'
+                },
+                rose: {
+                    value: 'text-rose-600',
+                    icon: 'text-rose-500',
+                    iconBg: 'bg-rose-50',
+                    iconBorder: 'border-rose-100',
+                    border: 'border-rose-100',
+                    shadow: 'shadow-[0_12px_28px_rgba(244,63,94,0.10)]'
+                },
+                amber: {
+                    value: 'text-amber-600',
+                    icon: 'text-amber-500',
+                    iconBg: 'bg-amber-50',
+                    iconBorder: 'border-amber-100',
+                    border: 'border-amber-100',
+                    shadow: 'shadow-[0_12px_28px_rgba(245,158,11,0.10)]'
+                },
+                violet: {
+                    value: 'text-violet-600',
+                    icon: 'text-violet-500',
+                    iconBg: 'bg-violet-50',
+                    iconBorder: 'border-violet-100',
+                    border: 'border-violet-100',
+                    shadow: 'shadow-[0_12px_28px_rgba(139,92,246,0.10)]'
+                },
+                cyan: {
+                    value: 'text-cyan-600',
+                    icon: 'text-cyan-500',
+                    iconBg: 'bg-cyan-50',
+                    iconBorder: 'border-cyan-100',
+                    border: 'border-cyan-100',
+                    shadow: 'shadow-[0_12px_28px_rgba(6,182,212,0.10)]'
+                }
+            }[accent];
+
+            const isModal = mode === 'modal';
+
+            return (
+                <article className={`relative flex h-full flex-col rounded-[24px] border bg-white text-right ${palette.border} ${palette.shadow} ${isModal ? 'min-h-[168px] px-4 pb-4 pt-5' : 'h-[clamp(120px,14vh,138px)] min-h-[120px] px-4 pb-3 pt-3'} ${!isModal ? 'dashboard-card-motion' : ''}`}>
+                    {onAction && (
+                        <button
+                            type="button"
+                            onClick={onAction}
+                            aria-label={actionLabel}
+                            title={actionLabel}
+                            disabled={isActionDisabled}
+                            className={`absolute left-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-transparent transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-35 ${
+                                actionIcon === 'trash'
+                                    ? 'text-rose-400 hover:bg-rose-50 hover:text-rose-500'
+                                    : 'text-blue-400 hover:bg-blue-50 hover:text-blue-500'
+                            }`}
+                        >
+                            <Icon name={actionIcon} className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1 pr-1">
+                            <h4 className={`font-black text-slate-900 ${isModal ? 'text-[10px] leading-5' : 'text-[15px] leading-6'}`}>{title}</h4>
+                            {subtitle && <p className={`mt-1 text-slate-400 ${isModal ? 'text-[10px] leading-4' : 'text-[11px] leading-4'}`}>{subtitle}</p>}
+                        </div>
+                        <div className={`flex shrink-0 items-center justify-center border ${palette.iconBg} ${palette.iconBorder} ${isModal ? 'h-12 w-12 rounded-[18px]' : 'h-9 w-9 rounded-[16px]'}`}>
+                            <Icon name={icon} className={`${isModal ? 'h-5 w-5' : 'h-[14px] w-[14px]'} ${palette.icon}`} />
+                        </div>
+                    </div>
+
+                    <div className={`mt-auto ${isModal ? 'pt-5' : 'pt-2.5'}`}>
+                        <div className={`font-black tracking-tight ${palette.value} ${isModal ? 'text-[44px] leading-none' : 'text-[40px] leading-none'}`}>{value}</div>
+                        {!isModal && <div className="mt-2 text-[11px] font-semibold text-slate-400">עודכן עכשיו</div>}
+                    </div>
+                </article>
+            );
+        };
+
+        const DashboardInquiryListItem = ({ item }) => (
+            <article className="group mb-3 flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
+                <div className="flex shrink-0 items-center gap-2">
+                    <button type="button" className="rounded-xl bg-emerald-500 p-2 text-white transition-colors hover:bg-emerald-600">
+                        <Icon name="check" className="w-4 h-4" />
+                    </button>
+                    <button type="button" className="rounded-xl bg-slate-900 p-2 text-white transition-colors hover:bg-slate-700">
+                        <Icon name="eye" className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2 font-black text-slate-900">
+                            <Icon name="user" className="w-4 h-4 shrink-0 text-slate-400" />
+                            <span className="truncate">{item.requester}</span>
+                            <DashboardBadge className={item.priorityColor}>{item.priority}</DashboardBadge>
+                            <DashboardBadge className={item.status === 'open' ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : 'bg-slate-100 text-slate-600 ring-slate-200'}>
+                                {item.status === 'open' ? 'פתוחה' : 'סגורה'}
+                            </DashboardBadge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm font-bold text-slate-500" dir="ltr">
+                            <span>{item.id}</span>
+                            <span className="text-blue-500">#</span>
+                        </div>
+                    </div>
+                    <div className="grid gap-2 text-xs font-medium text-slate-500 sm:grid-cols-4">
+                        <span className="flex items-center gap-1"><Icon name="calendar" className="w-3.5 h-3.5" />{formatDashboardDate(item.date, { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                        <span className="flex items-center gap-1"><Icon name="phone" className="w-3.5 h-3.5" /><span dir="ltr">{item.phone}</span></span>
+                        <span className="flex items-center gap-1"><Icon name="location" className="w-3.5 h-3.5" />{item.location}</span>
+                        <span className="flex items-center gap-1"><Icon name="filter" className="w-3.5 h-3.5" />{item.assignee}</span>
+                    </div>
+                    <p className="mt-2 truncate text-sm text-slate-600"><span className="font-bold text-slate-800">{item.subject}:</span> {item.description}</p>
+                </div>
+            </article>
+        );
+
+        const CustomDonutChart = ({ data, onSegmentClick }) => {
+            const [hoveredSegment, setHoveredSegment] = useState(null);
+            const size = 204;
+            const strokeWidth = 32;
+            const radius = (size - strokeWidth) / 2;
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            const centerRadius = Math.max(0, radius - (strokeWidth / 2) - 7);
+            const center = size / 2;
+            let currentAngle = 0;
+
+            const pointOnCircle = (angle, pointRadius = radius) => {
+                const radians = (angle - 90) * Math.PI / 180;
+                return {
+                    x: center + pointRadius * Math.cos(radians),
+                    y: center + pointRadius * Math.sin(radians)
+                };
+            };
+
+            const describeArc = (startAngle, endAngle) => {
+                const start = pointOnCircle(endAngle);
+                const end = pointOnCircle(startAngle);
+                const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+                return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+            };
+
+            if (total === 0) {
+                return <div className="text-sm font-bold text-slate-400">אין נתונים לתצוגה</div>;
+            }
+
+            return (
+                <div className="relative flex items-center justify-center p-2">
+                    <div className="pointer-events-none absolute h-48 w-48 rounded-full bg-gradient-to-b from-blue-50 to-white shadow-inner" />
+                    <svg width={size} height={size} className="relative z-10 overflow-visible drop-shadow-sm">
+                        <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="#EEF4FF" strokeWidth={strokeWidth} />
+                        {data.map(item => {
+                            if (item.value === 0) return null;
+                            const startAngle = currentAngle;
+                            const segmentAngle = (item.value / total) * 360;
+                            const endAngle = startAngle + segmentAngle;
+                            const labelAngle = startAngle + (segmentAngle / 2);
+                            const rawLabelPoint = pointOnCircle(labelAngle, radius + (strokeWidth / 2) + 12);
+                            const labelPoint = {
+                                x: Math.min(size - 8, Math.max(8, rawLabelPoint.x)),
+                                y: Math.min(size - 8, Math.max(8, rawLabelPoint.y))
+                            };
+                            const labelAnchor = rawLabelPoint.x > size - 24 ? 'end' : rawLabelPoint.x < 24 ? 'start' : rawLabelPoint.x >= center ? 'start' : 'end';
+                            const shortLabel = item.label.replace(/-\d+$/, '');
+                            const path = segmentAngle >= 359.99 ? null : describeArc(startAngle, endAngle);
+                            const isHovered = hoveredSegment === item.label;
+                            currentAngle = endAngle;
+
+                            if (!path) {
+                                return (
+                                    <g key={item.label}>
+                                        <circle
+                                            cx={size / 2}
+                                            cy={size / 2}
+                                            r={radius}
+                                            fill="transparent"
+                                            stroke={item.color}
+                                            strokeLinecap="round"
+                                            strokeWidth={isHovered ? strokeWidth + 3 : strokeWidth}
+                                            className="cursor-pointer transition-all duration-200"
+                                            onMouseEnter={() => setHoveredSegment(item.label)}
+                                            onMouseLeave={() => setHoveredSegment(null)}
+                                            onClick={() => onSegmentClick(item)}
+                                        />
+                                        <text
+                                            x={labelPoint.x}
+                                            y={labelPoint.y}
+                                            textAnchor={labelAnchor}
+                                            dominantBaseline="middle"
+                                            className="fill-slate-600 text-[10px] font-semibold"
+                                            style={{ pointerEvents: 'none' }}
+                                        >
+                                            {shortLabel}
+                                        </text>
+                                    </g>
+                                );
+                            }
+
+                            return (
+                                <g key={item.label}>
+                                    <path
+                                        d={path}
+                                        fill="transparent"
+                                        stroke={item.color}
+                                        strokeLinecap="round"
+                                        strokeWidth={isHovered ? strokeWidth + 3 : strokeWidth}
+                                        opacity={hoveredSegment && !isHovered ? 0.84 : 1}
+                                        className="transition-all duration-200"
+                                        style={{ pointerEvents: 'none' }}
+                                    />
+                                    <path
+                                        d={path}
+                                        fill="transparent"
+                                        stroke="transparent"
+                                        strokeLinecap="butt"
+                                        strokeWidth={strokeWidth + 8}
+                                        className="cursor-pointer"
+                                        style={{ pointerEvents: 'stroke' }}
+                                        onMouseEnter={() => setHoveredSegment(item.label)}
+                                        onMouseLeave={() => setHoveredSegment(null)}
+                                        onClick={() => onSegmentClick(item)}
+                                    />
+                                    <text
+                                        x={labelPoint.x}
+                                        y={labelPoint.y}
+                                        textAnchor={labelAnchor}
+                                        dominantBaseline="middle"
+                                        className="fill-slate-600 text-[10px] font-semibold"
+                                        style={{ pointerEvents: 'none' }}
+                                    >
+                                        {shortLabel}
+                                    </text>
+                                </g>
+                            );
+                        })}
+                        <circle
+                            cx={size / 2}
+                            cy={size / 2}
+                            r={centerRadius}
+                            fill="white"
+                            className="cursor-default"
+                            style={{ pointerEvents: 'none' }}
+                        />
+                    </svg>
+                    <div className="donut-center absolute z-20 flex cursor-default flex-col items-center justify-center rounded-full bg-white/80 px-6 py-5 shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur-sm">
+                        <span className="text-4xl font-black text-slate-900">{total}</span>
+                        <span className="text-sm font-bold text-slate-500">סה״כ פניות</span>
+                    </div>
+                </div>
+            );
+        };
+        const CustomBarChart = ({ data, onBarClick, barsPerPage = 6, isExpanded = false }) => {
+            const [page, setPage] = useState(0);
+            const pageCount = Math.max(1, Math.ceil(data.length / barsPerPage));
+            const maxVal = Math.max(...data.map(item => item.total), 0);
+            const yAxisMax = Math.max(10, Math.ceil(maxVal / 10) * 10);
+            const yAxisSteps = [1, 0.75, 0.5, 0.25, 0];
+            const visibleBars = data.slice(page * barsPerPage, page * barsPerPage + barsPerPage);
+            const paddedBars = [...visibleBars];
+            while (paddedBars.length < barsPerPage) paddedBars.push(null);
+
+            useEffect(() => {
+                setPage(currentPage => Math.min(currentPage, pageCount - 1));
+            }, [pageCount, barsPerPage, data.length]);
+
+            if (data.length === 0) {
+                return (
+                    <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-4 rounded-b-[28px] bg-gradient-to-b from-[#F8FBFF] to-[#EEF5FF] text-slate-400">
+                        <div className="rounded-full bg-white p-6 shadow-sm"><Icon name="search" className="w-11 h-11 text-slate-300" /></div>
+                        <div className="text-center">
+                            <p className="text-lg font-black text-slate-600">לא נמצאו נתונים</p>
+                            <p className="text-sm">נסו לשנות תאריכים, קטגוריה או סינון.</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            const chartPaddingClass = isExpanded ? 'px-4 pb-3 pt-4 sm:px-5' : 'px-5 pb-2 pt-4';
+            const plotPaddingClass = isExpanded ? 'px-4 pt-5 sm:px-6 lg:px-8' : 'px-8 pt-5';
+            const plotMinHeightClass = 'min-h-0';
+            const labelSlotClass = isExpanded ? 'min-h-[48px]' : 'min-h-[48px]';
+            const labelGapClass = isExpanded ? 'pt-3' : 'pt-2';
+            const navSpacingClass = isExpanded ? 'mt-3' : 'mt-2';
+            const firstItemIndex = paddedBars.findIndex(Boolean);
+            const lastItemIndex = paddedBars.reduce((lastIndex, item, index) => item ? index : lastIndex, -1);
+
+            return (
+                <div className={`relative flex h-full min-h-0 ${chartPaddingClass} flex-col overflow-hidden rounded-b-[28px] bg-gradient-to-b from-[#F8FBFF] via-[#F6F9FF] to-[#EEF5FF]`}>
+                    <div className="pointer-events-none absolute inset-x-4 inset-y-4 rounded-[28px] bg-white/60 ring-1 ring-white/80" />
+
+                    <div className={`relative z-10 flex min-h-0 flex-1 flex-col ${plotPaddingClass}`}>
+                        <div dir="ltr" className="grid min-h-0 flex-1 grid-cols-[42px_minmax(0,1fr)] gap-3">
+                            <div className="flex min-h-0 flex-col">
+                                <div className={`relative ${plotMinHeightClass} min-h-0 flex-1`}>
+                                    {yAxisSteps.map((step, index) => (
+                                        <span
+                                            key={step}
+                                            className="pointer-events-none absolute right-0 text-[10px] font-bold text-slate-400"
+                                            dir="ltr"
+                                            style={{
+                                                top: `${(1 - step) * 100}%`,
+                                                transform: index === 0 ? 'translateY(0)' : index === yAxisSteps.length - 1 ? 'translateY(-100%)' : 'translateY(-50%)'
+                                            }}
+                                        >
+                                            {Math.round(yAxisMax * step)}
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className={`shrink-0 ${labelGapClass}`}>
+                                    <div className={labelSlotClass} />
+                                </div>
+                            </div>
+
+                            <div className="flex min-h-0 flex-1 flex-col">
+                                <div className={`relative ${plotMinHeightClass} min-h-0 flex-1`}>
+                                    {yAxisSteps.map(step => (
+                                        <div
+                                            key={step}
+                                            className="pointer-events-none absolute left-0 right-0 border-t border-blue-100/80"
+                                            style={{ top: `${(1 - step) * 100}%` }}
+                                        />
+                                    ))}
+
+                                    <div className="dashboard-bar-columns relative z-10 flex h-full items-end justify-between gap-2">
+                                        {paddedBars.map((item, index) => {
+                                            if (!item) {
+                                                return <div key={`empty-${index}`} className="flex min-w-0 flex-1" />;
+                                            }
+
+                                            const normalizedValue = Math.max(0, Math.min(item.total, yAxisMax));
+                                            const heightPct = (normalizedValue / yAxisMax) * 100;
+                                            const isHot = index === 0 && isExpanded;
+                                            const tooltipEdgeClass = index === firstItemIndex
+                                                ? 'left-0 translate-x-0'
+                                                : index === lastItemIndex
+                                                    ? 'right-0 translate-x-0'
+                                                    : 'left-1/2 -translate-x-1/2';
+                                            return (
+                                                <button
+                                                    key={`${item.label}-${index}`}
+                                                    type="button"
+                                                    title={`${item.label} - ${item.total} פניות`}
+                                                    onClick={() => onBarClick(item)}
+                                                    className="group relative h-full min-w-0 flex-1 outline-none"
+                                                >
+                                                    <div
+                                                        className="pointer-events-none absolute left-0 right-0 z-20 flex w-full justify-center"
+                                                        style={{ bottom: `calc(${heightPct}% + 8px)` }}
+                                                    >
+                                                        <span className={`dashboard-bar-tooltip pointer-events-none absolute -top-8 z-30 whitespace-nowrap rounded-full bg-slate-950 px-3 py-1 text-xs font-bold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 ${tooltipEdgeClass}`}>{item.total} {'פניות'}</span>
+                                                        <span className="absolute -top-7 rounded-full bg-slate-950 px-3 py-1 text-xs font-bold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">{item.total} פניות</span>
+                                                        <span className="rounded-full bg-white/95 px-2 py-1 text-xs font-black text-slate-700 shadow-sm ring-1 ring-slate-100">{item.total}</span>
+                                                    </div>
+                                                    <div className="flex min-h-0 h-full items-end justify-center">
+                                                        <span
+                                                            className={`w-full max-w-[58px] rounded-t-[18px] transition-all duration-300 group-hover:brightness-95 group-hover:drop-shadow-xl ${
+                                                                isHot ? 'bg-gradient-to-b from-pink-400 via-pink-300 to-pink-100/85' : 'bg-gradient-to-b from-blue-600 via-blue-400 to-blue-200/85'
+                                                            }`}
+                                                            style={{ height: `${heightPct}%` }}
+                                                        />
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className={`flex shrink-0 items-start justify-between gap-2 ${labelGapClass}`}>
+                                    {paddedBars.map((item, index) => (
+                                        <div key={item ? `${item.label}-label-${index}` : `empty-label-${index}`} className="flex min-w-0 flex-1 justify-center">
+                                            {item ? (
+                                                <span
+                                                    title={item.label}
+                                                    dir="rtl"
+                                                    className={`dashboard-bar-label flex ${labelSlotClass} w-full max-w-[112px] items-start justify-center px-1 text-center text-[11px] font-bold leading-4 text-slate-500`}
+                                                >
+                                                    {item.label}
+                                                </span>
+                                            ) : (
+                                                <div className={labelSlotClass} />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {pageCount > 1 && (
+                        <div className={`relative z-20 ${navSpacingClass} flex shrink-0 items-center justify-between rounded-2xl border border-white/80 bg-white/85 px-3 py-2 shadow-sm backdrop-blur-sm`}>
+                            <button
+                                type="button"
+                                onClick={() => setPage(currentPage => Math.max(0, currentPage - 1))}
+                                disabled={page === 0}
+                                className="flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                <Icon name="arrowRight" className="w-4 h-4" /> הקודם
+                            </button>
+                            <div className="text-xs font-black text-slate-500">
+                                מציג {Math.min(data.length, page * barsPerPage + 1)}-{Math.min(data.length, (page + 1) * barsPerPage)} מתוך {data.length} ֲ· {barsPerPage} עמודות בכל תצוגה
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setPage(currentPage => Math.min(pageCount - 1, currentPage + 1))}
+                                disabled={page >= pageCount - 1}
+                                className="flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                הבא <Icon name="arrowLeft" className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const DashboardFilterToolbar = ({ isExpanded, filters, setFilters, categoryOptions, sortOptions, onExport }) => (
+            <div className={`grid transition-all duration-500 ${isExpanded ? 'mt-3 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="min-h-0 overflow-hidden">
+                    <div className="rounded-[24px] border border-blue-100 bg-slate-50/90 px-3 py-2.5 shadow-inner sm:px-4 sm:py-3">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <div className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm ring-1 ring-slate-100">
+                                <Icon name="filter" className="w-4 h-4 text-blue-600" />
+                                מסנני תצוגה מתקדמים
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <div className="flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+                                <DashboardSegmentedButton label="יומי" isActive={filters.grouping === 'daily'} onClick={() => setFilters(current => ({ ...current, grouping: 'daily' }))} />
+                                <DashboardSegmentedButton label="שבועי" isActive={filters.grouping === 'weekly'} onClick={() => setFilters(current => ({ ...current, grouping: 'weekly' }))} />
+                                <DashboardSegmentedButton label="חודשי" isActive={filters.grouping === 'monthly'} onClick={() => setFilters(current => ({ ...current, grouping: 'monthly' }))} />
+                            </div>
+                            <DashboardDateInput label="מתאריך" value={filters.dateFrom} onChange={(value) => setFilters(current => ({ ...current, dateFrom: value }))} />
+                            <DashboardDateInput label="עד תאריך" value={filters.dateTo} onChange={(value) => setFilters(current => ({ ...current, dateTo: value }))} />
+                            <DashboardSelectPill label="קטגוריה" icon="filter" value={filters.category} onChange={(value) => setFilters(current => ({ ...current, category: value }))} options={categoryOptions} />
+                            <DashboardSelectPill label="מיון" icon="arrowDownUp" value={filters.sortOrder} onChange={(value) => setFilters(current => ({ ...current, sortOrder: value }))} options={sortOptions} />
+                            <button
+                                type="button"
+                                onClick={onExport}
+                                className="sm:mr-auto flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md"
+                            >
+                                <Icon name="arrowDownStraight" className="w-4 h-4" />
+                                הורדת קובץ Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const DashboardInquiryModal = ({ modalConfig, searchValue, onSearchChange, onClose }) => {
+            if (!modalConfig.isOpen) return null;
+
+            const query = searchValue.trim().toLowerCase();
+            const visibleItems = query
+                ? modalConfig.filteredData.filter(item => {
+                    const haystack = `${item.id} ${item.requester} ${item.phone} ${item.assignee} ${item.priority} ${item.subject}`.toLowerCase();
+                    return haystack.includes(query);
+                })
+                : modalConfig.filteredData;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-md">
+                    <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[30px] border border-white/70 bg-slate-50 shadow-2xl" dir="rtl">
+                        <div className="border-b border-slate-100 bg-white px-6 py-5">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                                        <Icon name="filter" className="w-3.5 h-3.5" /> Drill-down
+                                    </div>
+                                    <h2 className="text-2xl font-black text-slate-950">{modalConfig.title}</h2>
+                                    <p className="mt-1 text-sm font-semibold text-slate-500">{modalConfig.subtitle}</p>
+                                </div>
+                                <button type="button" onClick={onClose} className="rounded-full p-3 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                                    <Icon name="close" className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-3">
+                                <DashboardToolbarPill className="min-w-[260px]">
+                                    <Icon name="search" className="w-4 h-4 text-slate-400" />
+                                    <input
+                                        value={searchValue}
+                                        onChange={(event) => onSearchChange(event.target.value)}
+                                        className="w-full border-0 bg-transparent text-sm outline-none"
+                                        placeholder="חיפוש לפי מספר פנייה או שם..."
+                                    />
+                                </DashboardToolbarPill>
+                                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm">
+                                    {visibleItems.length} פניות מוצגות
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto bg-[#F7FAFF] p-5">
+                            {visibleItems.length ? visibleItems.map(item => <DashboardInquiryListItem key={item.id} item={item} />) : (
+                                <div className="flex h-80 flex-col items-center justify-center gap-4 text-slate-400">
+                                    <Icon name="search" className="w-12 h-12" />
+                                    <p className="text-lg font-black">לא נמצאו פניות</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DashboardKpiEditModalLegacyUnused = ({ isOpen, onClose, page, pageCount, visibleKpis, selectedIds, canAddMore, onPrevPage, onNextPage, onAdd, onRemove }) => {
+            useEffect(() => {
+                if (!isOpen) return undefined;
+
+                const handleKeyDown = (event) => {
+                    if (event.key === 'Escape') onClose();
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [isOpen, onClose]);
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6">
+                    <button type="button" aria-label="סגור חלון עריכת כרטיסיות" className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]" onClick={onClose} />
+
+                    <div dir="rtl" className="relative z-10 flex w-full max-w-[560px] flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.28)] animate-fade-in">
+                        <div className="relative border-b border-slate-100 px-6 pb-5 pt-7 text-center">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                aria-label="סגור חלון עריכת כרטיסיות"
+                                className="absolute left-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                            >
+                                <Icon name="close" className="h-5 w-5" />
+                            </button>
+                            <h2 className="text-[30px] font-black tracking-tight text-slate-900">עריכת כרטיסיות המידע</h2>
+                            <p className="mt-2 text-sm font-semibold text-slate-400">נא בחר עד 4 כרטיסיות שברצונך להציג בחתך המידע</p>
+                        </div>
+
+                        <div className="px-6 py-5">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                {visibleKpis.map(kpi => {
+                                    const isSelected = selectedIds.includes(kpi.id);
+                                    const actionIcon = isSelected ? 'trash' : 'plus';
+                                    const actionLabel = isSelected ? `הסר כרטיסייה ${kpi.title}` : `הוסף כרטיסייה ${kpi.title}`;
+
+                                    return (
+                                        <KpiCard
+                                            key={kpi.id}
+                                            {...kpi}
+                                            mode="modal"
+                                            actionIcon={actionIcon}
+                                            actionLabel={actionLabel}
+                                            onAction={() => (isSelected ? onRemove(kpi.id) : onAdd(kpi.id))}
+                                            isActionDisabled={!isSelected && !canAddMore}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div dir="ltr" className="flex items-center justify-between border-t border-slate-100 px-6 py-4 text-sm font-bold text-slate-500">
+                            <button
+                                type="button"
+                                onClick={onNextPage}
+                                disabled={page >= pageCount - 1}
+                                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
+                            >
+                                הבא <Icon name="arrowLeft" className="h-4 w-4" />
+                            </button>
+                            <div className="text-center text-[15px] font-black text-slate-500">עמוד {page + 1} מתוך {pageCount}</div>
+                            <button
+                                type="button"
+                                onClick={onPrevPage}
+                                disabled={page === 0}
+                                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
+                            >
+                                <Icon name="arrowRight" className="h-4 w-4" /> קודם
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- DASHBOARD VIEW ---
+        const DashboardViewLegacyUnused = () => {
+            const inquiries = dashboardInquiries;
+            const [isExpanded, setIsExpanded] = useState(false);
+            const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', subtitle: '', filteredData: [] });
+            const [modalSearch, setModalSearch] = useState('');
+            const [isKpiEditorOpen, setIsKpiEditorOpen] = useState(false);
+            const [kpiPage, setKpiPage] = useState(0);
+            const [selectedKpiIds, setSelectedKpiIds] = useState(['total', 'handled', 'today', 'open']);
+            const [filters, setFilters] = useState({
+                dateFrom: '',
+                dateTo: '',
+                grouping: 'monthly',
+                category: 'all',
+                sortOrder: 'desc'
+            });
+
+            const filteredBarData = React.useMemo(() => filterDashboardInquiries(inquiries, filters), [inquiries, filters.category, filters.dateFrom, filters.dateTo]);
+            const groupedBarData = React.useMemo(() => sortDashboardGroups(groupDashboardInquiries(filteredBarData, filters.grouping), filters.sortOrder), [filteredBarData, filters.grouping, filters.sortOrder]);
+            const hasActiveFilters = Boolean(filters.dateFrom || filters.dateTo || filters.category !== 'all');
+            const donutSource = hasActiveFilters ? filteredBarData : inquiries;
+
+            const priorityData = React.useMemo(() => {
+                return dashboardPriorities.map(priority => ({
+                    label: priority.label,
+                    value: donutSource.filter(item => item.priority === priority.label).length,
+                    color: priority.chartColor,
+                    rawLabel: priority.label
+                }));
+            }, [donutSource]);
+
+            const categoryOptions = React.useMemo(() => {
+                const categories = Array.from(new Set(inquiries.map(item => item.assignee)));
+                return [
+                    { value: 'all', label: 'כל הקטגוריות' },
+                    ...categories.map(category => ({ value: category, label: category }))
+                ];
+            }, [inquiries]);
+
+            const sortOptions = [
+                { value: 'desc', label: 'מהגבוה לנמוך' },
+                { value: 'asc', label: 'מהנמוך לגבוה' }
+            ];
+
+            const totalInquiries = inquiries.length;
+            const openInquiries = inquiries.filter(item => item.status === 'open').length;
+            const closedInquiries = inquiries.filter(item => item.status === 'closed').length;
+            const todayString = new Date().toISOString().split('T')[0];
+            const openedToday = inquiries.filter(item => item.date === todayString).length;
+            const now = new Date(`${todayString}T12:00:00`);
+            const isWithinDays = (dateValue, days) => {
+                const diff = (now - new Date(`${dateValue}T12:00:00`)) / 86400000;
+                return diff >= 0 && diff < days;
+            };
+            const priorityCounts = inquiries.reduce((accumulator, item) => {
+                accumulator[item.priority] = (accumulator[item.priority] || 0) + 1;
+                return accumulator;
+            }, {});
+            const inquiriesThisWeek = inquiries.filter(item => isWithinDays(item.date, 7)).length;
+            const inquiriesLastThirtyDays = inquiries.filter(item => isWithinDays(item.date, 30)).length;
+            const countThisMonth = inquiries.filter(item => item.date.slice(0, 7) === todayString.slice(0, 7)).length;
+            const closedThisWeek = inquiries.filter(item => item.status === 'closed' && isWithinDays(item.date, 7)).length;
+            const highOpenInquiries = inquiries.filter(item => item.status === 'open' && item.priority === 'גבוהה-1').length;
+
+            const kpiDefinitions = [
+                { id: 'total', title: 'סה״כ פניות', value: totalInquiries, icon: 'filePlus', accent: 'blue' },
+                { id: 'handled', title: 'פניות שטופלו', value: closedInquiries, icon: 'check', accent: 'rose' },
+                { id: 'today', title: 'פניות שנפתחו היום', value: openedToday, icon: 'clock', accent: 'emerald' },
+                { id: 'open', title: 'פניות פתוחות', subtitle: 'כולל פניות שנשלחו ולא אושרו', value: openInquiries, icon: 'chartBar', accent: 'amber' },
+                { id: 'high', title: 'פניות בעדיפות גבוהה', value: priorityCounts['גבוהה-1'] || 0, icon: 'target', accent: 'rose' },
+                { id: 'medium', title: 'פניות בעדיפות בינונית', value: priorityCounts['בינונית-2'] || 0, icon: 'dashboard', accent: 'amber' },
+                { id: 'low', title: 'פניות בעדיפות נמוכה', value: priorityCounts['נמוכה-3'] || 0, icon: 'chartBar', accent: 'violet' },
+                { id: 'week', title: 'פניות ב-7 ימים', value: inquiriesThisWeek, icon: 'calendar', accent: 'cyan' },
+                { id: 'month', title: 'פניות החודש', value: countThisMonth, icon: 'calendar', accent: 'blue' },
+                { id: 'thirtyDays', title: 'פניות ב-30 ימים', value: inquiriesLastThirtyDays, icon: 'history', accent: 'emerald' },
+                { id: 'openHigh', title: 'פתוחות בעדיפות גבוהה', value: highOpenInquiries, icon: 'volume', accent: 'rose' },
+                { id: 'closedWeek', title: 'טופלו ב-7 ימים', value: closedThisWeek, icon: 'check', accent: 'cyan' }
+            ];
+
+            const kpiPageSize = 4;
+            const kpiPageCount = Math.max(1, Math.ceil(kpiDefinitions.length / kpiPageSize));
+            const visibleKpiOptions = kpiDefinitions.slice(kpiPage * kpiPageSize, kpiPage * kpiPageSize + kpiPageSize);
+            const selectedKpis = selectedKpiIds.map(id => kpiDefinitions.find(kpi => kpi.id === id)).filter(Boolean);
+
+            useEffect(() => {
+                setKpiPage(currentPage => Math.min(currentPage, kpiPageCount - 1));
+            }, [kpiPageCount]);
+
+            const closeModal = () => {
+                setModalSearch('');
+                setModalConfig({ isOpen: false, title: '', subtitle: '', filteredData: [] });
+            };
+
+            const handleAddKpi = (kpiId) => {
+                setSelectedKpiIds(currentIds => {
+                    if (currentIds.includes(kpiId) || currentIds.length >= 4) return currentIds;
+                    return [...currentIds, kpiId];
+                });
+            };
+
+            const handleRemoveKpi = (kpiId) => {
+                setSelectedKpiIds(currentIds => currentIds.filter(id => id !== kpiId));
+            };
+
+            const handleDonutClick = (segment) => {
+                const filtered = donutSource.filter(item => item.priority === segment.rawLabel);
+                setModalSearch('');
+                setModalConfig({
+                    isOpen: true,
+                    title: `פניות לפי דחיפות: ${segment.label}`,
+                    subtitle: `${filtered.length} פניות נמצאו בחתך שנבחר`,
+                    filteredData: filtered
+                });
+            };
+
+            const handleBarClick = (barData) => {
+                setModalSearch('');
+                setModalConfig({
+                    isOpen: true,
+                    title: `פניות לתקופה: ${barData.label}`,
+                    subtitle: `${barData.total} פניות לפי הסינון הנוכחי`,
+                    filteredData: barData.items
+                });
+            };
+
+            return (
+                <div dir="rtl" className={`h-full min-h-0 overflow-hidden ${isExpanded ? 'p-4 lg:p-5' : 'p-4'} flex flex-col wave-bg text-slate-800`}>
+                    <header className={`${isExpanded ? 'mb-4' : 'mb-3'} shrink-0 flex flex-wrap items-start justify-between gap-4`}>
+                        <div className="flex flex-col gap-1">
+                            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                                <Icon name="dashboard" className="w-3.5 h-3.5" /> מרכז ניתוח פניות
+                            </div>
+                            <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight text-[#1E3A8A]">
+                                <Icon name="chartBar" className="w-8 h-8 text-[#1E4DB7]" /> דשבורד פניות
+                            </h1>
+                            <p className="mt-1 text-sm font-semibold text-[#1E4DB7]">מבט ניהולי, אינטראקטיבי ומסונן על כל הפניות במערכת.</p>
+                        </div>
+                        <div className="hidden items-center gap-3 lg:flex">
+                            <div className="rounded-3xl border border-blue-100 bg-white/90 px-6 py-4 text-left shadow-sm">
+                                <div className="text-xs font-bold text-slate-400">סה״כ פניות במערכת</div>
+                                <div className="text-4xl font-black text-blue-700">{totalInquiries}</div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                        <div className="min-h-0 flex-1 overflow-hidden">
+                            <div className={`flex h-full min-h-0 min-w-0 items-stretch ${isExpanded ? 'gap-4' : 'gap-5'} lg:flex-row`}>
+                                {!isExpanded && (
+                                    <div className="flex h-full min-h-0 w-full opacity-100 transition-all duration-500 ease-in-out lg:w-[43%]">
+                                        <DashboardCard className="flex h-full min-h-0 flex-col p-6">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <h2 className="text-2xl font-black text-slate-950">פילוח לפי דחיפות</h2>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-400">לחיצה על מקטע פותחת את רשימת הפניות הרלוונטיות.</p>
+                                                </div>
+                                                <div className="rounded-2xl bg-blue-50 p-3 text-blue-600 ring-1 ring-blue-100">
+                                                    <Icon name="dashboard" className="w-6 h-6" />
+                                                </div>
+                                            </div>
+                                            <div className="flex min-h-0 flex-1 flex-col py-3">
+                                                <div className="flex min-h-0 flex-1 items-center justify-center">
+                                                    <CustomDonutChart data={priorityData} onSegmentClick={handleDonutClick} />
+                                                </div>
+                                                <div className="mt-2 flex max-h-[88px] w-full shrink-0 flex-wrap items-start justify-center gap-2 overflow-y-auto rounded-3xl border border-slate-100 bg-slate-50/80 p-2">
+                                                    {priorityData.map(item => (
+                                                        <button key={item.label} type="button" title={item.label} onClick={() => handleDonutClick(item)} className="flex min-w-0 max-w-full items-center gap-2 rounded-2xl bg-white px-3 py-1.5 text-sm font-black text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                                                            <span className="max-w-[84px] truncate" dir="rtl">{item.label}</span>
+                                                            <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-slate-500">{item.value}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </DashboardCard>
+                                    </div>
+                                )}
+
+                                <div className={`flex h-full min-h-0 flex-col transition-all duration-500 ease-in-out ${isExpanded ? 'w-full' : 'w-full lg:w-[57%]'}`}>
+                                    <DashboardCard className="flex h-full min-h-0 flex-col">
+                                        <div className={`shrink-0 border-b border-slate-100 bg-white/90 ${isExpanded ? 'px-5 py-4' : 'px-6 py-5'}`}>
+                                            <div className={`flex flex-wrap justify-between ${isExpanded ? 'items-center gap-3' : 'items-start gap-4'}`}>
+                                                <div>
+                                                    <h2 className="flex items-center gap-2 text-2xl font-black text-slate-950">
+                                                        <Icon name="chartBar" className="w-6 h-6 text-blue-600" /> מגמת פניות תקופתית
+                                                    </h2>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-400">גרף עמודות עם 12 עמודות בתצוגה, סינון, מיון וייצוא.</p>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    {isExpanded && <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-black text-blue-700">סה״כ מוצגות: <span className="text-lg">{filteredBarData.length}</span></div>}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsExpanded(!isExpanded)}
+                                                        className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 hover:shadow-md active:scale-95"
+                                                    >
+                                                        {isExpanded ? (
+                                                            <><Icon name="arrowDownStraight" className="w-4 h-4" /> מזער</>
+                                                        ) : (
+                                                            <><Icon name="arrowUpStraight" className="w-4 h-4 text-blue-500" /> הרחבה</>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <DashboardFilterToolbar
+                                                isExpanded={isExpanded}
+                                                filters={filters}
+                                                setFilters={setFilters}
+                                                categoryOptions={categoryOptions}
+                                                sortOptions={sortOptions}
+                                                onExport={() => exportDashboardCsv(groupedBarData)}
+                                            />
+                                        </div>
+                                        <div className="min-h-0 flex-1 overflow-hidden">
+                                            <CustomBarChart data={groupedBarData} onBarClick={handleBarClick} barsPerPage={isExpanded ? 12 : 6} isExpanded={isExpanded} />
+                                        </div>
+                                    </DashboardCard>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={`shrink-0 transition-all duration-500 ${isExpanded ? 'mt-0 max-h-0 overflow-hidden opacity-0' : 'mt-3 max-h-[520px] opacity-100'}`}>
+                            <div className="mb-2 flex items-end justify-between px-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsKpiEditorOpen(true)}
+                                    className="rounded-2xl border-2 border-slate-900 bg-white px-5 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-700 hover:text-blue-700 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                                >
+                                    ערוך כרטיסיות
+                                </button>
+                                <h3 className="text-lg font-black text-slate-900">חתכי מידע מרכזיים</h3>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                {selectedKpis.map(kpi => <KpiCard key={kpi.id} {...kpi} />)}
+                            </div>
+                        </div>
+                    </main>
+
+                    <DashboardInquiryModal
+                        modalConfig={modalConfig}
+                        searchValue={modalSearch}
+                        onSearchChange={setModalSearch}
+                        onClose={closeModal}
+                    />
+                    <DashboardKpiEditModal
+                        isOpen={isKpiEditorOpen}
+                        onClose={() => setIsKpiEditorOpen(false)}
+                        page={kpiPage}
+                        pageCount={kpiPageCount}
+                        visibleKpis={visibleKpiOptions}
+                        selectedIds={selectedKpiIds}
+                        canAddMore={selectedKpiIds.length < 4}
+                        onPrevPage={() => setKpiPage(currentPage => Math.max(0, currentPage - 1))}
+                        onNextPage={() => setKpiPage(currentPage => Math.min(kpiPageCount - 1, currentPage + 1))}
+                        onAdd={handleAddKpi}
+                        onRemove={handleRemoveKpi}
+                    />
+                </div>
+            );
+        };
+
+        const SectionExpandButton = ({ expanded, onClick, compact = false, title }) => (
+            <button
+                type="button"
+                title={title}
+                aria-label={title}
+                onClick={onClick}
+                className={`dashboard-motion flex items-center gap-2 rounded-2xl border border-slate-200 bg-white font-black text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 hover:shadow-md active:scale-95 ${
+                    compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'
+                }`}
+            >
+                <Icon
+                    name="arrowUpStraight"
+                    className={`h-4 w-4 text-blue-500 transition-transform duration-300 ease-out ${expanded ? 'rotate-180' : ''}`}
+                />
+                <span>{expanded ? 'מזער' : 'הרחבה'}</span>
+            </button>
+        );
+
+        const DashboardWorkloadCard = ({ rows, expanded, onToggle }) => {
+            const visibleRows = expanded ? rows : rows.slice(0, 3);
+            const maxTotal = Math.max(...rows.map(row => row.total), 1);
+
+            return (
+                <DashboardCard className={`dashboard-card-motion flex h-full min-h-0 flex-col p-5 ${expanded ? 'dashboard-expanded-card' : ''}`} dir="rtl">
+                    <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                            <Icon name="user" className="h-5 w-5 text-blue-500" />
+                            <h2 className="text-2xl font-black text-slate-950">עומס מטפלים</h2>
+                        </div>
+                        <SectionExpandButton expanded={expanded} onClick={onToggle} compact title={expanded ? 'מזער עומס מטפלים' : 'הרחב עומס מטפלים'} />
+                    </div>
+
+                    <div className={`min-h-0 flex-1 ${expanded ? 'overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' : 'overflow-hidden'}`}>
+                        <div className={`${expanded ? 'dashboard-legend-reveal' : ''} space-y-4 pr-1`}>
+                            {visibleRows.map(row => {
+                                const totalWidth = Math.max(20, Math.round((row.total / maxTotal) * 100));
+                                const urgentWidth = Math.min(totalWidth, Math.max(0, Math.round((row.urgent / Math.max(row.total, 1)) * totalWidth)));
+
+                                return (
+                                    <div key={row.name}>
+                                        <div className="mb-1 flex items-end justify-between gap-3">
+                                            <span className="text-sm font-bold text-slate-700">{row.name}</span>
+                                            <span className="text-sm font-black text-slate-900">{row.total}</span>
+                                        </div>
+                                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                                            <div className="flex h-full rounded-full" style={{ width: `${totalWidth}%` }}>
+                                                <div className="h-full bg-blue-500" style={{ width: `${Math.max(0, totalWidth - urgentWidth)}%` }} />
+                                                <div className="h-full bg-red-400" style={{ width: `${urgentWidth}%` }} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </DashboardCard>
+            );
+        };
+
+        const DashboardUrgentQueueCard = ({ items, expanded, onToggle, onInspect }) => {
+            const visibleItems = expanded ? items : items.slice(0, 2);
+
+            return (
+                <DashboardCard className={`dashboard-card-motion flex h-full min-h-0 flex-col ${expanded ? 'dashboard-expanded-card' : ''}`} dir="rtl">
+                    <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                        <div className="flex items-center gap-2 text-red-500">
+                            <Icon name="target" className="h-5 w-5" />
+                            <h2 className="text-2xl font-black text-red-500">דורש טיפול עכשיו</h2>
+                        </div>
+                        <SectionExpandButton expanded={expanded} onClick={onToggle} compact title={expanded ? 'מזער דורש טיפול עכשיו' : 'הרחב דורש טיפול עכשיו'} />
+                    </div>
+
+                    <div className={`min-h-0 flex-1 px-4 py-3 ${expanded ? 'overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' : 'overflow-hidden'}`}>
+                        <div className={`${expanded ? 'dashboard-legend-reveal' : ''} space-y-2`}>
+                            {visibleItems.map((item, index) => (
+                                <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 transition hover:border-slate-100 hover:bg-slate-50">
+                                    <div className="w-[88px] shrink-0 text-right text-sm font-black text-slate-800">{item.id}</div>
+                                    <div className="w-[84px] shrink-0">
+                                        <span className={`inline-flex rounded-xl px-3 py-1 text-xs font-black ${item.priorityColor}`}>
+                                            {item.priority.replace(/-\d+$/, '')}
+                                        </span>
+                                    </div>
+                                    <div className="flex w-[84px] shrink-0 items-center gap-1 text-sm font-bold text-slate-500">
+                                        <Icon name="clock" className="h-4 w-4 text-red-400" />
+                                        {item.durationLabel}
+                                    </div>
+                                    <div className={`min-w-0 flex-1 text-sm font-bold ${item.assigneeLabel === 'ללא שיוך' ? 'text-amber-500' : 'text-slate-600'}`}>
+                                        {item.assigneeLabel}
+                                    </div>
+                                    <div className="shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => onInspect(item)}
+                                            className={`rounded-xl px-4 py-2 text-sm font-black transition ${
+                                                index === 0
+                                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                                            }`}
+                                        >
+                                            {index === 0 ? 'טפל' : 'צפייה'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </DashboardCard>
+            );
+        };
+
+        const DashboardKpiEditModal = ({ isOpen, onClose, selectedIds, kpiDefinitions, onMove, onAdd, onRemove, onSave }) => {
+            useEffect(() => {
+                if (!isOpen) return undefined;
+
+                const handleKeyDown = (event) => {
+                    if (event.key === 'Escape') onClose();
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [isOpen, onClose]);
+
+            if (!isOpen) return null;
+
+            const visibleKpis = selectedIds.map(id => kpiDefinitions.find(kpi => kpi.id === id)).filter(Boolean);
+            const hiddenKpis = kpiDefinitions.filter(kpi => !selectedIds.includes(kpi.id));
+            const canAddMore = selectedIds.length < 6;
+            const canRemoveMore = selectedIds.length > 4;
+
+            return (
+                <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6">
+                    <button type="button" aria-label="סגור חלון עריכת כרטיסיות" className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]" onClick={onClose} />
+
+                    <div dir="rtl" className="relative z-10 flex max-h-[90vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.28)] animate-fade-in">
+                        <div className="relative border-b border-slate-100 px-6 pb-5 pt-7 text-center">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                aria-label="סגור חלון עריכת כרטיסיות"
+                                className="absolute left-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                            >
+                                <Icon name="close" className="h-5 w-5" />
+                            </button>
+                            <h2 className="text-[30px] font-black tracking-tight text-slate-900">עריכת כרטיסיות המידע</h2>
+                            <p className="mt-2 text-sm font-semibold text-slate-400">בחר אילו כרטיסיות יופיעו, סדר אותן מחדש, ושמור בין 4 ל-6 כרטיסים פעילים.</p>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            <div className="mb-5 flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900">כרטיסים מוצגים</h3>
+                                    <p className="text-sm font-semibold text-slate-400">{selectedIds.length} מתוך 6 יוצגו בדשבורד</p>
+                                </div>
+                                <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-black text-blue-700">
+                                    מינימום 4 · מקסימום 6
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                {visibleKpis.map((kpi, index) => (
+                                    <div key={kpi.id} className="space-y-2">
+                                        <KpiCard
+                                            {...kpi}
+                                            mode="modal"
+                                            actionIcon="trash"
+                                            actionLabel={`הסר כרטיסייה ${kpi.title}`}
+                                            onAction={() => onRemove(kpi.id)}
+                                            isActionDisabled={!canRemoveMore}
+                                        />
+                                        <div className="flex items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
+                                            <span className="text-xs font-black text-slate-500">מיקום {index + 1}</span>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onMove(index, index - 1)}
+                                                    disabled={index === 0}
+                                                    className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-xs font-black text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
+                                                >
+                                                    <Icon name="arrowUpStraight" className="h-3.5 w-3.5" /> למעלה
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onMove(index, index + 1)}
+                                                    disabled={index === visibleKpis.length - 1}
+                                                    className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-xs font-black text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"
+                                                >
+                                                    <Icon name="arrowDownStraight" className="h-3.5 w-3.5" /> למטה
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-6">
+                                <h3 className="text-lg font-black text-slate-900">כרטיסים זמינים לשחזור</h3>
+                                <p className="mt-1 text-sm font-semibold text-slate-400">כרטיסים מוסתרים נשמרים זמינים להחזרה מיידית.</p>
+                                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    {hiddenKpis.length ? hiddenKpis.map(kpi => (
+                                        <div key={kpi.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                                            <div className="min-w-0">
+                                                <div className="truncate text-sm font-black text-slate-800">{kpi.title}</div>
+                                                {kpi.subtitle && <div className="mt-1 truncate text-xs font-semibold text-slate-400">{kpi.subtitle}</div>}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => onAdd(kpi.id)}
+                                                disabled={!canAddMore}
+                                                className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-xs font-black text-blue-600 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-35"
+                                            >
+                                                <Icon name="plus" className="h-3.5 w-3.5" /> שחזר
+                                            </button>
+                                        </div>
+                                    )) : (
+                                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-bold text-slate-400 sm:col-span-2">
+                                            כל ששת הכרטיסים כבר מוצגים.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="rounded-2xl border border-slate-200 bg-white px-5 py-2 text-sm font-black text-slate-600 shadow-sm transition hover:bg-slate-50"
+                            >
+                                ביטול
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onSave}
+                                className="rounded-2xl bg-blue-600 px-6 py-2 text-sm font-black text-white shadow-sm transition hover:bg-blue-700"
+                            >
+                                שמור כרטיסיות
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DashboardView = () => {
+            const inquiries = dashboardInquiries;
+            const [expandedSection, setExpandedSection] = useState(null);
+            const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', subtitle: '', filteredData: [] });
+            const [modalSearch, setModalSearch] = useState('');
+            const [isKpiEditorOpen, setIsKpiEditorOpen] = useState(false);
+            const [selectedKpiIds, setSelectedKpiIds] = useState(() => loadDashboardKpiLayout());
+            const [draftKpiIds, setDraftKpiIds] = useState(() => loadDashboardKpiLayout());
+            const [selectedDonutCategoryId, setSelectedDonutCategoryId] = useState(null);
+            const [donutCategoryPage, setDonutCategoryPage] = useState(0);
+            const [donutInquiryPage, setDonutInquiryPage] = useState(0);
+            const [filters, setFilters] = useState({
+                dateFrom: '',
+                dateTo: '',
+                grouping: 'monthly',
+                category: 'all',
+                sortOrder: 'desc'
+            });
+            const DONUT_CATEGORIES_PER_PAGE = 6;
+            const DONUT_INQUIRIES_PER_PAGE = 3;
+
+            const filteredBarData = React.useMemo(() => filterDashboardInquiries(inquiries, filters), [inquiries, filters.category, filters.dateFrom, filters.dateTo]);
+            const groupedBarData = React.useMemo(() => sortDashboardGroups(groupDashboardInquiries(filteredBarData, filters.grouping), filters.sortOrder), [filteredBarData, filters.grouping, filters.sortOrder]);
+            const hasActiveFilters = Boolean(filters.dateFrom || filters.dateTo || filters.category !== 'all');
+            const donutSource = hasActiveFilters ? filteredBarData : inquiries;
+            const todayString = new Date().toISOString().split('T')[0];
+            const now = new Date(`${todayString}T12:00:00`);
+            const openedToday = inquiries.filter(item => item.date === todayString).length;
+            const totalInquiries = inquiries.length;
+            const openInquiries = inquiries.filter(item => item.status === 'open').length;
+            const closedInquiries = inquiries.filter(item => item.status === 'closed').length;
+
+            const priorityData = React.useMemo(() => {
+                return dashboardPriorities.map(priority => ({
+                    label: priority.label,
+                    value: donutSource.filter(item => item.priority === priority.label).length,
+                    color: priority.chartColor,
+                    rawLabel: priority.label
+                }));
+            }, [donutSource]);
+
+            const donutCategories = React.useMemo(() => {
+                const total = priorityData.reduce((sum, item) => sum + item.value, 0);
+
+                return priorityData
+                    .filter(item => item.value > 0)
+                    .map(item => {
+                        const inquiriesByCategory = donutSource
+                            .filter(inquiry => inquiry.priority === item.rawLabel)
+                            .sort((a, b) => a.priorityLevel - b.priorityLevel || b.date.localeCompare(a.date));
+                        const percentage = total > 0 ? (item.value / total) * 100 : 0;
+
+                        return {
+                            ...item,
+                            id: item.rawLabel,
+                            shortLabel: item.label.replace(/-\d+$/, ''),
+                            inquiries: inquiriesByCategory,
+                            percentage,
+                            formattedPercentage: Number.isInteger(percentage) ? percentage.toFixed(0) : percentage.toFixed(1),
+                            lightColor: `${item.color}12`,
+                            borderColor: `${item.color}40`
+                        };
+                    });
+            }, [priorityData, donutSource]);
+
+            const categoryOptions = React.useMemo(() => {
+                const categories = Array.from(new Set(inquiries.map(item => item.assignee)));
+                return [
+                    { value: 'all', label: 'כל הקטגוריות' },
+                    ...categories.map(category => ({ value: category, label: category }))
+                ];
+            }, [inquiries]);
+
+            const workloadRows = React.useMemo(() => {
+                const groupedRows = inquiries
+                    .filter(item => item.status === 'open')
+                    .reduce((accumulator, item) => {
+                        if (!accumulator[item.requester]) {
+                            accumulator[item.requester] = { name: formatDashboardShortName(item.requester), total: 0, urgent: 0 };
+                        }
+
+                        accumulator[item.requester].total += 1;
+                        if (item.priority === 'גבוהה-1') {
+                            accumulator[item.requester].urgent += 1;
+                        }
+
+                        return accumulator;
+                    }, {});
+
+                return Object.values(groupedRows).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'he'));
+            }, [inquiries]);
+
+            const urgentQueueItems = React.useMemo(() => {
+                return inquiries
+                    .filter(item => item.status === 'open')
+                    .sort((a, b) => a.priorityLevel - b.priorityLevel || a.date.localeCompare(b.date))
+                    .slice(0, 10)
+                    .map((item, index) => {
+                        const hoursOpen = Math.max(1, Math.round((now - new Date(`${item.date}T12:00:00`)) / 3600000));
+                        const durationLabel = hoursOpen < 24
+                            ? `${Math.min(12, 4 + ((index * 3) % 8))} שעות`
+                            : `${Math.max(1, Math.floor(hoursOpen / 24))} ימים`;
+
+                        return {
+                            ...item,
+                            durationLabel,
+                            assigneeLabel: index % 3 === 0 ? 'ללא שיוך' : formatDashboardShortName(item.requester)
+                        };
+                    });
+            }, [inquiries, now]);
+
+            const sortOptions = [
+                { value: 'desc', label: 'מהגבוה לנמוך' },
+                { value: 'asc', label: 'מהנמוך לגבוה' }
+            ];
+
+            const kpiDefinitions = [
+                { id: 'open', title: 'פניות פתוחות', subtitle: `${openedToday} נפתחו היום`, value: openInquiries, icon: 'chartBar', accent: 'amber' },
+                { id: 'overdue', title: 'פניות באיחור', subtitle: 'דורש טיפול עכשיו', value: 12, icon: 'clock', accent: 'rose' },
+                { id: 'urgent', title: 'דחופות פתוחות', subtitle: 'דורשות התערבות', value: 5, icon: 'target', accent: 'rose' },
+                { id: 'unassigned', title: 'ללא גורם מטפל', subtitle: 'ממתינות לשיוך', value: 7, icon: 'user', accent: 'amber' },
+                { id: 'averageTime', title: 'זמן טיפול ממוצע', subtitle: 'בשעות, מהשבוע', value: 6.4, icon: 'dashboard', accent: 'blue' },
+                { id: 'recentlyHandled', title: 'טופלו לאחרונה', subtitle: 'ב-7 ימים אחרונים', value: closedInquiries, icon: 'check', accent: 'emerald' }
+            ];
+
+            const fullSectionExpansion = expandedSection === 'barChart' || expandedSection === 'donut';
+            const visibleDonutCategories = expandedSection === 'donut' ? priorityData : priorityData.slice(0, 4);
+            const hasHiddenDonutCategories = expandedSection !== 'donut' && priorityData.length > 4;
+            const selectedKpis = selectedKpiIds.map(id => kpiDefinitions.find(kpi => kpi.id === id)).filter(Boolean);
+            const totalDonutCategoryPages = Math.max(1, Math.ceil(donutCategories.length / DONUT_CATEGORIES_PER_PAGE));
+            const selectedDonutCategory = donutCategories.find(category => category.id === selectedDonutCategoryId) ?? donutCategories[0] ?? null;
+            const selectedDonutInquiries = selectedDonutCategory?.inquiries ?? [];
+            const totalDonutInquiryPages = Math.max(1, Math.ceil(selectedDonutInquiries.length / DONUT_INQUIRIES_PER_PAGE));
+            const visibleDonutCategoryCards = donutCategories.slice(
+                donutCategoryPage * DONUT_CATEGORIES_PER_PAGE,
+                (donutCategoryPage + 1) * DONUT_CATEGORIES_PER_PAGE
+            );
+            const visibleSelectedDonutInquiries = selectedDonutInquiries.slice(
+                donutInquiryPage * DONUT_INQUIRIES_PER_PAGE,
+                (donutInquiryPage + 1) * DONUT_INQUIRIES_PER_PAGE
+            );
+
+            useEffect(() => {
+                setDonutCategoryPage(currentPage => Math.min(currentPage, totalDonutCategoryPages - 1));
+            }, [totalDonutCategoryPages]);
+
+            useEffect(() => {
+                setDonutInquiryPage(currentPage => Math.min(currentPage, totalDonutInquiryPages - 1));
+            }, [totalDonutInquiryPages]);
+
+            useEffect(() => {
+                if (donutCategories.length === 0) {
+                    setSelectedDonutCategoryId(null);
+                    return;
+                }
+
+                if (!selectedDonutCategoryId || !donutCategories.some(category => category.id === selectedDonutCategoryId)) {
+                    setSelectedDonutCategoryId(donutCategories[0].id);
+                }
+            }, [donutCategories, selectedDonutCategoryId]);
+
+            const selectDonutCategory = (categoryId) => {
+                const selectedIndex = donutCategories.findIndex(category => category.id === categoryId);
+                if (selectedIndex === -1) return;
+
+                setSelectedDonutCategoryId(categoryId);
+                setDonutInquiryPage(0);
+                setDonutCategoryPage(Math.floor(selectedIndex / DONUT_CATEGORIES_PER_PAGE));
+            };
+
+            const formatDonutInquiryAge = (dateValue) => {
+                const ageInHours = Math.max(1, Math.round((now - new Date(`${dateValue}T12:00:00`)) / 3600000));
+                return ageInHours < 24 ? `${ageInHours} שעות` : `${Math.max(1, Math.floor(ageInHours / 24))} ימים`;
+            };
+
+            const toggleExpandedSection = (section) => {
+                setExpandedSection(currentSection => (currentSection === section ? null : section));
+            };
+
+            const closeModal = () => {
+                setModalSearch('');
+                setModalConfig({ isOpen: false, title: '', subtitle: '', filteredData: [] });
+            };
+
+            const handleDonutClick = (segment) => {
+                if (expandedSection === 'donut') {
+                    selectDonutCategory(segment.rawLabel);
+                    return;
+                }
+
+                const filtered = donutSource.filter(item => item.priority === segment.rawLabel);
+                setModalSearch('');
+                setModalConfig({
+                    isOpen: true,
+                    title: `פניות לפי דחיפות: ${segment.label}`,
+                    subtitle: `${filtered.length} פניות נמצאו בחתך שנבחר`,
+                    filteredData: filtered
+                });
+            };
+
+            const handleBarClick = (barData) => {
+                setModalSearch('');
+                setModalConfig({
+                    isOpen: true,
+                    title: `פניות לתקופה: ${barData.label}`,
+                    subtitle: `${barData.total} פניות לפי הסינון הנוכחי`,
+                    filteredData: barData.items
+                });
+            };
+
+            const handleUrgentInspect = (item) => {
+                setModalSearch('');
+                setModalConfig({
+                    isOpen: true,
+                    title: `פנייה לטיפול: ${item.id}`,
+                    subtitle: `${item.requester} ֲ· ${item.priority}`,
+                    filteredData: [item]
+                });
+            };
+
+            const openKpiEditor = () => {
+                setDraftKpiIds(selectedKpiIds);
+                setIsKpiEditorOpen(true);
+            };
+
+            const closeKpiEditor = () => {
+                setDraftKpiIds(selectedKpiIds);
+                setIsKpiEditorOpen(false);
+            };
+
+            const handleDraftAddKpi = (kpiId) => {
+                setDraftKpiIds(currentIds => currentIds.includes(kpiId) || currentIds.length >= 6 ? currentIds : [...currentIds, kpiId]);
+            };
+
+            const handleDraftRemoveKpi = (kpiId) => {
+                setDraftKpiIds(currentIds => currentIds.length <= 4 ? currentIds : currentIds.filter(id => id !== kpiId));
+            };
+
+            const handleDraftMoveKpi = (fromIndex, toIndex) => {
+                setDraftKpiIds(currentIds => moveDashboardKpiId(currentIds, fromIndex, toIndex));
+            };
+
+            const handleSaveKpiLayout = () => {
+                const sanitizedIds = sanitizeDashboardKpiIds(draftKpiIds, kpiDefinitions.map(kpi => kpi.id));
+                setSelectedKpiIds(sanitizedIds);
+                persistDashboardKpiLayout(sanitizedIds);
+                setIsKpiEditorOpen(false);
+            };
+
+            const renderDonutCard = () => {
+                const isDonutExpanded = expandedSection === 'donut';
+                const visibleCardCount = visibleDonutCategoryCards.length;
+                const categoryGridClass = visibleCardCount <= 1 ? 'grid-cols-1' : visibleCardCount === 2 ? 'grid-cols-2' : 'grid-cols-3';
+                const categoryRowsClass = visibleCardCount <= 3 ? 'grid-rows-1' : 'grid-rows-2';
+
+                if (!isDonutExpanded) {
+                    return (
+                        <DashboardCard className="dashboard-card-motion flex h-full min-h-0 flex-col p-4" dir="rtl">
+                            <div className="flex shrink-0 items-start justify-between gap-3">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-950">פילוח לפי דחיפות</h2>
+                                    <p className="mt-1 text-sm font-semibold text-slate-400">התפלגות כוללת במערכת</p>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <SectionExpandButton expanded={false} onClick={() => toggleExpandedSection('donut')} compact title="הרחב פילוח לפי דחיפות" />
+                                    <div className="rounded-2xl bg-blue-50 p-3 text-blue-600 ring-1 ring-blue-100">
+                                        <Icon name="dashboard" className="h-6 w-6" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex min-h-0 flex-1 flex-col py-2">
+                                <div className="flex min-h-[230px] flex-1 items-center justify-center">
+                                    <CustomDonutChart data={priorityData} onSegmentClick={handleDonutClick} />
+                                </div>
+                                <div className="mt-1.5 min-h-[54px] w-full shrink-0 rounded-3xl border border-slate-100 bg-slate-50/80 p-2">
+                                    <div className="flex items-start justify-center gap-2">
+                                        {visibleDonutCategories.map(item => (
+                                            <button key={item.label} type="button" title={item.label} onClick={() => handleDonutClick(item)} className="flex min-w-0 max-w-full items-center gap-2 rounded-2xl bg-white px-3 py-1.5 text-sm font-black text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                                                <span className="max-w-[84px] truncate" dir="rtl">{item.label}</span>
+                                                <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-slate-500">{item.value}</span>
+                                            </button>
+                                        ))}
+                                        {hasHiddenDonutCategories && (
+                                            <button
+                                                type="button"
+                                                title="הצג קטגוריות נוספות"
+                                                aria-label="הצג קטגוריות נוספות"
+                                                onClick={() => setExpandedSection('donut')}
+                                                className="inline-flex h-[38px] shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-base font-black text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 hover:shadow-md"
+                                            >
+                                                ...
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </DashboardCard>
+                    );
+                }
+
+                return (
+                    <DashboardCard className="dashboard-card-motion dashboard-expanded-card flex h-full min-h-0 flex-col p-4" dir="rtl">
+                        <div className="flex shrink-0 items-start justify-between gap-3">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-950">פילוח לפי דחיפות</h2>
+                                <p className="mt-1 text-sm font-semibold text-slate-400">התפלגות כוללת במערכת</p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <SectionExpandButton expanded onClick={() => toggleExpandedSection('donut')} compact title="מזער פילוח לפי דחיפות" />
+                                <div className="rounded-2xl bg-blue-50 p-3 text-blue-600 ring-1 ring-blue-100">
+                                    <Icon name="dashboard" className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex min-h-0 flex-1 pt-3">
+                            <div className="grid h-full min-h-0 w-full gap-4 overflow-hidden" style={{ gridTemplateRows: 'minmax(0,1fr) minmax(220px,30%)' }}>
+                                <div className="grid min-h-0 gap-4 overflow-hidden" style={{ gridTemplateColumns: 'minmax(340px,34%) minmax(0,1fr)' }}>
+                                    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                                        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
+                                            <h3 className="text-xl font-black text-slate-950">פילוח מדדים מפורט</h3>
+                                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">{donutCategories.length} קטגוריות</span>
+                                        </div>
+
+                                        <div className="flex min-h-0 flex-1 items-center px-4 py-4">
+                                            {donutCategories.length === 0 ? (
+                                                <div className="flex h-full w-full items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 text-sm font-bold text-slate-400">אין קטגוריות להצגה</div>
+                                            ) : (
+                                                <div className={`grid h-full w-full gap-3 ${categoryGridClass} ${categoryRowsClass}`}>
+                                                    {visibleDonutCategoryCards.map((category, index) => {
+                                                        const isSelected = selectedDonutCategory?.id === category.id;
+
+                                                        return (
+                                                            <article
+                                                                key={category.id}
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                onClick={() => selectDonutCategory(category.id)}
+                                                                onKeyDown={(event) => {
+                                                                    if (event.key === 'Enter' || event.key === ' ') {
+                                                                        event.preventDefault();
+                                                                        selectDonutCategory(category.id);
+                                                                    }
+                                                                }}
+                                                                className="flex min-h-0 cursor-pointer flex-col rounded-[24px] border border-slate-200 bg-white p-4 text-right shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                                                                style={isSelected ? { borderColor: category.color, backgroundColor: category.lightColor, boxShadow: `0 12px 24px ${category.borderColor}` } : { transitionDelay: `${index * 40}ms` }}
+                                                            >
+                                                                <div className="flex items-center justify-between gap-3">
+                                                                    <div className="text-base font-black text-slate-900">{category.shortLabel}</div>
+                                                                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
+                                                                </div>
+                                                                <div className="mt-4 flex items-end justify-between gap-3">
+                                                                    <div className="text-sm font-bold text-slate-400">פניות</div>
+                                                                    <div className="text-4xl font-black text-slate-950">{category.value}</div>
+                                                                </div>
+                                                                <div className="mt-2 text-sm font-semibold text-slate-500">{category.formattedPercentage}% מכלל הפניות</div>
+                                                                <div className="mt-4 h-2 rounded-full bg-slate-100">
+                                                                    <div className="h-full rounded-full" style={{ width: `${Math.max(6, category.percentage)}%`, backgroundColor: category.color }} />
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(event) => {
+                                                                        event.stopPropagation();
+                                                                        selectDonutCategory(category.id);
+                                                                    }}
+                                                                    className="mt-auto pt-4 text-right text-sm font-bold"
+                                                                    style={{ color: category.color }}
+                                                                >
+                                                                    צפה בפניות
+                                                                </button>
+                                                            </article>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {totalDonutCategoryPages > 1 && (
+                                            <div className="flex shrink-0 items-center justify-between border-t border-slate-100 px-5 py-3 text-sm font-bold text-slate-500">
+                                                <button type="button" onClick={() => setDonutCategoryPage(currentPage => Math.max(0, currentPage - 1))} disabled={donutCategoryPage === 0} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הקודם</button>
+                                                <span>עמוד {donutCategoryPage + 1} מתוך {totalDonutCategoryPages}</span>
+                                                <button type="button" onClick={() => setDonutCategoryPage(currentPage => Math.min(totalDonutCategoryPages - 1, currentPage + 1))} disabled={donutCategoryPage >= totalDonutCategoryPages - 1} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הבא</button>
+                                            </div>
+                                        )}
+                                    </section>
+
+                                    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                                        <div className="flex min-h-0 flex-1 items-center justify-center p-5">
+                                            <CustomDonutChart data={priorityData} onSegmentClick={handleDonutClick} />
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <section className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                                    <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl font-black text-slate-950">פניות בקטגוריה שנבחרה</span>
+                                            {selectedDonutCategory && <span className="rounded-full px-3 py-1 text-xs font-black text-slate-700 ring-1 ring-slate-200" style={{ backgroundColor: selectedDonutCategory.lightColor }}>{selectedDonutCategory.shortLabel} · {selectedDonutCategory.value}</span>}
+                                        </div>
+                                        <button type="button" onClick={() => selectedDonutCategory && handleDonutClick(selectedDonutCategory)} disabled={!selectedDonutCategory} className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-black text-slate-600 transition disabled:cursor-not-allowed disabled:opacity-40">פתח במודל</button>
+                                    </div>
+
+                                    <div className="min-h-0 flex-1 px-5 py-3">
+                                        {visibleSelectedDonutInquiries.length === 0 ? (
+                                            <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 text-sm font-bold text-slate-400">אין פניות בקטגוריה זו</div>
+                                        ) : (
+                                            <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100">
+                                                <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.9fr_0.8fr] gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-black text-slate-400" dir="rtl">
+                                                    <span>מזהה</span>
+                                                    <span>דחיפות</span>
+                                                    <span>זמן פתוח</span>
+                                                    <span>נציג מטפל</span>
+                                                    <span>סטטוס</span>
+                                                    <span>פעולה</span>
+                                                </div>
+                                                <div className="flex min-h-0 flex-1 flex-col">
+                                                    {visibleSelectedDonutInquiries.map(item => (
+                                                        <div key={item.id} className="grid flex-1 grid-cols-[1.2fr_1fr_1fr_1fr_0.9fr_0.8fr] items-center gap-3 border-b border-slate-100 px-4 py-3 text-sm text-slate-600 last:border-b-0" dir="rtl">
+                                                            <span className="font-black text-slate-900">{item.id}</span>
+                                                            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 font-bold text-slate-600">
+                                                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.chartColor }} />
+                                                                {item.priority.replace(/-\d+$/, '')}
+                                                            </span>
+                                                            <span className="font-semibold text-slate-500">{formatDonutInquiryAge(item.date)}</span>
+                                                            <span className="font-semibold text-slate-600">{item.assignee}</span>
+                                                            <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-black ${item.status === 'open' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{item.status === 'open' ? 'פתוחה' : 'סגורה'}</span>
+                                                            <button type="button" onClick={() => handleUrgentInspect(item)} className="rounded-2xl bg-blue-50 px-3 py-1.5 text-sm font-black text-blue-700 transition hover:bg-blue-100">צפייה</button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex shrink-0 items-center justify-between border-t border-slate-100 px-5 py-3 text-sm font-bold text-slate-500">
+                                        <button type="button" onClick={() => setDonutInquiryPage(currentPage => Math.max(0, currentPage - 1))} disabled={donutInquiryPage === 0} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הקודם</button>
+                                        <span>עמוד {donutInquiryPage + 1} מתוך {totalDonutInquiryPages}</span>
+                                        <button type="button" onClick={() => setDonutInquiryPage(currentPage => Math.min(totalDonutInquiryPages - 1, currentPage + 1))} disabled={donutInquiryPage >= totalDonutInquiryPages - 1} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הבא</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </DashboardCard>
+                );
+            };
+            const renderBarCard = () => {
+                const isBarExpanded = expandedSection === 'barChart';
+
+                return (
+                    <DashboardCard className={`dashboard-card-motion flex h-full min-h-0 flex-col ${isBarExpanded ? 'dashboard-expanded-card' : ''}`}>
+                        <div className={`shrink-0 border-b border-slate-100 bg-white/90 ${isBarExpanded ? 'px-5 py-4' : 'px-5 py-3.5'}`}>
+                            <div className={`flex flex-wrap justify-between ${isBarExpanded ? 'items-center gap-3' : 'items-start gap-4'}`} dir="rtl">
+                                <div>
+                                    <h2 className="flex items-center gap-2 text-2xl font-black text-slate-950">
+                                        <Icon name="chartBar" className="h-6 w-6 text-blue-600" /> מגמת פניות תקופתית
+                                    </h2>
+                                    <p className="mt-1 text-sm font-semibold text-slate-400">גרף עמודות עם 12 עמודות בתצוגה, סינון, מיון וייצוא.</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {isBarExpanded && <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-black text-blue-700">סה״כ מוצגות: <span className="text-lg">{filteredBarData.length}</span></div>}
+                                    <SectionExpandButton
+                                        expanded={isBarExpanded}
+                                        onClick={() => toggleExpandedSection('barChart')}
+                                        title={isBarExpanded ? 'מזער מגמת פניות תקופתית' : 'הרחב מגמת פניות תקופתית'}
+                                    />
+                                </div>
+                            </div>
+
+                            <DashboardFilterToolbar
+                                isExpanded={isBarExpanded}
+                                filters={filters}
+                                setFilters={setFilters}
+                                categoryOptions={categoryOptions}
+                                sortOptions={sortOptions}
+                                onExport={() => exportDashboardCsv(groupedBarData)}
+                            />
+                        </div>
+                        <div className="min-h-[220px] flex-1 overflow-hidden">
+                            <CustomBarChart data={groupedBarData} onBarClick={handleBarClick} barsPerPage={isBarExpanded ? 12 : 6} isExpanded={isBarExpanded} />
+                        </div>
+                    </DashboardCard>
+                );
+            };
+
+            return (
+                <div dir="rtl" className={`flex h-full min-h-0 flex-col overflow-hidden p-3 text-slate-800 wave-bg ${fullSectionExpansion ? 'lg:p-4' : ''}`}>
+                    {/* <header className={`shrink-0 ${fullSectionExpansion ? 'mb-3' : 'mb-2'} flex flex-wrap items-start justify-between gap-3`}>
+                         <div className="flex  gap-1">
+                            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                                <Icon name="dashboard" className="h-3.5 w-3.5" /> מרכז ניתוח פניות
+                            </div>
+                            <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight text-[#1E3A8A]">
+                                <Icon name="chartBar" className="h-8 w-8 text-[#1E4DB7]" /> דשבורד פניות
+                            </h1>
+                            <p className="mt-1 text-sm font-semibold text-[#1E4DB7]">מבט ניהולי, אינטראקטיבי ומסונן על כל הפניות במערכת.</p>
+                        </div>
+                        <div className="hidden items-center gap-3 lg:flex">
+                            <div className="rounded-3xl border border-blue-100 bg-white/90 px-6 py-4 text-left shadow-sm">
+                                <div className="text-xs font-bold text-slate-400">סה״כ פניות במערכת</div>
+                                <div className="text-4xl font-black text-blue-700">{totalInquiries}</div>
+                            </div>
+                        </div>
+                    </header> */}
+                         <header className="h-[64px] px-6 flex justify-between items-center shrink-0 bg-white/50 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 bg-blue-50 text-blue-500 rounded-md">
+               <Icon name="dashboard" className="h-3.5 w-3.5" />
+            </div>
+            <h1 className="text-lg font-bold text-slate-800">דשבורד פניות</h1>
+            <span className="text-slate-300 font-light">|</span>
+            <p className="text-slate-500 text-xs">מבט ניהולי כולל</p>
+          </div>
+
+          <div className="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full border border-slate-200 shadow-sm text-sm">
+             <span className="text-slate-500 font-medium">סה״כ פניות:</span>
+             <span className="font-bold text-[#3B82F6]">150</span>
+          </div>
+        </header>
+
+
+                    <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                        <div className={`dashboard-motion overflow-hidden ${fullSectionExpansion ? 'mb-0 max-h-0 -translate-y-2 opacity-0 pointer-events-none' : 'mb-3 max-h-[188px] translate-y-0 opacity-100 shrink-0'}`}>
+                                <div className="mb-2 flex items-end justify-between px-1">
+                                    <button
+                                        type="button"
+                                        onClick={openKpiEditor}
+                                        className="inline-flex items-center gap-2 rounded-2xl border-2 border-slate-900 bg-white px-5 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-700 hover:text-blue-700 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                                    >
+                                        <Icon name="settings" className="order-last h-3.5 w-3.5 shrink-0" />
+                                        ערוך כרטיסיות
+                                    </button>
+                                    {/* <h3 className="text-lg font-black text-slate-900">חתכי מידע מרכזיים</h3> */}
+                                </div>
+                                <div className="grid h-[clamp(120px,14vh,138px)] grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6 lg:gap-4">
+                                    {selectedKpis.map(kpi => <KpiCard key={kpi.id} {...kpi} />)}
+                                </div>
+                            </div>
+
+                        <div className="min-h-0 flex-1 overflow-hidden">
+                            {expandedSection === 'barChart' ? (
+                                <div className="grid h-full min-h-0 grid-cols-12">
+                                    <div className="col-span-12 min-h-0">{renderBarCard()}</div>
+                                </div>
+                            ) : expandedSection === 'donut' ? (
+                                <div className="grid h-full min-h-0 grid-cols-12">
+                                    <div className="col-span-12 min-h-0">{renderDonutCard()}</div>
+                                </div>
+                            ) : (
+                                <div dir="ltr" className="dashboard-motion grid h-full min-h-0 grid-cols-12 grid-rows-[minmax(320px,1fr)_minmax(140px,160px)] gap-3 lg:gap-4">
+                                    {expandedSection !== 'workload' && (
+                                        <div className="dashboard-motion col-span-12 min-h-0 lg:col-span-4 lg:col-start-1 lg:row-start-1">
+                                            {renderDonutCard()}
+                                        </div>
+                                    )}
+
+                                    {expandedSection !== 'urgentQueue' && (
+                                        <div className="dashboard-motion col-span-12 min-h-0 lg:col-span-8 lg:col-start-5 lg:row-start-1">
+                                            {renderBarCard()}
+                                        </div>
+                                    )}
+
+                                    <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-1 ${expandedSection === 'workload' ? 'lg:col-span-4 lg:row-span-2' : 'lg:col-span-4 lg:row-start-2'}`}>
+                                        <DashboardWorkloadCard
+                                            rows={workloadRows}
+                                            expanded={expandedSection === 'workload'}
+                                            onToggle={() => toggleExpandedSection('workload')}
+                                        />
+                                    </div>
+
+                                    <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-5 ${expandedSection === 'urgentQueue' ? 'lg:col-span-8 lg:row-span-2' : 'lg:col-span-8 lg:row-start-2'}`}>
+                                        <DashboardUrgentQueueCard
+                                            items={urgentQueueItems}
+                                            expanded={expandedSection === 'urgentQueue'}
+                                            onToggle={() => toggleExpandedSection('urgentQueue')}
+                                            onInspect={handleUrgentInspect}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    <DashboardInquiryModal
+                        modalConfig={modalConfig}
+                        searchValue={modalSearch}
+                        onSearchChange={setModalSearch}
+                        onClose={closeModal}
+                    />
+                    <DashboardKpiEditModal
+                        isOpen={isKpiEditorOpen}
+                        onClose={closeKpiEditor}
+                        selectedIds={draftKpiIds}
+                        kpiDefinitions={kpiDefinitions}
+                        onMove={handleDraftMoveKpi}
+                        onAdd={handleDraftAddKpi}
+                        onRemove={handleDraftRemoveKpi}
+                        onSave={handleSaveKpiLayout}
+                    />
+                </div>
+            );
+        };
+
+        // --- TICKET MODAL COMPONENT ---
+        const TicketModal = ({ ticket, viewType, onClose }) => {
+            const [activeTab, setActiveTab] = useState('info');
+
+            // הגדרת הטאבים הזמינים לפי סוג התצוגה
+            let availableTabs = [];
+            if (viewType === 'open' || viewType === 'my_tasks') {
+                availableTabs = [
+                    { id: 'info', label: 'מידע אודות הפנייה' },
+                    { id: 'chat', label: "צ'אט" },
+                    { id: 'edit', label: 'מצב עריכה' },
+                    { id: 'send', label: 'שליחה' },
+                    { id: 'close', label: 'סגירת פנייה' }
+                ];
+            } else if (viewType === 'history') {
+                availableTabs = [
+                    { id: 'info', label: 'מידע אודות הפנייה' },
+                    { id: 'chat', label: "צ'אט" },
+                    { id: 'edit', label: 'מצב עריכה' }
+                ];
+            } else if (viewType === 'external') {
+                availableTabs = [
+                    { id: 'info', label: 'מידע אודות הפנייה' },
+                    { id: 'chat', label: "צ'אט" }
+                ];
+            }
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
+                    
+                    <div className="bg-[#F4F5FA] w-full max-w-4xl rounded-2xl shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden animate-fade-in z-10 border border-gray-200">
+                        
+                        <div className="px-8 pt-6 pb-0 flex flex-col shrink-0">
+                            <div className="flex justify-between items-start w-full">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <Icon name="filePlus" className="w-5 h-5 text-[#1E4DB7]" />
+                                        <h2 className="text-2xl font-black text-[#1E3A8A] tracking-tight">{ticket.id.replace('...', '')}</h2>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-[#FEF3C7] text-[#D97706] border border-[#FCD34D] px-3 py-1 rounded-md text-xs font-bold shadow-sm">
+                                            {ticket.priority || 'בינונית-2'}
+                                        </span>
+                                        <span className="bg-[#22C55E] text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm">
+                                            {viewType === 'history' ? 'סגורה' : 'פתוחה'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button onClick={onClose} className="text-gray-400 hover:text-gray-700 bg-white border border-gray-200 p-1.5 rounded-lg transition-colors shadow-sm">
+                                    <Icon name="close" className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <div className="flex gap-6 mt-6 border-b border-gray-200">
+                                {availableTabs.map(tab => (
+                                    <button 
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`pb-3 px-1 text-sm font-bold transition-all relative ${
+                                            activeTab === tab.id 
+                                            ? 'text-[#1E4DB7]' 
+                                            : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                        {activeTab === tab.id && (
+                                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#1E4DB7] rounded-t-md"></div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar relative">
+                            {/* --- TAB: INFO (מידע אודות הפנייה) --- */}
+                            {activeTab === 'info' && (
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="text-[#1E3A8A] font-extrabold text-lg mb-4">מידע קריטי</h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-[#E6F0FD] border border-[#BFDBFE] rounded-xl p-4 flex gap-4 items-center shadow-sm">
+                                                <div className="bg-white p-2 rounded-lg text-[#1E4DB7] shadow-sm shrink-0"><Icon name="user" className="w-5 h-5"/></div>
+                                                <div>
+                                                    <div className="text-[#1E4DB7] font-bold text-sm">נפתח על ידי</div>
+                                                    <div className="text-gray-800 font-semibold text-xs mt-0.5">{ticket.name}</div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-[#E6F0FD] border border-[#BFDBFE] rounded-xl p-4 flex gap-4 items-center shadow-sm">
+                                                <div className="bg-white p-2 rounded-lg text-[#1E4DB7] shadow-sm shrink-0"><Icon name="phone" className="w-5 h-5"/></div>
+                                                <div>
+                                                    <div className="text-[#1E4DB7] font-bold text-sm">טלפון ליצירת קשר</div>
+                                                    <div className="text-gray-800 font-semibold text-xs mt-0.5">{ticket.phone !== 'לא זמין' ? ticket.phone : '050-1234567'}</div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-[#E6F0FD] border border-[#BFDBFE] rounded-xl p-4 flex gap-4 items-center shadow-sm">
+                                                <div className="bg-white p-2 rounded-lg text-[#1E4DB7] shadow-sm shrink-0"><Icon name="calendar" className="w-5 h-5"/></div>
+                                                <div>
+                                                    <div className="text-[#1E4DB7] font-bold text-sm">תאריך פתיחה</div>
+                                                    <div className="text-gray-800 font-semibold text-xs mt-0.5">{ticket.date} בשעה 13:27</div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-[#E6F0FD] border border-[#BFDBFE] rounded-xl p-4 flex gap-4 items-center shadow-sm">
+                                                <div className="bg-white p-2 rounded-lg text-[#1E4DB7] shadow-sm shrink-0"><Icon name="check" className="w-5 h-5"/></div>
+                                                <div>
+                                                    <div className="text-[#1E4DB7] font-bold text-sm">תאריך סגירה</div>
+                                                    <div className="text-gray-800 font-semibold text-xs mt-0.5">{viewType === 'history' ? `${ticket.date} בשעה 14:00` : 'טרם נסגר'}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-[#1E3A8A] font-extrabold text-lg mb-4 mt-8">מידע נלווה</h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-start justify-center min-h-[80px]">
+                                                <div className="text-gray-500 font-bold text-xs mb-1">גורם מטפל</div>
+                                                <div className="text-gray-800 font-semibold text-sm">מנדיי (ccfcc)</div>
+                                            </div>
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-start justify-center min-h-[80px]">
+                                                <div className="text-gray-500 font-bold text-xs mb-1">מ.א של לקוח</div>
+                                                <div className="text-gray-800 font-semibold text-sm">s3333333</div>
+                                            </div>
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-start justify-center min-h-[80px]">
+                                                <div className="text-gray-500 font-bold text-xs mb-1">אופן טיפול בפנייה</div>
+                                                <div className="text-gray-800 font-semibold text-sm">הפנייה טופלה בהצלחה (dsfsdfsd)</div>
+                                            </div>
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-start justify-center min-h-[80px]">
+                                                <div className="text-gray-500 font-bold text-xs mb-1">סוג רשת</div>
+                                                <div className="text-gray-800 font-semibold text-sm">סודי</div>
+                                            </div>
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-start justify-center min-h-[80px]">
+                                                <div className="text-gray-500 font-bold text-xs mb-1">מידע יעודי</div>
+                                                <div className="text-gray-800 font-semibold text-sm">sdfsdf</div>
+                                            </div>
+                                            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-start justify-center min-h-[80px]">
+                                                <div className="text-gray-500 font-bold text-xs mb-1">משימה ייחודית</div>
+                                                <div className="text-gray-800 font-semibold text-sm">sdfsdfsd</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- TAB: EDIT (מצב עריכה) --- */}
+                            {activeTab === 'edit' && (
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="flex flex-col gap-5">
+                                            <Select label="גורם מטפל *" options={["מנדיי (ccfcc)", "אחר"]} className="font-bold text-[#1E4DB7] h-11" />
+                                            <Input label="אופן טיפול בפנייה" defaultValue="הפנייה טופלה בהצלחה (dsfsdfsd)" className="h-11 font-bold text-gray-700" />
+                                            <Input label="טלפון ליצירת קשר *" icon="phone" defaultValue={ticket.phone !== 'לא זמין' ? ticket.phone : '050-1234567'} className="h-11 font-bold text-[#1E4DB7]" />
+                                            <Select label="סוג רשת *" options={["סודי", "בלמ״ס"]} className="font-bold text-[#1E4DB7] h-11" />
+                                        </div>
+                                        <div className="flex flex-col gap-5">
+                                            <Input label="מ.א של לקוח" icon="search" defaultValue="s3333333" className="h-11 font-bold text-[#1E4DB7]" />
+                                            <Input label="מידע יעודי" defaultValue="sdfsdf" className="h-11 font-bold text-gray-700" />
+                                            <div className="flex flex-col flex-1">
+                                                <label className="block text-xs font-bold text-gray-700 mb-1.5">תיאור התקלה *</label>
+                                                <textarea className="w-full flex-1 bg-white border border-gray-200 shadow-sm rounded-lg py-3 px-4 text-sm font-bold text-gray-700 focus:outline-none focus:border-[#1E4DB7] resize-none" defaultValue="sdfsdfsd"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="pt-6 border-t border-gray-200 flex justify-center">
+                                        <Button className="px-10 py-2.5 text-sm rounded-xl shadow-md w-full max-w-xs">שמור שינויים</Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- TAB: CLOSE (סגירת פנייה) --- */}
+                            {activeTab === 'close' && (
+                                <div className="flex flex-col items-center justify-center py-4 max-w-2xl mx-auto space-y-8 animate-fade-in">
+                                    <div className="text-center space-y-1.5 mt-4">
+                                        <h3 className="text-[17px] font-bold text-gray-800">האם אתה בטוח שאתה רוצה לסגור את הפנייה?</h3>
+                                        <p className="text-[13px] text-gray-400 font-bold">כרגע לא יהיה ניתן לשחזר אותה</p>
+                                    </div>
+                                    
+                                    <div className="w-full flex justify-between bg-[#F8FAFC] border border-gray-200 rounded-xl p-5 shadow-sm">
+                                        <div className="flex flex-col items-start gap-2 w-1/2">
+                                            <div className="flex items-center gap-1.5 text-gray-400 text-[11px] font-bold bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm w-fit">
+                                                <Icon name="calendar" className="w-3 h-3 text-[#1E4DB7]" />
+                                                תאריך פתיחה של הלקוח
+                                            </div>
+                                            <span className="font-extrabold text-[#1E3A8A] text-sm ml-1 pr-1">14 ביוני 2026 בשעה 11:45</span>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-2 w-1/2 border-r border-gray-200 pr-5">
+                                            <div className="flex items-center gap-1.5 text-gray-400 text-[11px] font-bold bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm w-fit">
+                                                מספר פנייה
+                                                <span className="text-[#1E4DB7] font-black text-xs leading-none">#</span>
+                                            </div>
+                                            <span className="font-extrabold text-[#1E3A8A] text-sm mr-1 pl-1" dir="ltr">{ticket.id || 'BC-284-1781426709667'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="w-full">
+                                        <input className="w-full bg-white border border-gray-200 rounded-xl py-3.5 px-4 text-sm focus:outline-none focus:border-[#1E4DB7] transition-all shadow-sm font-semibold text-gray-700 placeholder-gray-400" placeholder="הקליד/י כאן את אופן הטיפול בתקלה" />
+                                    </div>
+
+                                    <div className="flex items-center justify-center gap-4 pt-2">
+                                        <Button className="px-10 py-2.5 text-sm rounded-xl font-bold shadow-md bg-[#1E3A8A] hover:bg-blue-900">כן, סגור פנייה</Button>
+                                        <Button variant="ghost" className="px-10 py-2.5 text-sm rounded-xl font-bold border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700" onClick={onClose}>בטל</Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- TAB: SEND (שליחת פנייה / העברה לחדר) --- */}
+                            {activeTab === 'send' && (
+                                <div className="space-y-6 animate-fade-in pb-4">
+                                    <div className="bg-[#F8FAFC] border border-gray-200 shadow-sm rounded-2xl p-5 flex flex-col items-center gap-3">
+                                        <label className="text-[#1E3A8A] font-extrabold text-[15px]">בחרו לאיזה חדר להעביר</label>
+                                        <Select options={["מנדיי"]} className="w-72 text-center font-bold text-[#1E4DB7] h-10 shadow-sm border-gray-200" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-x-8 gap-y-6 bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+                                        <div className="flex flex-col gap-6">
+                                            <Select label={<span className="flex items-center gap-1.5 text-gray-700"><Icon name="users" className="w-3.5 h-3.5 text-[#1E4DB7]"/> גורם מטפל <span className="text-red-500">*</span></span>} options={["מנדיי"]} className="font-bold text-[#1E4DB7] h-11 bg-white" />
+                                            <Input label={<span className="text-gray-700 font-bold block">אופן טיפול בפנייה</span>} defaultValue="אופן טיפול בפנייה" className="h-11 font-bold text-gray-500 bg-white" />
+                                            <Input label={<span className="flex items-center gap-1.5 text-gray-700"><Icon name="location" className="w-3.5 h-3.5 text-gray-400"/> מיקום</span>} defaultValue="בהההה" className="h-11 font-bold text-gray-500 bg-white" />
+                                        </div>
+                                        <div className="flex flex-col gap-6">
+                                            <Select label={<span className="flex items-center gap-1.5 text-gray-700"><Icon name="target" className="w-3.5 h-3.5 text-red-500"/> דחיפות <span className="text-red-500">*</span></span>} options={["נמוכה-3"]} className="font-bold text-gray-600 h-11 bg-white" />
+                                            <Input label={<span className="flex items-center gap-1.5 text-gray-700"><Icon name="user" className="w-3.5 h-3.5 text-[#1E4DB7]"/> מ.א של לקוח <span className="text-red-500">*</span></span>} defaultValue="c6666666" className="h-11 font-extrabold text-[#1E4DB7] bg-white" />
+                                            <div className="flex flex-col flex-1">
+                                                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1.5"><Icon name="filePlus" className="w-3.5 h-3.5 text-[#1E4DB7]"/> תיאור התקלה <span className="text-red-500">*</span></label>
+                                                <textarea className="w-full flex-1 bg-white border border-gray-200 shadow-sm rounded-lg py-3 px-4 text-sm font-extrabold text-[#1E4DB7] focus:outline-none focus:border-[#1E4DB7] resize-none h-24 leading-relaxed" defaultValue="77777777777777"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-center pt-2">
+                                        <Button className="px-14 py-2.5 text-sm rounded-xl font-bold shadow-md bg-[#1E4DB7] hover:bg-blue-800">שלח פנייה</Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- TAB: CHAT (Placeholder) --- */}
+                            {activeTab === 'chat' && (
+                                <div className="h-64 flex flex-col items-center justify-center opacity-60">
+                                    <Icon name="chat" className="w-16 h-16 text-gray-300 mb-4" />
+                                    <h3 className="text-xl font-bold text-gray-400">אזור צ'אט בהקמה</h3>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // --- UNIFIED TICKET LIST COMPONENT ---
+        const TicketListView = ({ title, description, showToggle = false, isExternal = false, viewType = 'default' }) => {
+            const [toggleState, setToggleState] = useState('received'); // 'received' or 'sent'
+            const [selectedTicket, setSelectedTicket] = useState(null); // ׳ ׳™׳”׳•׳ ׳”׳₪׳•׳₪-׳׳₪
+            
+            // Advanced Filters State
+            const [searchBy, setSearchBy] = useState({ label: 'מספר פניה', iconText: '#' });
+            const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+            
+            const [sortBy, setSortBy] = useState('מספר פנייה ↑↓');
+            const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+            
+            const [priorityFilter, setPriorityFilter] = useState('בחר דחיפות');
+            const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
+
+            // Filter Options
+            const searchOptions = [
+                { label: 'מספר פניה', iconText: '#' },
+                { label: 'שם לקוח', iconName: 'user' },
+                { label: 'מס טלפון', iconName: 'phone' },
+                { label: 'גורם מטפל', iconName: 'search' },
+                { label: 'מ.א של לקוח', iconName: 'search' },
+                { label: 'טלפון ליצירת קשר', iconName: 'phone' }
+            ];
+
+            const sortOptions = [
+                { label: 'מספר פנייה', sortType: 'up', iconName: 'arrowUpStraight' },
+                { label: 'מספר פנייה', sortType: 'down', iconName: 'arrowDownStraight' },
+                { label: 'חדש יותר', iconName: 'calendar' },
+                { label: 'ישן יותר', iconName: 'calendar' }
+            ];
+
+            const priorityOptions = ['בחר דחיפות', 'דחיפות גבוהה', 'דחיפות בינונית', 'דחיפות נמוכה'];
+            
+            const closeAllDropdowns = () => {
+                setSearchDropdownOpen(false);
+                setSortDropdownOpen(false);
+                setPriorityDropdownOpen(false);
+            };
+
+            const items = isExternal ? [
+                { id: 'M-16-338...', priority: 'נמוכה-3', name: 'עטיה נהוראי', room: '44444444444', phone: 'לא זמין', date: '12 ביוני 2026' },
+            ] : [
+                { id: 'M-16-338...', priority: 'נמוכה-3', name: 'עטיה נהוראי', room: '44444444444', phone: 'לא זמין', date: '12 ביוני 2026' },
+                { id: '26T3933', priority: 'נמוכה-3', name: 'עטיה נהוראי', room: '555345345', phone: 'לא זמין', date: '11 ביוני 2026' },
+                { id: 'A-22-192...', priority: 'גבוהה-1', name: 'משה כהן', room: '33333333333', phone: '050-1234567', date: '10 ביוני 2026' },
+                { id: 'B-88-123...', priority: 'נמוכה-3', name: 'דנה לוי', room: '22222222222', phone: '054-9876543', date: '09 ביוני 2026' },
+                { id: 'C-44-555...', priority: 'גבוהה-1', name: 'רועי שמש', room: '11111111111', phone: 'לא זמין', date: '08 ביוני 2026' },
+            ];
+
+            return (
+                <div className="p-5 h-full flex flex-col wave-bg min-h-0 relative">
+                    
+                    {/* Global overlay to close dropdowns */}
+                    {(searchDropdownOpen || sortDropdownOpen || priorityDropdownOpen) && (
+                        <div className="fixed inset-0 z-30" onClick={closeAllDropdowns}></div>
+                    )}
+
+                    <div className="mb-5 shrink-0 relative z-10">
+                        <h1 className="text-[28px] font-black text-[#1E3A8A] mb-2 tracking-tight">{title}</h1>
+                        <p className="text-sm font-semibold text-[#1E4DB7]">{description}</p>
+                        
+                        {showToggle && (
+                            <div className="absolute top-0 left-0 bg-[#E5E7EB] p-1 rounded-full flex relative shadow-inner w-[240px]">
+                                <div 
+                                    className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-full shadow-sm transition-transform duration-300 ease-out"
+                                    style={{
+                                        transform: toggleState === 'received' ? 'translateX(0)' : 'translateX(-100%)',
+                                        right: '4px'
+                                    }}
+                                ></div>
+                                
+                                <button 
+                                    onClick={() => setToggleState('received')}
+                                    className={`flex-1 relative z-10 py-1.5 text-xs font-bold transition-colors duration-300 ${toggleState === 'received' ? 'text-[#1E4DB7]' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    פניות שהתקבלו
+                                </button>
+                                <button 
+                                    onClick={() => setToggleState('sent')}
+                                    className={`flex-1 relative z-10 py-1.5 text-xs font-bold transition-colors duration-300 ${toggleState === 'sent' ? 'text-[#1E4DB7]' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    פניות שנשלחו
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex justify-between items-center mb-3 gap-4 shrink-0 relative z-40">
+                        {/* RIGHT SIDE: Search Input + Dropdown */}
+                        <div className="flex-1 flex bg-white border border-gray-200 shadow-sm rounded-lg max-w-xl relative transition-colors focus-within:border-[#1E4DB7]">
+                            <div className="relative border-l border-gray-200">
+                                <button 
+                                    onClick={() => {closeAllDropdowns(); setSearchDropdownOpen(!searchDropdownOpen);}} 
+                                    className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 rounded-r-lg h-full"
+                                    title={searchBy.label}
+                                >
+                                    {searchBy.iconText ? (
+                                        <span className="text-[#1E4DB7] bg-blue-50 px-1 py-0.5 rounded text-[11px] leading-none">{searchBy.iconText}</span>
+                                    ) : (
+                                        <Icon name={searchBy.iconName} className="w-3.5 h-3.5 text-[#1E4DB7]" />
+                                    )}
+                                    {searchBy.label.length > 20 ? searchBy.label.substring(0, 20) + '...' : searchBy.label}
+                                    <Icon name="chevronDown" className="w-3 h-3 text-gray-400" />
+                                </button>
+                                
+                                {searchDropdownOpen && (
+                                    <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1 max-h-48 overflow-y-auto custom-scrollbar">
+                                        {searchOptions.map(opt => {
+                                            const displayText = opt.label.length > 20 ? opt.label.substring(0, 20) + '...' : opt.label;
+                                            return (
+                                                <button 
+                                                    key={opt.label} 
+                                                    onClick={() => { setSearchBy(opt); closeAllDropdowns(); }} 
+                                                    className="w-full text-right px-4 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-[#1E4DB7] flex items-center gap-2"
+                                                    title={opt.label}
+                                                >
+                                                    {opt.iconText ? (
+                                                        <span className="text-gray-400 font-black">{opt.iconText}</span>
+                                                    ) : (
+                                                        <Icon name={opt.iconName} className="w-3.5 h-3.5 text-gray-400" />
+                                                    )}
+                                                    {displayText}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="flex-1 relative">
+                                <input 
+                                    className="w-full h-full bg-transparent py-2 px-3 pl-8 text-sm focus:outline-none text-gray-700 font-semibold" 
+                                    placeholder={`חפש על ידי ${searchBy.label}...`} 
+                                />
+                                <Icon name="search" className="w-4 h-4 absolute left-2.5 top-2.5 text-gray-400" />
+                            </div>
+                        </div>
+                        
+                        {/* LEFT SIDE: Sort & Filter */}
+                        <div className="flex gap-3">
+                            <div className="relative">
+                                <button 
+                                    onClick={() => {closeAllDropdowns(); setSortDropdownOpen(!sortDropdownOpen);}} 
+                                    className="bg-white border border-gray-200 shadow-sm rounded-lg px-4 py-2 text-xs font-bold text-gray-700 flex items-center gap-2 hover:bg-gray-50 transition-colors h-full"
+                                >
+                                    <Icon name="arrowDownUp" className="w-3.5 h-3.5 text-gray-500" />
+                                    {sortBy} 
+                                    <Icon name="chevronDown" className="w-3 h-3 text-gray-400" />
+                                </button>
+                                {sortDropdownOpen && (
+                                    <div className="absolute top-full right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1">
+                                        {sortOptions.map((opt, idx) => (
+                                            <button 
+                                                key={idx} 
+                                                onClick={() => { setSortBy(opt.sortType ? `${opt.label} ${opt.sortType==='up'?'↑':'↓'}` : opt.label); closeAllDropdowns(); }} 
+                                                className="w-full text-right px-4 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-[#1E4DB7] flex items-center gap-2"
+                                            >
+                                                <Icon name={opt.iconName} className="w-3.5 h-3.5 text-gray-400" />
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="relative">
+                                <button 
+                                    onClick={() => {closeAllDropdowns(); setPriorityDropdownOpen(!priorityDropdownOpen);}} 
+                                    className="bg-white border border-gray-200 shadow-sm rounded-lg px-4 py-2 text-xs font-bold text-gray-700 flex items-center gap-2 hover:bg-gray-50 transition-colors h-full"
+                                >
+                                    <Icon name="filter" className="w-3.5 h-3.5 text-gray-500" />
+                                    {priorityFilter} 
+                                    <Icon name="chevronDown" className="w-3 h-3 text-gray-400" />
+                                </button>
+                                {priorityDropdownOpen && (
+                                    <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1">
+                                        {priorityOptions.map(opt => (
+                                            <button 
+                                                key={opt} 
+                                                onClick={() => { setPriorityFilter(opt); closeAllDropdowns(); }} 
+                                                className="w-full text-right px-4 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-[#1E4DB7]"
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-2.5">
+                        {items.length > 0 ? items.map((task, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-2.5 flex items-center shadow-sm hover:shadow-md transition">
+                                <div className="flex items-center gap-3 w-56 pr-1 shrink-0">
+                                    <div className="bg-[#EFF6FF] text-brand-mainBlue p-1.5 rounded-lg font-extrabold flex items-center justify-center w-7 h-7 shrink-0">
+                                        <span className="text-xs">#</span>
+                                    </div>
+                                    <span className="font-bold text-gray-800 text-xs truncate w-24">{task.id}</span>
+                                    <Badge type={task.priority.includes('נמוכה') ? 'low' : 'high'}>{task.priority}</Badge>
+                                </div>
+                                <div className="flex items-center justify-between flex-1 text-[11px] font-bold text-gray-600 px-4">
+                                    <div className="flex items-center gap-2 w-1/4">
+                                        <div className="bg-[#EFF6FF] p-1.5 rounded-lg shrink-0"><Icon name="user" className="w-3 h-3 text-brand-mainBlue"/></div>
+                                        <span className="truncate">{task.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 w-1/4">
+                                        <div className="bg-[#EFF6FF] p-1.5 rounded-lg shrink-0"><Icon name="location" className="w-3 h-3 text-brand-mainBlue"/></div>
+                                        <span className="truncate">{task.room}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 w-1/4">
+                                        <div className="bg-[#EFF6FF] p-1.5 rounded-lg shrink-0"><Icon name="phone" className="w-3 h-3 text-brand-mainBlue"/></div>
+                                        <span className="truncate">{task.phone}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 w-1/4">
+                                        <div className="bg-[#EFF6FF] p-1.5 rounded-lg shrink-0"><Icon name="calendar" className="w-3 h-3 text-brand-mainBlue"/></div>
+                                        <span className="whitespace-nowrap">{task.date}</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="pl-1 shrink-0 flex items-center gap-2">
+                                    {viewType === 'open' && (
+                                        <button className="bg-green-500 text-white p-2 rounded-lg shadow-sm hover:bg-green-600 transition" title="סגור פנייה">
+                                            <Icon name="check" className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    {viewType === 'external' && toggleState === 'received' && (
+                                        <React.Fragment>
+                                            <button className="bg-red-500 text-white p-2 rounded-lg shadow-sm hover:bg-red-600 transition" title="דחה פנייה">
+                                                <Icon name="close" className="w-4 h-4" />
+                                            </button>
+                                            <button className="bg-green-500 text-white p-2 rounded-lg shadow-sm hover:bg-green-600 transition" title="קבל פנייה">
+                                                <Icon name="check" className="w-4 h-4" />
+                                            </button>
+                                        </React.Fragment>
+                                    )}
+                                    {viewType === 'external' && toggleState === 'sent' && (
+                                        <button className="bg-red-500 text-white p-2 rounded-lg shadow-sm hover:bg-red-600 transition" title="בטל פנייה">
+                                            <Icon name="close" className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => setSelectedTicket(task)}
+                                        className="bg-[#1E3A8A] text-white p-2 rounded-lg shadow-sm hover:bg-blue-800 transition" 
+                                        title="צפה בפנייה"
+                                    >
+                                        <Icon name="eye" className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="flex flex-col items-center justify-center h-full opacity-50">
+                                <Icon name="filePlus" className="w-10 h-10 text-gray-400 mb-2" />
+                                <p className="text-gray-500 font-bold text-sm">אין נתונים להצגה</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-gray-200 flex justify-center items-center gap-4 shrink-0">
+                         <button className="bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-lg shadow-sm text-xs font-bold hover:bg-gray-50 hover:text-brand-mainBlue transition">
+                             הבא &lt;
+                         </button>
+                         <div className="bg-white border border-gray-200 text-gray-700 px-8 py-1.5 rounded-lg shadow-sm text-xs font-bold">
+                             עמוד 1 מתוך 4
+                         </div>
+                         <button className="bg-white border border-gray-200 text-gray-600 px-4 py-1.5 rounded-lg shadow-sm text-xs font-bold hover:bg-gray-50 hover:text-brand-mainBlue transition">
+                             &gt; קודם
+                         </button>
+                    </div>
+
+                    {selectedTicket && (
+                        <TicketModal 
+                            ticket={selectedTicket} 
+                            viewType={viewType} 
+                            onClose={() => setSelectedTicket(null)} 
+                        />
+                    )}
+                </div>
+            );
+        };
+
+
+        // --- SYSTEM SETTINGS VIEW ---
+        const SettingsView = () => {
+            const [activeFields, setActiveFields] = useState([
+                { id: 1, title: 'דחיפות', val: 'רמת דחיפות הפנייה', icon: 'chevronDown', type: 'select', required: true, locked: true },
+                { id: 2, title: 'גורם מטפל', val: 'הכנס/י גורם מטפל', icon: 'chevronDown', type: 'select', required: true, locked: true },
+                { id: 3, title: 'מ.א של לקוח', val: 'הכנס/י מ.א של לקוח', type: 'short_text', required: true, locked: true },
+                { id: 4, title: 'אופן טיפול בפנייה', val: 'אופן טיפול בפנייה', type: 'free_text', required: true, locked: true },
+                { id: 5, title: 'תיאור התקלה', val: 'תיאור התקלה', type: 'free_text', required: true, locked: true },
+                { id: 6, title: 'מיקום', val: 'בהתהוות', type: 'short_text', required: false, locked: false, dashed: true }
+            ]);
+
+            const [editingField, setEditingField] = useState(null);
+            const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+            const [draggedItemId, setDraggedItemId] = useState(null);
+
+            const handleFieldTypeClick = (type) => {
+                const typeMap = {
+                    'free_text': { title: 'טקסט חופשי חדש', val: 'לדוגמא: תיאור פנייה, דרך פתרון...', icon: null },
+                    'select': { title: 'בחירת אפשרות חדשה', val: 'לדוגמא: רשימת יחידות...', icon: 'chevronDown', options: ['אפשרות 1', 'אפשרות 2'] },
+                    'short_text': { title: 'טקסט קצר חדש', val: 'לדוגמא: שם פרטי, שם משפחה...', icon: null }
+                };
+                
+                setEditingField({
+                    id: Date.now(), 
+                    isNew: true,
+                    type: type,
+                    title: typeMap[type].title,
+                    val: typeMap[type].val,
+                    required: false,
+                    locked: false,
+                    icon: typeMap[type].icon,
+                    options: typeMap[type].options || []
+                });
+                setIsDropdownOpen(false);
+            };
+
+            const handleEditExisting = (field) => {
+                const options = field.options || (field.type === 'select' ? ['אפשרות לדוגמא'] : []);
+                setEditingField({ ...field, isNew: false, options });
+                setIsDropdownOpen(false);
+            };
+
+            const handleSave = () => {
+                if (!editingField) return;
+                
+                if (editingField.isNew) {
+                    const newField = { ...editingField, dashed: false };
+                    delete newField.isNew;
+                    setActiveFields([...activeFields, newField]);
+                } else {
+                    setActiveFields(activeFields.map(f => f.id === editingField.id ? { ...editingField } : f));
+                }
+                setEditingField(null);
+            };
+
+            const handleDelete = () => {
+                if (!editingField || editingField.locked || editingField.isNew) return;
+                setActiveFields(activeFields.filter(f => f.id !== editingField.id));
+                setEditingField(null);
+            };
+
+            const updateOption = (idx, val) => {
+                const newOptions = [...editingField.options];
+                newOptions[idx] = val;
+                setEditingField({ ...editingField, options: newOptions });
+            };
+
+            const addOption = () => {
+                setEditingField({ ...editingField, options: [...editingField.options, `אפשרות ${editingField.options.length + 1}`] });
+            };
+
+            const removeOption = (idx) => {
+                const newOptions = editingField.options.filter((_, i) => i !== idx);
+                setEditingField({ ...editingField, options: newOptions });
+            };
+
+            // Drag and drop handlers
+            const handleDragStart = (e, id) => {
+                setDraggedItemId(id);
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => {
+                    e.target.classList.add('opacity-40');
+                }, 0);
+            };
+
+            const handleDragEnd = (e) => {
+                e.target.classList.remove('opacity-40');
+                setDraggedItemId(null);
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            };
+
+            const handleDrop = (e, targetId) => {
+                e.preventDefault();
+                if (draggedItemId === null || draggedItemId === targetId) return;
+                
+                const oldIndex = activeFields.findIndex(f => f.id === draggedItemId);
+                const newIndex = activeFields.findIndex(f => f.id === targetId);
+                
+                const newFields = [...activeFields];
+                const [movedItem] = newFields.splice(oldIndex, 1);
+                newFields.splice(newIndex, 0, movedItem);
+                
+                setActiveFields(newFields);
+            };
+
+            return (
+                <div className="p-8 h-full flex flex-col min-h-0 wave-bg overflow-hidden">
+                    <div className="mb-8 shrink-0">
+                        <h1 className="text-[28px] font-black text-[#1E3A8A] mb-2 tracking-tight">הגדרות מערכת - מנדיי</h1>
+                        <p className="text-sm font-semibold text-[#1E4DB7]">
+                            בעמוד זה ניתן לערוך את השדות והאופי שלפיו החדר מתנהל. קיימים ברשותך <span className="text-purple-600 font-bold">3 סוגים</span> שונים של שדות.
+                        </p>
+                    </div>
+
+                    <div className="flex-1 flex gap-8 min-h-0 pb-6">
+                        
+                        {/* Right Column: Field Types */}
+                        <div className="flex flex-col gap-6 w-[25%] shrink-0 pt-4">
+                            <div className="flex flex-col relative group cursor-pointer" onClick={() => handleFieldTypeClick('free_text')}>
+                                <span className="text-center font-bold text-gray-700 text-sm mb-2">טקסט חופשי</span>
+                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50/50 h-[80px] flex items-center justify-center text-gray-400 text-xs shadow-sm transition hover:border-[#1E4DB7] hover:bg-blue-50/50 hover:text-gray-600">
+                                    לדוגמא: תיאור פנייה, דרך פתרון...
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col relative mt-2 group cursor-pointer" onClick={() => handleFieldTypeClick('select')}>
+                                <span className="text-center font-bold text-gray-700 text-sm mb-2">בחירת אפשרות</span>
+                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50/50 h-[80px] flex items-center justify-between text-gray-400 text-xs shadow-sm transition hover:border-[#1E4DB7] hover:bg-blue-50/50 hover:text-gray-600">
+                                    <span>לדוגמא: רשימת רשויות,יחידות...</span>
+                                    <Icon name="chevronDown" className="w-4 h-4 text-gray-400 group-hover:text-[#1E4DB7] transition-colors"/>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col relative mt-2 group cursor-pointer" onClick={() => handleFieldTypeClick('short_text')}>
+                                <span className="text-center font-bold text-gray-700 text-sm mb-2">טקסט קצר</span>
+                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50/50 h-[80px] flex items-center justify-center text-gray-400 text-xs shadow-sm transition hover:border-[#1E4DB7] hover:bg-blue-50/50 hover:text-gray-600">
+                                    לדוגמא: שם פרטי, שם משפחה...
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Center Column: Template & Graphics */}
+                        <div className="flex flex-col w-[30%] shrink-0 px-2 pt-4">
+                            {!editingField ? (
+                                <React.Fragment>
+                                    <span className="text-center font-bold text-gray-700 text-sm mb-2">בחרו תבנית</span>
+                                    <div className="border border-yellow-400 rounded-xl p-4 bg-yellow-50/30 h-[100px] mb-4 relative shadow-sm cursor-default">
+                                        <div className="absolute top-2 right-4 text-[10px] text-gray-400 font-bold">כותרת</div>
+                                        <div className="text-gray-400 text-sm mt-4 text-center">לחצו על שדה מימין כדי לערוך אותו...</div>
+                                    </div>
+                                </React.Fragment>
+                            ) : (
+                                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3.5 flex flex-col gap-3 relative animate-fade-in mx-auto w-full max-w-[320px] mb-4 h-[230px] justify-between">
+                                    <div className="flex items-center justify-between border-b border-gray-100 pb-2 shrink-0">
+                                        <h4 className="font-bold text-[#1E4DB7] text-sm">
+                                            {editingField.isNew ? 'הגדרת שדה חדש' : 'עריכת שדה פעיל'}
+                                        </h4>
+                                        <button onClick={() => setEditingField(null)} className="text-gray-400 hover:text-gray-600 bg-gray-50 p-1 rounded-md transition"><Icon name="close" className="w-3.5 h-3.5" /></button>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 relative bg-gray-50/30 p-3 rounded-xl border border-gray-100 flex-1">
+                                        <div className="flex items-center justify-between gap-2 group mb-1">
+                                            <div className="flex items-center flex-1">
+                                                <input
+                                                    className="font-bold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#1E4DB7] outline-none text-sm w-full transition-colors cursor-text"
+                                                    value={editingField.title}
+                                                    onChange={(e) => setEditingField({...editingField, title: e.target.value})}
+                                                    placeholder="הכנס שם שדה..."
+                                                />
+                                                {editingField.required && <span className="text-red-500 font-bold ml-1 text-xs">*</span>}
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-md shadow-sm border border-gray-100 shrink-0">
+                                                <span className="text-[10px] font-bold text-gray-600">חובה?</span>
+                                                <div 
+                                                    className={`w-7 h-4 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${editingField.required ? 'bg-[#1E4DB7]' : 'bg-gray-300'}`} 
+                                                    onClick={() => setEditingField({...editingField, required: !editingField.required})}
+                                                >
+                                                    <div className={`bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform ${editingField.required ? '-translate-x-3' : 'translate-x-0'}`}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {editingField.type === 'short_text' && (
+                                            <input
+                                                className="w-full bg-white border border-gray-200 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-[#1E4DB7] transition-all hover:border-[#1E4DB7] shadow-sm"
+                                                value={editingField.val}
+                                                onChange={(e) => setEditingField({...editingField, val: e.target.value})}
+                                                placeholder="הכנס טקסט מנחה (Placeholder)..."
+                                            />
+                                        )}
+
+                                        {editingField.type === 'free_text' && (
+                                            <textarea
+                                                className="w-full bg-white border border-gray-200 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-[#1E4DB7] transition-all hover:border-[#1E4DB7] resize-none h-14 shadow-sm"
+                                                value={editingField.val}
+                                                onChange={(e) => setEditingField({...editingField, val: e.target.value})}
+                                                placeholder="הכנס טקסט מנחה (Placeholder)..."
+                                            />
+                                        )}
+
+                                        {editingField.type === 'select' && (
+                                            <div className="relative">
+                                                <div className="flex items-center relative border border-gray-200 rounded-lg bg-white shadow-sm hover:border-[#1E4DB7] transition-colors focus-within:border-[#1E4DB7]">
+                                                    <input
+                                                        className="w-full bg-transparent py-2 pr-3 pl-8 text-xs outline-none placeholder-gray-400"
+                                                        value={editingField.val}
+                                                        onChange={(e) => setEditingField({...editingField, val: e.target.value})}
+                                                        placeholder="טקסט מנחה (Placeholder)..."
+                                                    />
+                                                    <button
+                                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                                        className="absolute left-0 top-0 bottom-0 px-2 flex items-center justify-center text-gray-400 hover:text-[#1E4DB7] hover:bg-gray-50 rounded-l-lg border-r border-transparent"
+                                                    >
+                                                        <Icon name="chevronDown" className={`w-3 h-3 transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                                    </button>
+                                                </div>
+
+                                                {isDropdownOpen && (
+                                                    <div className="absolute top-full right-0 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 p-1.5 flex flex-col gap-1 max-h-32 overflow-y-auto">
+                                                        {editingField.options.map((opt, i) => (
+                                                            <div key={i} className="flex items-center gap-1 bg-gray-50 hover:bg-gray-100 p-1 rounded-md group transition-colors">
+                                                                <input
+                                                                    className="flex-1 bg-transparent border-b border-transparent focus:border-[#1E4DB7] text-xs outline-none px-1 py-0.5 text-gray-700"
+                                                                    value={opt}
+                                                                    onChange={(e) => updateOption(i, e.target.value)}
+                                                                    placeholder={`אפשרות ${i + 1}...`}
+                                                                />
+                                                                <button onClick={() => removeOption(i)} className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-white shadow-sm transition-all">
+                                                                    <Icon name="trash" className="w-3.5 h-3.5"/>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        <button onClick={addOption} className="text-[#1E4DB7] text-[10px] font-bold flex items-center justify-center gap-1 p-1.5 hover:bg-blue-50 rounded-md mt-0.5 border border-dashed border-blue-200">
+                                                            <Icon name="filePlus" className="w-3 h-3" /> הוסף אפשרות בחירה
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2 pt-1 border-t border-gray-100 shrink-0">
+                                        <Button onClick={handleSave} className="flex-1 text-xs py-1.5 shadow-sm">שמור שדה פעיל</Button>
+                                        {!editingField.isNew && !editingField.locked && (
+                                            <Button variant="outline" onClick={handleDelete} className="text-red-500 border-red-200 hover:bg-red-50 px-2.5 py-1.5 shadow-sm" title="מחק שדה">
+                                                <Icon name="trash" className="w-3.5 h-3.5" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex-1 flex items-center justify-center relative opacity-90">
+                                <svg viewBox="0 0 300 200" className="w-full h-auto max-h-[180px]">
+                                    <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+                                        <path d="M50,150 L250,150 L250,152 L50,152 Z" fill="#9CA3AF" />
+                                        <g transform="translate(100, 100) rotate(15)">
+                                            <path d="M45.6,22.2l3.4-11.8L37.2,7l-3.4,11.8c-2.3-0.9-4.8-1.5-7.4-1.8L24.5,5.2H12.1 l-1.9,11.8c-2.6,0.3-5.1,0.9-7.4,1.8L-0.6,7l-11.8,3.4l3.4,11.8c-1.8,1.7-3.4,3.6-4.8,5.7l-11.4-4.5L-31,34.1l11.4,4.5 c-0.8,2.5-1.3,5.1-1.5,7.8l-11.9,1.5v12.4l11.9,1.5c0.3,2.7,0.8,5.3,1.5,7.8L-31,74.1l5.8,10.7l11.4-4.5c1.4,2.1,3,4,4.8,5.7 l-3.4,11.8L-0.6,101l3.4-11.8c2.3,0.9,4.8,1.5,7.4,1.8l1.9,11.8h12.4l1.9-11.8c2.6-0.3,5.1-0.9,7.4-1.8L37.2,101l11.8-3.4 l-3.4-11.8c1.8-1.7,3.4-3.6,4.8-5.7l11.4,4.5L67.6,74.1l-11.4-4.5c0.8-2.5,1.3-5.1,1.5-7.8l11.9-1.5V47.9l-11.9-1.5 c-0.3-2.7-0.8-5.3-1.5-7.8l11.4-4.5L61.8,23.4l-11.4,4.5C49,25.8,47.4,23.9,45.6,22.2z M18.3,66.6c-8.6,0-15.6-7-15.6-15.6 s7-15.6,15.6-15.6s15.6,7,15.6,15.6S26.9,66.6,18.3,66.6z" fill="#1E4DB7"/>
+                                        </g>
+                                        <g transform="translate(180, 70) rotate(-10) scale(0.6)">
+                                            <path d="M45.6,22.2l3.4-11.8L37.2,7l-3.4,11.8c-2.3-0.9-4.8-1.5-7.4-1.8L24.5,5.2H12.1 l-1.9,11.8c-2.6,0.3-5.1,0.9-7.4,1.8L-0.6,7l-11.8,3.4l3.4,11.8c-1.8,1.7-3.4,3.6-4.8,5.7l-11.4-4.5L-31,34.1l11.4,4.5 c-0.8,2.5-1.3,5.1-1.5,7.8l-11.9,1.5v12.4l11.9,1.5c0.3,2.7,0.8,5.3,1.5,7.8L-31,74.1l5.8,10.7l11.4-4.5c1.4,2.1,3,4,4.8,5.7 l-3.4,11.8L-0.6,101l3.4-11.8c2.3,0.9,4.8,1.5,7.4,1.8l1.9,11.8h12.4l1.9-11.8c2.6-0.3,5.1-0.9,7.4-1.8L37.2,101l11.8-3.4 l-3.4-11.8c1.8-1.7,3.4-3.6,4.8-5.7l11.4,4.5L67.6,74.1l-11.4-4.5c0.8-2.5,1.3-5.1,1.5-7.8l11.9-1.5V47.9l-11.9-1.5 c-0.3-2.7-0.8-5.3-1.5-7.8l11.4-4.5L61.8,23.4l-11.4,4.5C49,25.8,47.4,23.9,45.6,22.2z M18.3,66.6c-8.6,0-15.6-7-15.6-15.6 s7-15.6,15.6-15.6s15.6,7,15.6,15.6S26.9,66.6,18.3,66.6z" fill="#9CA3AF"/>
+                                        </g>
+                                        <g fill="#4B5563">
+                                            <circle cx="70" cy="115" r="5" />
+                                            <rect x="67" y="122" width="6" height="28" rx="2" />
+                                            <circle cx="165" cy="55" r="5" />
+                                            <rect x="162" y="62" width="6" height="20" rx="2" />
+                                        </g>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Left Column: Active Fields */}
+                        <div className="flex-1 flex flex-col relative pl-4 min-h-0">
+                            <div className="flex justify-between items-start mb-4 shrink-0 z-10 bg-[#F4F5FA] pb-2">
+                                <h3 className="font-bold text-lg text-gray-800">שדות פעילים</h3>
+                                <div className="flex flex-col gap-2 items-end text-xs font-bold text-gray-700">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="mt-0.5">מוגבל ל {activeFields.length}/10</span>
+                                        <Icon name="volume" className="w-4 h-4 text-gray-500"/>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[#1E4DB7] cursor-pointer hover:underline">
+                                        <span className="mt-0.5">ביטול שיוך אישי</span>
+                                        <Icon name="user" className="w-4 h-4"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="relative flex-1 min-h-0">
+                                <div className="absolute inset-0 overflow-y-auto pr-2 pb-10 space-y-4 z-10 custom-scrollbar">
+                                    <div className="absolute right-[19px] top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
+                                    
+                                    {activeFields.map((field, index) => {
+                                        const isEditingThis = editingField && editingField.id === field.id;
+                                        
+                                        return (
+                                            <div 
+                                                key={field.id} 
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, field.id)}
+                                                onDragEnd={handleDragEnd}
+                                                onDragOver={handleDragOver}
+                                                onDrop={(e) => handleDrop(e, field.id)}
+                                                className="flex gap-4 items-center group relative z-10 cursor-grab active:cursor-grabbing"
+                                                title="גרור כדי לשנות סדר"
+                                            >
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm transition-colors ${isEditingThis ? 'bg-[#1E4DB7] text-white border-transparent' : 'bg-white border border-gray-300 text-gray-600 group-hover:border-[#1E4DB7]'}`}>
+                                                    {index + 1}
+                                                </div>
+                                                
+                                                <div 
+                                                    onClick={() => handleEditExisting(field)} 
+                                                    className={`flex-1 border ${field.dashed ? 'border-dashed border-gray-300 bg-transparent' : 'border-gray-200 bg-[#FCFCFD] shadow-sm'} rounded-xl p-3 flex justify-between items-center transition-all ${isEditingThis ? 'ring-2 ring-[#1E4DB7] border-transparent' : 'hover:border-[#1E4DB7]'}`}
+                                                >
+                                                    <div className="absolute right-[-24px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Icon name="grip" className="w-4 h-4 text-gray-400" />
+                                                    </div>
+
+                                                    {field.locked && (
+                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-gray-400">
+                                                            לא ניתן למחוק
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex flex-col justify-center w-full text-right pr-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`text-sm font-bold ${field.dashed ? 'text-gray-500' : (isEditingThis ? 'text-[#1E4DB7]' : 'text-gray-800')}`}>{field.title}</span>
+                                                            {field.required && <span className="text-[10px] bg-red-50 text-red-500 font-bold px-1.5 py-0.5 rounded">חובה</span>}
+                                                        </div>
+                                                        <div className="text-xs text-gray-400 mt-1 font-semibold truncate max-w-[70%]">{field.val}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    
+                                    {activeFields.length === 0 && (
+                                        <div className="text-center text-gray-400 text-sm py-10 font-bold bg-white rounded-xl border border-dashed border-gray-300 relative z-10 mr-12">
+                                            אין שדות פעילים. צרו שדות מהתפריט מימין.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const SidebarNavItem = ({ icon, label, isActive, badge, onClick }) => (
+            <button
+                type="button"
+                onClick={onClick}
+                className="my-1 flex w-full items-center justify-between rounded-xl border-r-4 px-4 py-3 text-sm transition-all duration-200 hover:bg-[#F8FAFC]"
+                style={{
+                    borderRightColor: isActive ? '#2563EB' : 'transparent',
+                    backgroundColor: isActive ? '#EFF6FF' : 'transparent',
+                    color: isActive ? '#2563EB' : '#718096',
+                    fontWeight: isActive ? 700 : 500
+                }}
+            >
+                <div className="flex min-w-0 items-center gap-3">
+                    <Icon name={icon} className="h-5 w-5 shrink-0" color={isActive ? '#2563EB' : '#A0AEC0'} />
+                    <span className="truncate">{label}</span>
+                </div>
+                {badge && (
+                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-100 px-1.5 text-[10px] font-bold text-blue-600">
+                        {badge}
+                    </span>
+                )}
+            </button>
+        );
+
+        // --- MAIN APP COMPONENT ---
+        const App = () => {
+            const [hasSelectedEnv, setHasSelectedEnv] = useState(false);
+            const [hasSelectedRoom, setHasSelectedRoom] = useState(false); // New state to control sidebar visibility
+            const [currentView, setCurrentView] = useState('hierarchy');
+            const [showEnvModal, setShowEnvModal] = useState(true); 
+            
+            const isAdmin = true; 
+
+            const navItems = [
+                { id: 'hierarchy', icon: 'dashboard', label: 'בחירת חדרים' },
+                { id: 'dashboard', icon: 'trendUp', label: 'דשבורד' },
+                { id: 'new_complaint', icon: 'filePlus', label: 'פנייה חדשה' },
+                { id: 'my_tasks', icon: 'user', label: 'המשימות שלי' },
+                { id: 'open_complaints', icon: 'globe', label: 'פניות פתוחות' },
+                { id: 'history', icon: 'history', label: 'היסטוריית פניות' },
+                { id: 'external', icon: 'link', label: 'פניות חיצוניות', badge: '0' },
+                { id: 'settings', icon: 'settings', label: 'הגדרות מערכת' }
+            ];
+
+            const handleEnvConfirm = (env) => {
+                setHasSelectedEnv(true);
+                setShowEnvModal(false);
+                setCurrentView('hierarchy');
+                setHasSelectedRoom(false); // Reset room selection on env change
+            };
+
+            const handleRoomSelect = (room) => {
+                setHasSelectedRoom(true); // User picked a room, show sidebar!
+                setCurrentView('dashboard'); // Default view when entering a room
+            };
+
+            // כפתור "חזור לבחירת חדרים" מהסיידבר יעביר למסך ההיררכיה ויעלים את הסיידבר
+            const handleNavigate = (id) => {
+                if (id === 'hierarchy') {
+                    setHasSelectedRoom(false);
+                }
+                setCurrentView(id);
+            };
+
+            const renderView = () => {
+                switch(currentView) {
+                    case 'hierarchy': return <HierarchyView onOpenEnvModal={() => setShowEnvModal(true)} onOpenUserManagement={() => setCurrentView('user_management')} onRoomSelect={handleRoomSelect} />;
+                    case 'user_management': return <UserManagementView />;
+                    case 'dashboard': return <DashboardView />;
+                    case 'new_complaint': return <NewComplaintView />;
+                    case 'settings': return <SettingsView />;
+                    
+                    case 'my_tasks': return <TicketListView 
+                        title="המשימות שלי - מנדיי" 
+                        description="כאן מוצגות כל המשימות שנמצאות תחת טיפול. קיימות כפתורים על מנת לבצע פעולות שונות" 
+                        viewType="my_tasks"
+                    />;
+                    case 'open_complaints': return <TicketListView 
+                        title="פניות פתוחות - מנדיי" 
+                        description="כאן ניתן לצפות בכל הפניות הפתוחות שקיימות במערכת וניתן לסנן אותן בעזרת סל מסננים" 
+                        viewType="open"
+                    />;
+                    case 'history': return <TicketListView 
+                        title="היסטוריית פניות - מנדיי" 
+                        description="כאן מוצגות כל הפניות שניסגרו, המערכת משמשת כארכיון לתקלות, ניתן לסנן לפי שלל המסננים המתאימים" 
+                        viewType="history"
+                    />;
+                    case 'external': return <TicketListView 
+                        title="פניות חיצוניות - מנדיי" 
+                        description="כאן מוצגות כל הפניות שהועברו מחדרכם או הועברו לחדרכם מחדר אחר. ניתן לעבור בין הקטגוריות בעזרת הכפתורים מעלה" 
+                        showToggle={true} 
+                        isExternal={true}
+                        viewType="external"
+                    />;
+                    
+                    default: return <div className="p-8 font-bold text-gray-500">מסך בתהליך בנייה</div>;
+                }
+            };
+
+            // האם להציג את התפריט הצדדי?
+            // התפריט יוצג רק אם נבחר חדר ספציפי (לא במצב היררכיה ולא בניהול משתמשים)
+            const showSidebar = hasSelectedRoom && currentView !== 'hierarchy' && currentView !== 'user_management';
+
+            return (
+                <div className="flex h-screen w-full overflow-hidden bg-[#F5F6FA] text-brand-text font-sans" dir="rtl">
+                    
+                    {/* Environment Selection Overlay */}
+                    {showEnvModal && (
+                        <EnvironmentSelectionModal 
+                            onConfirm={handleEnvConfirm} 
+                            onClose={() => hasSelectedEnv ? setShowEnvModal(false) : null}
+                            isAdmin={isAdmin}
+                        />
+                    )}
+
+                    {/* RIGHT SIDEBAR - Conditionally Rendered */}
+                    {showSidebar && (
+                        <aside className="fixed inset-y-0 right-0 z-30 flex h-screen w-64 flex-col bg-white shadow-[-8px_0_30px_rgba(0,0,0,0.025)]">
+                            <div className="mx-6 flex h-24 shrink-0 items-center justify-center gap-2 border-b border-slate-100">
+                                <Icon name="layers" className="h-8 w-8 text-[#1B2559]" />
+                                <button type="button" className="text-3xl font-extrabold tracking-tight text-[#1B2559]" onClick={() => handleNavigate('dashboard')}>
+                                    תמ״ר
+                                </button>
+                            </div>
+
+                            <nav className="flex-1 min-h-0 px-4 py-3">
+                                {navItems.map((item) => (
+                                    <SidebarNavItem
+                                        key={item.id}
+                                        icon={item.icon}
+                                        label={item.label}
+                                        badge={item.badge}
+                                        isActive={currentView === item.id}
+                                        onClick={() => handleNavigate(item.id)}
+                                    />
+                                ))}
+                            </nav>
+
+                            <div className="mt-auto shrink-0 border-t border-slate-100 px-6 py-5 transition-colors hover:bg-slate-50/60">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-600">
+                                        ע
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="truncate text-sm font-bold text-[#1B2559]">עטיה נהוראי</div>
+                                        <div className="text-xs text-gray-400">14 ביוני 2026</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    )}
+
+                    {/* MAIN CONTENT AREA */}
+                    <main className={`flex-1 flex h-full min-w-0 flex-col overflow-hidden bg-transparent relative ${showSidebar ? 'mr-64' : ''}`}>
+                        {renderView()}
+                    </main>
+                </div>
+            );
+        };
+
+export default App;
+
+
