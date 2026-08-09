@@ -11,6 +11,14 @@ import { DashboardDateInput, DashboardSegmentedButton, DashboardSelectPill } fro
                                 <Icon name="filter" className="w-4 h-4 text-blue-600" />
                                 מסנני תצוגה מתקדמים
                             </div>
+                              <button
+                                type="button"
+                                onClick={onExport}
+                                className="sm:mr-auto flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md"
+                            >
+                                <Icon name="arrowDownStraight" className="w-4 h-4" />
+                                הורדת קובץ Excel
+                            </button>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2.5">
@@ -23,14 +31,7 @@ import { DashboardDateInput, DashboardSegmentedButton, DashboardSelectPill } fro
                             <DashboardDateInput label="עד תאריך" value={filters.dateTo} onChange={(value) => setFilters(current => ({ ...current, dateTo: value }))} />
                             <DashboardSelectPill label="קטגוריה" icon="filter" value={filters.category} onChange={(value) => setFilters(current => ({ ...current, category: value }))} options={categoryOptions} />
                             <DashboardSelectPill label="מיון" icon="arrowDownUp" value={filters.sortOrder} onChange={(value) => setFilters(current => ({ ...current, sortOrder: value }))} options={sortOptions} />
-                            <button
-                                type="button"
-                                onClick={onExport}
-                                className="sm:mr-auto flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md"
-                            >
-                                <Icon name="arrowDownStraight" className="w-4 h-4" />
-                                הורדת קובץ Excel
-                            </button>
+                          
                         </div>
                     </div>
                 </div>

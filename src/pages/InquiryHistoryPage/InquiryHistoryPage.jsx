@@ -3,7 +3,7 @@ import TicketListPage from '../TicketListPage/TicketListPage.jsx';
 
 const InquiryHistoryPage = () => (
     <TicketListPage
-        title="היסטוריית פניות - מנדיי"
+        title="היסטוריית פניות"
         description="כאן מוצגות כל הפניות שניסגרו, המערכת משמשת כארכיון לתקלות, ניתן לסנן לפי שלל המסננים המתאימים"
         viewType="history"
     />

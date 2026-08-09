@@ -4,7 +4,7 @@ import Icon from '../../../components/common/Icon.jsx';
 const fieldBase = 'h-[34px] w-full rounded-lg border border-blue-100 bg-white px-3 text-[12px] font-semibold text-slate-800 shadow-[0_2px_8px_rgba(37,99,235,0.04)] outline-none transition placeholder:text-blue-200 focus:border-blue-500';
 
 const FieldLabel = ({ children, required, action }) => (
-    <div className="mb-1 flex h-5 items-center justify-between gap-2 text-right text-[12px] font-black text-slate-900">
+    <div className="mb-2 flex h-5 items-center justify-between gap-2 text-right text-[12px] font-black text-slate-900">
         {action}
         <label>{children} {required && <span className="text-red-500">*</span>}</label>
     </div>
@@ -58,7 +58,7 @@ const SystemFieldsCard = ({
                 value={fields.personalId}
                 onChange={(event) => setField('personalId', event.target.value)}
                 placeholder="הכנס/י מספר אישי"
-                action={<button type="button" onClick={onOpenHistory} className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-[12px] font-black text-blue-700"><Icon name="history" className="h-3.5 w-3.5" /> היסטוריית לקוח (6)</button>}
+                action={<button type="button" onClick={onOpenHistory} className="inline-flex items-center  gap-1 rounded-md bg-blue-50 px-2 py-1 text-[12px] font-black text-blue-700"><Icon name="history" className="h-3.5 w-3.5" /> היסטוריית לקוח (6)</button>}
             />
 
             <TextField label="שם הלקוח" required icon="user" value={fields.customerName} onChange={(event) => setField('customerName', event.target.value)} placeholder="הכנס/י שם" />

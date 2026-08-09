@@ -1,4 +1,6 @@
 import React from 'react';
+import PageHeader from '../../components/common/PageHeader.jsx';
+import { PageErrorState, PageLoadingState } from '../../components/common/PageLoadingState.jsx';
 import SystemFieldsCard from '../../features/inquiries/components/SystemFieldsCard.jsx';
 import RoomFieldsCard from '../../features/inquiries/components/RoomFieldsCard.jsx';
 import InquiryTabs from '../../features/inquiries/components/InquiryTabs.jsx';
@@ -11,18 +13,38 @@ import { useInquiryForm } from '../../features/inquiries/hooks/useInquiryForm.js
 const NewInquiryPage = () => {
     const form = useInquiryForm();
 
+    if (form.initialLoadError) {
+        return (
+            <div className="inquiry-page-surface relative flex h-full min-h-0 flex-col overflow-hidden" dir="rtl">
+                <PageErrorState onRetry={form.reloadInitialData} />
+            </div>
+        );
+    }
+
+    if (form.initialLoading) {
+        return (
+            <div className="inquiry-page-surface relative flex h-full min-h-0 flex-col overflow-hidden" dir="rtl">
+                <PageLoadingState />
+            </div>
+        );
+    }
+
+    const displayTitle = form.currentRoomName ? `פנייה חדשה - ${form.currentRoomName}` : 'פנייה חדשה';
+
     return (
-        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[#f3f6fb] text-slate-950" dir="rtl">
-            <header className="flex h-14 shrink-0 items-end justify-between border-b border-blue-100 bg-white/95 px-6 shadow-[0_2px_14px_rgba(15,23,42,0.05)]">
-                <div className="flex h-full items-center gap-4">
-                    <h1 className="whitespace-nowrap text-xl font-black tracking-tight text-slate-950">פנייה חדשה – {form.currentRoomName}</h1>
-                    <InquiryTabs activeTab={form.activeTab} onFormClick={form.closeChat} onChatClick={form.openChat} onAssignmentClick={form.openAssignment} />
+        <div className="inquiry-page-surface relative flex h-full min-h-0 flex-col overflow-hidden" dir="rtl">
+            <div className="inquiry-page-surface shrink-0 px-6 pt-4">
+                <PageHeader
+                    title={displayTitle}
+                    description="יצירת פנייה חדשה ומילוי פרטי הפנייה בחדר הנוכחי."
+                />
+
+                <div className="mt-2 border-b border-[var(--color-border-strong)]">
+                    <InquiryTabs activeTab={form.activeTab} onFormClick={form.closeChat} onChatClick={form.openChat} onAssignmentClick={form.openAssignment} assignmentEnabled={form.assignmentEnabled} />
                 </div>
+            </div>
 
-                <div className="h-full w-36" aria-hidden="true" />
-            </header>
-
-            <main className="flex min-h-0 flex-1 gap-3 overflow-hidden px-5 pb-4 pt-3">
+            <main className="flex min-h-0 flex-1 gap-3 overflow-hidden px-5 pb-4 pt-3 max-md:flex-col">
                 <SystemFieldsCard
                     inquiryId={form.inquiryId}
                     fields={form.fields}
@@ -31,11 +53,16 @@ const NewInquiryPage = () => {
                     isTemplateOpen={form.isTemplateOpen}
                     setIsTemplateOpen={form.setIsTemplateOpen}
                     selectTemplate={form.selectTemplate}
+                    incidentDescriptionSettings={form.incidentDescriptionSettings}
                     onOpenHistory={() => form.setIsHistoryOpen(true)}
+                    openedBy={form.currentUser?.displayName}
+                    openedByContext={form.currentUser?.email}
+                    historyCount={form.openCustomerInquiries.length}
                 />
 
                 <RoomFieldsCard
                     fields={form.fields}
+                    dynamicFields={form.dynamicFields}
                     setField={form.setField}
                     environments={form.environments}
                     selectedEnvironment={form.selectedEnvironment}
@@ -49,6 +76,8 @@ const NewInquiryPage = () => {
                     requiredDone={form.requiredDone}
                     requiredTotal={form.requiredTotal}
                     optionalTotal={form.optionalTotal}
+                    assignmentEnabled={form.assignmentEnabled}
+                    assignedUsersSummary={form.assignedUsersSummary}
                 />
             </main>
 
@@ -61,13 +90,16 @@ const NewInquiryPage = () => {
                 onSend={form.sendChatMessage}
             />
 
-            <PersonalAssignmentDrawer
-                open={form.activeTab === 'assignment'}
-                inquiryId={form.inquiryId}
-                roomId={form.roomId}
-                roomName={form.currentRoomName}
-                onClose={form.closeAssignment}
-            />
+            {form.assignmentEnabled && (
+                <PersonalAssignmentDrawer
+                    open={form.activeTab === 'assignment'}
+                    inquiryId={form.ticketId}
+                    roomId={form.roomId}
+                    roomName={form.currentRoomName}
+                    onClose={form.closeAssignment}
+                    onSaved={form.refreshAssignment}
+                />
+            )}
 
             <CustomerHistoryDrawer
                 open={form.isHistoryOpen}
@@ -80,6 +112,10 @@ const NewInquiryPage = () => {
                 setIsShortcutsOpen={form.setIsShortcutsOpen}
                 isPublishConfirmOpen={form.isPublishConfirmOpen}
                 setIsPublishConfirmOpen={form.setIsPublishConfirmOpen}
+                isClearConfirmOpen={form.isClearConfirmOpen}
+                setIsClearConfirmOpen={form.setIsClearConfirmOpen}
+                onClearContent={form.resetFormContent}
+                onPublish={form.publishInquiry}
             />
         </div>
     );

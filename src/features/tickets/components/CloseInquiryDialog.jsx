@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/common/Icon.jsx';
 import { closeInquiryService } from '../services/closeInquiryService.js';
+import { notificationSoundService } from '../services/notificationSoundService.js';
 
-const CloseInquiryDialog = ({ ticket, open, onClose, onClosed }) => {
+const CloseInquiryDialog = ({ ticket, open, closeSound = 'off', onClose, onClosed }) => {
     const [summary, setSummary] = useState('');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -17,7 +18,8 @@ const CloseInquiryDialog = ({ ticket, open, onClose, onClosed }) => {
         setSubmitting(true);
         setError('');
         try {
-            const closedTicket = await closeInquiryService.closeInquiry(ticket.id, { summary });
+            const closedTicket = await closeInquiryService.closeInquiry(ticket.ticketId || ticket.id, { summary }, ticket.ticketVersion);
+            notificationSoundService.play(closeSound);
             onClosed?.(closedTicket);
             onClose();
         } catch (err) {
@@ -28,21 +30,21 @@ const CloseInquiryDialog = ({ ticket, open, onClose, onClosed }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/30 p-4" dir="rtl" onMouseDown={onClose}>
-            <div className="w-full max-w-md rounded-2xl border border-blue-100 bg-white p-4 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="inquiry-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4" dir="rtl" onMouseDown={onClose}>
+            <div className="inquiry-overlay-panel w-full max-w-md rounded-2xl p-4" onMouseDown={(event) => event.stopPropagation()}>
                 <div className="mb-4 flex items-center justify-between">
-                    <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 text-slate-400">
+                    <button type="button" onClick={onClose} className="inquiry-control flex h-8 w-8 items-center justify-center rounded-lg p-0 inquiry-muted-text">
                         <Icon name="close" className="h-4 w-4" />
                     </button>
-                    <h3 className="text-base font-black text-slate-950">סגירת פנייה {ticket?.id}</h3>
+                    <h3 className="text-base font-black inquiry-primary-text">סגירת פנייה {ticket?.displayId || ticket?.ticketId || ticket?.id}</h3>
                 </div>
-                <label className="block text-sm font-black text-slate-800">
+                <label className="block text-sm font-black inquiry-primary-text">
                     סיכום טיפול / פתרון
-                    <textarea value={summary} onChange={(event) => setSummary(event.target.value)} className="mt-2 h-28 w-full resize-none rounded-xl border border-blue-100 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-500" placeholder="תארו מה בוצע ואיך נסגרה הפנייה" />
+                    <textarea value={summary} onChange={(event) => setSummary(event.target.value)} className="inquiry-input-surface mt-2 h-28 w-full resize-none rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-blue-500" placeholder="תארו מה בוצע ואיך נסגרה הפנייה" />
                 </label>
-                {error && <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600">{error}</div>}
+                {error && <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
                 <div className="mt-4 flex justify-end gap-2">
-                    <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-black text-slate-600">ביטול</button>
+                    <button type="button" onClick={onClose} className="inquiry-control rounded-xl px-4 py-2 text-xs font-black">ביטול</button>
                     <button type="button" onClick={submit} disabled={submitting} className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white disabled:opacity-50">{submitting ? 'סוגר...' : 'סגור פנייה'}</button>
                 </div>
             </div>

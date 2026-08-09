@@ -1,12 +1,32 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import Icon from '../../../components/common/Icon.jsx';
+import PortalMenu from '../../../components/common/PortalMenu.jsx';
+import { summarizeIncidentTemplate } from '../../settings/constants/settingsDefaults.js';
 
-const fieldBase = 'h-[34px] w-full rounded-lg border border-blue-100 bg-white px-3 text-[12px] font-semibold text-slate-800 shadow-[0_2px_8px_rgba(37,99,235,0.04)] outline-none transition placeholder:text-blue-200 focus:border-blue-500';
+const fieldBase = 'inquiry-input-surface h-[34px] w-full rounded-lg px-3 text-[12px] font-semibold shadow-[0_2px_8px_rgba(37,99,235,0.04)] outline-none transition focus:border-blue-500';
+const LABEL_SYSTEM_FIELDS = 'שדות מערכת';
+const LABEL_INQUIRY_ID = 'מספר פנייה:';
+const LABEL_OPENED_BY = 'פותח פנייה:';
+const LABEL_HISTORY = 'היסטוריית לקוח';
+const LABEL_CUSTOMER_ID = 'מספר אישי של הלקוח';
+const LABEL_CUSTOMER_NAME = 'שם הלקוח';
+const LABEL_PHONE = 'טלפון ליצירת קשר';
+const LABEL_PRIORITY = 'רמת דחיפות';
+const LABEL_TEMPLATE = 'הוספת תבנית';
+const LABEL_TEMPLATE_PICKER = 'בחירת תבנית';
+const PLACEHOLDER_CUSTOMER_ID = 'הכנס/י מספר אישי';
+const PLACEHOLDER_CUSTOMER_NAME = 'הכנס/י שם';
+const PLACEHOLDER_PHONE = 'הכנס/י טלפון';
+const DEFAULT_DESCRIPTION_LABEL = 'תיאור תקלה';
+const DEFAULT_DESCRIPTION_PLACEHOLDER = 'לדוגמה: תיאור הפנייה, דרך פתרון...';
+const PRIORITY_LOW = 'נמוכה-3';
+const PRIORITY_MEDIUM = 'בינונית-2';
+const PRIORITY_HIGH = 'גבוהה-1';
 
 const FieldLabel = ({ children, required, action }) => (
-    <div className="mb-1 flex h-5 items-center justify-between gap-2 text-right text-[12px] font-black text-slate-900">
-        {action}
+    <div className="mb-2 flex h-5 items-center justify-between gap-2 text-right text-[12px] font-black inquiry-primary-text">
         <label>{children} {required && <span className="text-red-500">*</span>}</label>
+        {action}
     </div>
 );
 
@@ -15,7 +35,7 @@ const TextField = ({ label, required, icon, action, ...props }) => (
         <FieldLabel required={required} action={action}>{label}</FieldLabel>
         <div className="relative">
             <input {...props} className={`${fieldBase} pl-9 text-right`} />
-            {icon && <Icon name={icon} className="absolute left-3 top-2.5 h-4 w-4 text-blue-300" />}
+            {icon && <Icon name={icon} className="absolute left-3 top-2.5 h-4 w-4 inquiry-muted-text" />}
         </div>
     </div>
 );
@@ -28,115 +48,105 @@ const SystemFieldsCard = ({
     isTemplateOpen,
     setIsTemplateOpen,
     selectTemplate,
-    onOpenHistory
+    incidentDescriptionSettings,
+    onOpenHistory,
+    openedBy,
+    openedByContext,
+    historyCount = 0
 }) => {
-    const templatePopupRef = useRef(null);
     const templateButtonRef = useRef(null);
-
-    useEffect(() => {
-        if (!isTemplateOpen) {
-            return undefined;
-        }
-
-        const handlePointerDown = (event) => {
-            const target = event.target;
-            if (templatePopupRef.current?.contains(target) || templateButtonRef.current?.contains(target)) {
-                return;
-            }
-            setIsTemplateOpen(false);
-        };
-
-        const handleKeyDown = (event) => {
-            if (event.key === 'Escape') {
-                setIsTemplateOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handlePointerDown);
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('mousedown', handlePointerDown);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isTemplateOpen, setIsTemplateOpen]);
+    const descriptionLabel = incidentDescriptionSettings?.label || DEFAULT_DESCRIPTION_LABEL;
+    const descriptionPlaceholder = incidentDescriptionSettings?.placeholder || DEFAULT_DESCRIPTION_PLACEHOLDER;
+    const descriptionHelpText = incidentDescriptionSettings?.helpText || '';
+    const descriptionRequired = incidentDescriptionSettings?.required !== false;
+    const normalizedTemplates = useMemo(() => templates.filter((template) => template?.id && template?.content), [templates]);
 
     return (
-        <section className="flex h-full min-h-0 basis-[36%] flex-col overflow-hidden rounded-2xl border border-blue-100 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]" dir="rtl">
-            <div className="shrink-0 border-b border-slate-100 pb-3">
+        <section className="inquiry-panel flex h-full min-h-0 basis-[36%] flex-col overflow-hidden rounded-2xl p-4" dir="rtl">
+            <div className="shrink-0 border-b border-[var(--color-border)] pb-3">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-black text-slate-950">שדות מערכת</h2>
-                        <button type="button" className="inline-flex h-7 items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 text-[12px] font-black text-slate-900">
+                        <h2 className="text-lg font-black inquiry-primary-text">{LABEL_SYSTEM_FIELDS}</h2>
+                        <button type="button" className="inquiry-control inline-flex h-7 items-center gap-2 rounded-md px-3 text-[12px] font-black">
                             <Icon name="copy" className="h-3.5 w-3.5 text-blue-400" />
-                            <span className="text-slate-500">מספר פנייה:</span>
-                            <span>{inquiryId}</span>
+                            <span className="inquiry-muted-text">{LABEL_INQUIRY_ID}</span>
+                            <span className="inquiry-primary-text">{inquiryId}</span>
                         </button>
                     </div>
                 </div>
 
-                <div className="mt-3 flex items-center gap-2 text-[12px] font-bold text-slate-500">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white">ע</span>
-                    <span>פותח פנייה:</span>
-                    <span className="font-black text-slate-900">עטיה נהוראי</span>
-                    <span>· מנהל מערכת</span>
+                <div className="mt-3 flex items-center gap-2 text-[12px] font-bold inquiry-secondary-text">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-slate-700">ע</span>
+                    <span>{LABEL_OPENED_BY}</span>
+                    <span className="font-black inquiry-primary-text">{openedBy || 'המשתמש המחובר'}</span>
+                    {openedByContext && <span>· {openedByContext}</span>}
                 </div>
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-3 pt-3">
                 <TextField
-                    label="מספר אישי של הלקוח"
+                    label={LABEL_CUSTOMER_ID}
                     required
                     icon="user"
                     value={fields.personalId}
                     onChange={(event) => setField('personalId', event.target.value)}
-                    placeholder="הכנס/י מספר אישי"
-                    action={<button type="button" onClick={onOpenHistory} className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-[12px] font-black text-blue-700"><Icon name="history" className="h-3.5 w-3.5" /> היסטוריית לקוח (6)</button>}
+                    placeholder={PLACEHOLDER_CUSTOMER_ID}
+                    action={<button type="button" onClick={onOpenHistory} className="inquiry-control inquiry-control--active inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-black"><Icon name="history" className="h-3.5 w-3.5" /> {LABEL_HISTORY}{historyCount ? ` (${historyCount})` : ''}</button>}
                 />
 
-                <TextField label="שם הלקוח" required icon="user" value={fields.customerName} onChange={(event) => setField('customerName', event.target.value)} placeholder="הכנס/י שם" />
-                <TextField label="טלפון ליצירת קשר" required icon="phone" value={fields.phone} onChange={(event) => setField('phone', event.target.value)} placeholder="הכנס/י טלפון" />
+                <TextField label={LABEL_CUSTOMER_NAME} required icon="user" value={fields.customerName} onChange={(event) => setField('customerName', event.target.value)} placeholder={PLACEHOLDER_CUSTOMER_NAME} />
+                <TextField label={LABEL_PHONE} required icon="phone" value={fields.phone} onChange={(event) => setField('phone', event.target.value)} placeholder={PLACEHOLDER_PHONE} />
 
                 <div>
-                    <FieldLabel required>רמת דחיפות</FieldLabel>
+                    <FieldLabel required>{LABEL_PRIORITY}</FieldLabel>
                     <select value={fields.priority} onChange={(event) => setField('priority', event.target.value)} className={`${fieldBase} text-right`}>
-                        <option>נמוכה-3</option>
-                        <option>בינונית-2</option>
-                        <option>גבוהה-1</option>
+                        <option>{PRIORITY_LOW}</option>
+                        <option>{PRIORITY_MEDIUM}</option>
+                        <option>{PRIORITY_HIGH}</option>
                     </select>
                 </div>
 
                 <div className="relative flex min-h-0 flex-1 flex-col">
-                    <div className="mb-1 flex h-6 items-center justify-between">
-                        <button ref={templateButtonRef} type="button" onClick={() => setIsTemplateOpen((value) => !value)} className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-[12px] font-black text-blue-700">
+                    <div className="mb-1 flex h-6 items-center justify-between gap-2">
+                        <label className="text-[12px] font-black inquiry-primary-text">{descriptionLabel} {descriptionRequired && <span className="text-red-500">*</span>}</label>
+                        <button
+                            ref={templateButtonRef}
+                            type="button"
+                            onClick={() => setIsTemplateOpen((value) => !value)}
+                            className="inquiry-control inquiry-control--active inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-black"
+                            aria-expanded={isTemplateOpen}
+                            aria-haspopup="dialog"
+                        >
                             <Icon name="list" className="h-3.5 w-3.5" />
-                            הוספת תבנית
+                            {LABEL_TEMPLATE}
                         </button>
-                        <label className="text-[12px] font-black text-slate-900">תיאור התקלה <span className="text-red-500">*</span></label>
                     </div>
 
-                    {isTemplateOpen && (
-                        <div ref={templatePopupRef} className="absolute bottom-[calc(100%-28px)] right-0 z-30 max-h-40 w-[280px] overflow-y-auto rounded-xl border border-blue-100 bg-white p-2 text-right shadow-[0_16px_30px_rgba(15,23,42,0.14)]">
-                            <div className="mb-1 flex items-center justify-between gap-2 px-1">
-                                <button type="button" onClick={() => setIsTemplateOpen(false)} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-blue-100 bg-white text-slate-400">
+                    <PortalMenu anchorRef={templateButtonRef} open={isTemplateOpen} onClose={() => setIsTemplateOpen(false)}>
+                        <div className="inquiry-menu-surface max-h-[320px] w-[320px] overflow-y-auto rounded-2xl p-2 text-right" role="dialog" aria-label={LABEL_TEMPLATE_PICKER} dir="rtl">
+                            <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                                <button type="button" onClick={() => setIsTemplateOpen(false)} className="inquiry-control flex h-7 w-7 shrink-0 items-center justify-center rounded-md p-0 inquiry-muted-text" aria-label="סגור בחירת תבנית">
                                     <Icon name="close" className="h-3.5 w-3.5" />
                                 </button>
-                                <span className="text-[11px] font-black text-slate-500">בחירת תבנית</span>
+                                <span className="text-[11px] font-black inquiry-muted-text">{LABEL_TEMPLATE_PICKER}</span>
                             </div>
-                            {templates.map((template) => (
-                                <button key={template} type="button" onClick={() => selectTemplate(template)} className="block w-full rounded-lg px-3 py-2 text-right text-[12px] font-semibold leading-5 text-slate-700 hover:bg-blue-50">
-                                    {template}
+                            {normalizedTemplates.map((template) => (
+                                <button key={template.id} type="button" onClick={() => selectTemplate(template)} className="inquiry-menu-item block w-full rounded-xl border border-transparent px-3 py-2 text-right text-[12px] font-semibold leading-5 transition hover:border-[var(--color-border-strong)] focus:border-[var(--color-primary)] focus:outline-none">
+                                    <span className="block text-[12px] font-black inquiry-primary-text">{summarizeIncidentTemplate(template.content)}</span>
+                                    <span className="mt-1 block whitespace-pre-line text-[11px] inquiry-muted-text">{template.content}</span>
                                 </button>
                             ))}
+                            {!normalizedTemplates.length && <div className="px-3 py-4 text-center text-[12px] font-bold inquiry-muted-text">לא הוגדרו תבניות עדיין.</div>}
                         </div>
-                    )}
+                    </PortalMenu>
 
                     <textarea
                         value={fields.description}
                         onChange={(event) => setField('description', event.target.value)}
-                        className="min-h-[120px] flex-1 resize-none rounded-xl border-2 border-blue-600 bg-white px-4 py-3 text-right text-[13px] font-semibold leading-6 text-slate-800 outline-none placeholder:text-blue-200"
-                        placeholder="תיאור מפורט... (הקלד / לתבנית)"
+                        className="inquiry-input-surface min-h-[120px] flex-1 resize-y rounded-xl border-2 border-blue-600 px-4 py-3 text-right text-[13px] font-semibold leading-6 outline-none"
+                        placeholder={descriptionPlaceholder}
                     />
+                    {descriptionHelpText && <p className="mt-2 text-right text-[11px] font-semibold leading-5 inquiry-muted-text">{descriptionHelpText}</p>}
                 </div>
             </div>
         </section>

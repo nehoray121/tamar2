@@ -1,6 +1,4 @@
-﻿import React, { useState } from 'react';
-import { dashboardInquiries } from '../../features/dashboard/data/dashboard.mock.js';
-import { formatDashboardShortName } from '../../features/dashboard/utils/dashboard.utils.js';
+import React, { useState } from 'react';
 import DashboardHeader from '../../features/dashboard/components/DashboardHeader.jsx';
 import DashboardInquiryModal from '../../features/dashboard/components/DashboardInquiryModal.jsx';
 import DashboardKpiGrid from '../../features/dashboard/components/DashboardKpiGrid.jsx';
@@ -9,30 +7,32 @@ import KpiEditorModal from '../../features/dashboard/components/KpiEditorModal.j
 import PeriodicTrendCard from '../../features/dashboard/components/PeriodicTrendCard.jsx';
 import UrgencyBreakdownCard from '../../features/dashboard/components/UrgencyBreakdownCard.jsx';
 import WorkloadPanel from '../../features/dashboard/components/WorkloadPanel.jsx';
-import { useDashboardFilters } from '../../features/dashboard/hooks/useDashboardFilters.js';
+import { useDashboardData } from '../../features/dashboard/hooks/useDashboardData.js';
 import { useDashboardKpis } from '../../features/dashboard/hooks/useDashboardKpis.js';
 import { useExpandedDashboardPanel } from '../../features/dashboard/hooks/useExpandedDashboardPanel.js';
 import { useUrgencySelection } from '../../features/dashboard/hooks/useUrgencySelection.js';
 
 const DashboardPage = () => {
-    const inquiries = dashboardInquiries;
+    const dashboard = useDashboardData();
+    const { data, status, error, retry, filters, setFilters, filteredBarData, groupedBarData, categoryOptions, sortOptions, hasActiveFilters } = dashboard;
+    const inquiries = data.inquiries;
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', subtitle: '', filteredData: [] });
     const [modalSearch, setModalSearch] = useState('');
     const { expandedSection, setExpandedSection, fullSectionExpansion, toggleExpandedSection } = useExpandedDashboardPanel();
-    const { filters, setFilters, filteredBarData, groupedBarData, categoryOptions, sortOptions, hasActiveFilters } = useDashboardFilters(inquiries);
 
     const donutSource = hasActiveFilters ? filteredBarData : inquiries;
     const todayString = new Date().toISOString().split('T')[0];
     const now = new Date(`${todayString}T12:00:00`);
-    const openedToday = inquiries.filter((item) => item.date === todayString).length;
-    const totalInquiries = inquiries.length;
-    const openInquiries = inquiries.filter((item) => item.status === 'open').length;
-    const closedInquiries = inquiries.filter((item) => item.status === 'closed').length;
+    const totalInquiries = data.metrics.total || 0;
     const {
         priorityData,
         donutCategories,
         visibleDonutCategories,
         hasHiddenDonutCategories,
+        hiddenDonutCategoryCount,
+        hiddenDonutInquiryCount,
+        totalDonutCategoryCount,
+        totalDonutInquiries,
         visibleDonutCategoryCards,
         selectedDonutCategory,
         visibleSelectedDonutInquiries,
@@ -44,7 +44,7 @@ const DashboardPage = () => {
         totalDonutInquiryPages,
         selectDonutCategory,
         formatDonutInquiryAge
-    } = useUrgencySelection({ donutSource, expandedSection, now });
+    } = useUrgencySelection({ donutSource, prioritySource: data.priorityData, expandedSection, now });
     const {
         isKpiEditorOpen,
         selectedKpis,
@@ -60,45 +60,19 @@ const DashboardPage = () => {
         removeSelectedKpi,
         restoreRemovedKpi,
         dismissUndo
-    } = useDashboardKpis({ openedToday, openInquiries, closedInquiries });
+    } = useDashboardKpis({ metrics: data.metrics });
 
-    const workloadRows = React.useMemo(() => {
-        const groupedRows = inquiries
-            .filter((item) => item.status === 'open')
-            .reduce((accumulator, item) => {
-                if (!accumulator[item.requester]) {
-                    accumulator[item.requester] = { name: formatDashboardShortName(item.requester), total: 0, urgent: 0 };
-                }
+    const workloadRows = data.workload || [];
 
-                accumulator[item.requester].total += 1;
-                if (item.priority === 'גבוהה-1') {
-                    accumulator[item.requester].urgent += 1;
-                }
-
-                return accumulator;
-            }, {});
-
-        return Object.values(groupedRows).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'he'));
-    }, [inquiries]);
-
-    const urgentQueueItems = React.useMemo(() => {
-        return inquiries
-            .filter((item) => item.status === 'open')
-            .sort((a, b) => a.priorityLevel - b.priorityLevel || a.date.localeCompare(b.date))
-            .slice(0, 10)
-            .map((item, index) => {
-                const hoursOpen = Math.max(1, Math.round((now - new Date(`${item.date}T12:00:00`)) / 3600000));
-                const durationLabel = hoursOpen < 24
-                    ? `${Math.min(12, 4 + ((index * 3) % 8))} שעות`
-                    : `${Math.max(1, Math.floor(hoursOpen / 24))} ימים`;
-
-                return {
-                    ...item,
-                    durationLabel,
-                    assigneeLabel: index % 3 === 0 ? 'ללא שיוך' : formatDashboardShortName(item.requester)
-                };
-            });
-    }, [inquiries, now]);
+    const urgentQueueItems = React.useMemo(() => (data.attention || []).map((item) => {
+        const createdAt = new Date(item.createdAt || `${item.date}T12:00:00`);
+        const hoursOpen = Math.max(1, Math.round((now - createdAt) / 3600000));
+        return {
+            ...item,
+            durationLabel: hoursOpen < 24 ? `${hoursOpen} שעות` : `${Math.max(1, Math.floor(hoursOpen / 24))} ימים`,
+            assigneeLabel: item.assignee || 'ללא שיוך'
+        };
+    }), [data.attention, now]);
 
     const closeModal = () => {
         setModalSearch('');
@@ -141,11 +115,25 @@ const DashboardPage = () => {
         });
     };
 
+    if (status === 'loading' || status === 'idle') {
+        return <div dir="rtl" className="inquiry-page-surface flex h-full items-center justify-center text-sm font-black inquiry-secondary-text">טוען נתוני לוח בקרה...</div>;
+    }
+    if (status === 'error') {
+        return (
+            <div dir="rtl" className="inquiry-page-surface flex h-full items-center justify-center p-6">
+                <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <h2 className="text-lg font-black inquiry-primary-text">לא ניתן לטעון את לוח הבקרה</h2>
+                    <p className="mt-2 text-sm inquiry-secondary-text">{error}</p>
+                    <button type="button" onClick={retry} className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white">נסה שוב</button>
+                </div>
+            </div>
+        );
+    }
     return (
-        <div dir="rtl" className={`flex h-full min-h-0 flex-col overflow-hidden px-3 pb-3 pt-2 text-slate-800 wave-bg ${fullSectionExpansion ? 'lg:p-3' : ''}`}>
+        <div dir="rtl" className={`inquiry-page-surface wave-bg flex h-full min-h-0 flex-col overflow-hidden px-3 pb-3 pt-2 shadow-none ${fullSectionExpansion ? 'lg:p-3' : ''}`}>
             <DashboardHeader totalInquiries={totalInquiries} />
 
-            <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <main className="flex min-h-0 flex-1 flex-col overflow-auto">
                 <DashboardKpiGrid fullSectionExpansion={fullSectionExpansion} selectedKpis={selectedKpis} onEdit={openKpiEditor} onRemove={removeSelectedKpi} />
 
                 <div className="min-h-0 flex-1 overflow-hidden">
@@ -174,6 +162,10 @@ const DashboardPage = () => {
                                     priorityData={priorityData}
                                     visibleDonutCategories={visibleDonutCategories}
                                     hasHiddenDonutCategories={hasHiddenDonutCategories}
+                                    hiddenDonutCategoryCount={hiddenDonutCategoryCount}
+                                    hiddenDonutInquiryCount={hiddenDonutInquiryCount}
+                                    totalDonutCategoryCount={totalDonutCategoryCount}
+                                    totalDonutInquiries={totalDonutInquiries}
                                     visibleDonutCategoryCards={visibleDonutCategoryCards}
                                     donutCategories={donutCategories}
                                     selectedDonutCategory={selectedDonutCategory}
@@ -193,7 +185,7 @@ const DashboardPage = () => {
                             </div>
                         </div>
                     ) : (
-                        <div dir="ltr" className="dashboard-motion grid h-full min-h-0 grid-cols-12 grid-rows-[minmax(286px,390px)_minmax(154px,174px)] gap-2.5">
+                        <div dir="ltr" className="dashboard-motion grid h-full min-h-0 grid-cols-12 grid-rows-[minmax(300px,400px)_minmax(158px,178px)] gap-2">
                             {expandedSection !== 'workload' && (
                                 <div className="dashboard-motion col-span-12 min-h-0 lg:col-span-4 lg:col-start-1 lg:row-start-1">
                                     <UrgencyBreakdownCard
@@ -202,6 +194,10 @@ const DashboardPage = () => {
                                         priorityData={priorityData}
                                         visibleDonutCategories={visibleDonutCategories}
                                         hasHiddenDonutCategories={hasHiddenDonutCategories}
+                                        hiddenDonutCategoryCount={hiddenDonutCategoryCount}
+                                        hiddenDonutInquiryCount={hiddenDonutInquiryCount}
+                                        totalDonutCategoryCount={totalDonutCategoryCount}
+                                        totalDonutInquiries={totalDonutInquiries}
                                         visibleDonutCategoryCards={visibleDonutCategoryCards}
                                         donutCategories={donutCategories}
                                         selectedDonutCategory={selectedDonutCategory}

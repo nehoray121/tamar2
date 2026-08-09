@@ -9,11 +9,11 @@ import SectionExpandButton from './SectionExpandButton.jsx';
             return (
                 <DashboardCard className={`dashboard-card-motion flex h-full min-h-0 flex-col ${expanded ? 'dashboard-expanded-card' : ''}`} dir="rtl">
                     <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                        <SectionExpandButton expanded={expanded} onClick={onToggle} compact title={expanded ? 'מזער דורש טיפול עכשיו' : 'הרחב דורש טיפול עכשיו'} />
                         <div className="flex items-center gap-2 text-red-500">
                             <Icon name="target" className="h-[18px] w-[18px]" />
                             <h2 className="text-2xl font-black text-red-500">דורש טיפול עכשיו</h2>
                         </div>
-                        <SectionExpandButton expanded={expanded} onClick={onToggle} compact title={expanded ? 'מזער דורש טיפול עכשיו' : 'הרחב דורש טיפול עכשיו'} />
                     </div>
 
                     <div className={`min-h-0 flex-1 px-3 py-2 ${expanded ? 'overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' : 'overflow-hidden'}`}>

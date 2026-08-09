@@ -1,0 +1,206 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tamar Ticket Text Chat API",
+    "version": "7.1.0",
+    "description": "One continuous plain-text stream per Ticket. Access requires current Ticket visibility plus active Ticket-create authority in a current or historically visible Room. Chat remains writable across transfers and after closure; workflow isReadOnly remains independent from canWriteChat. Only authors may edit or delete their own messages; there is no administrator override. Attachments, uploads, internal notes and private or hidden messages are not supported."
+  },
+  "servers": [{ "url": "/api" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/tickets/{id}/messages": {
+      "parameters": [{ "$ref": "#/components/parameters/TicketId" }],
+      "get": {
+        "operationId": "listTicketMessages",
+        "summary": "Read the newest page from the continuous Ticket chat",
+        "parameters": [
+          { "$ref": "#/components/parameters/MessageLimit" },
+          { "$ref": "#/components/parameters/BeforeCursor" }
+        ],
+        "responses": {
+          "200": { "description": "Chronologically ascending page with older-page cursor", "headers": { "Cache-Control": { "$ref": "#/components/headers/NoStore" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageListResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "operationId": "createTicketMessage",
+        "summary": "Create an idempotent plain-text Ticket message",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateMessageRequest" } } } },
+        "responses": {
+          "201": { "description": "Message persisted for the first time", "headers": { "ETag": { "$ref": "#/components/headers/MessageETag" }, "Cache-Control": { "$ref": "#/components/headers/NoStore" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageMutationResponse" } } } },
+          "200": { "description": "Identical clientMessageId retry replayed without another realtime event", "headers": { "ETag": { "$ref": "#/components/headers/MessageETag" }, "Cache-Control": { "$ref": "#/components/headers/NoStore" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageMutationResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/tickets/{id}/messages/{messageId}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/TicketId" },
+        { "$ref": "#/components/parameters/MessageId" }
+      ],
+      "patch": {
+        "operationId": "editOwnTicketMessage",
+        "summary": "Replace the authenticated author's own live Message content",
+        "parameters": [{ "$ref": "#/components/parameters/IfMatch" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EditMessageRequest" } } } },
+        "responses": {
+          "200": { "description": "Own Message edited", "headers": { "ETag": { "$ref": "#/components/headers/MessageETag" }, "Cache-Control": { "$ref": "#/components/headers/NoStore" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageOnlyResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "428": { "$ref": "#/components/responses/PreconditionRequired" }
+        }
+      },
+      "delete": {
+        "operationId": "softDeleteOwnTicketMessage",
+        "summary": "Soft-delete the authenticated author's own live Message as a tombstone",
+        "parameters": [{ "$ref": "#/components/parameters/IfMatch" }],
+        "responses": {
+          "200": { "description": "Own Message replaced by a content-null tombstone", "headers": { "ETag": { "$ref": "#/components/headers/MessageETag" }, "Cache-Control": { "$ref": "#/components/headers/NoStore" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageOnlyResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "428": { "$ref": "#/components/responses/PreconditionRequired" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "parameters": {
+      "TicketId": { "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } },
+      "MessageId": { "name": "messageId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } },
+      "IfMatch": { "name": "If-Match", "in": "header", "required": true, "description": "Current Message.version, independent from Ticket.version", "schema": { "type": "string", "pattern": "^\\\"?[1-9][0-9]*\\\"?$" } },
+      "MessageLimit": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } },
+      "BeforeCursor": { "name": "before", "in": "query", "description": "Opaque cursor for messages older than the current page", "schema": { "type": "string", "maxLength": 512 } }
+    },
+    "headers": {
+      "MessageETag": { "description": "Current Message.version", "schema": { "type": "string" } },
+      "NoStore": { "description": "Sensitive chat responses are never cached", "schema": { "const": "no-store" } }
+    },
+    "schemas": {
+      "ObjectId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+      "CanonicalUuidV4": { "type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+      "MessageContent": { "type": "string", "minLength": 1, "maxLength": 10000, "description": "Plain text, also bounded to 40000 UTF-8 bytes; CRLF normalized to LF and outer whitespace trimmed" },
+      "CreateMessageRequest": {
+        "type": "object", "additionalProperties": false,
+        "required": ["clientMessageId", "content"],
+        "properties": {
+          "clientMessageId": { "$ref": "#/components/schemas/CanonicalUuidV4" },
+          "content": { "$ref": "#/components/schemas/MessageContent" }
+        }
+      },
+      "EditMessageRequest": {
+        "type": "object", "additionalProperties": false, "required": ["content"],
+        "properties": { "content": { "$ref": "#/components/schemas/MessageContent" } }
+      },
+      "SafeAuthor": {
+        "type": "object", "additionalProperties": false, "required": ["id", "displayName"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" },
+          "displayName": { "type": "string" },
+          "email": { "type": ["string", "null"], "format": "email" }
+        }
+      },
+      "MessageCapabilities": {
+        "type": "object", "additionalProperties": false, "required": ["canEdit", "canDelete"],
+        "properties": { "canEdit": { "type": "boolean" }, "canDelete": { "type": "boolean" } }
+      },
+      "TicketMessage": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "ticketId", "author", "content", "isEdited", "editedAt", "isDeleted", "deletedAt", "version", "createdAt", "updatedAt", "capabilities"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" },
+          "ticketId": { "$ref": "#/components/schemas/ObjectId" },
+          "author": { "$ref": "#/components/schemas/SafeAuthor" },
+          "content": { "oneOf": [{ "$ref": "#/components/schemas/MessageContent" }, { "type": "null" }] },
+          "isEdited": { "type": "boolean" },
+          "editedAt": { "type": ["string", "null"], "format": "date-time" },
+          "isDeleted": { "type": "boolean" },
+          "deletedAt": { "type": ["string", "null"], "format": "date-time" },
+          "version": { "type": "integer", "minimum": 1 },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "capabilities": { "$ref": "#/components/schemas/MessageCapabilities" }
+        }
+      },
+      "MessageAcknowledgement": {
+        "type": "object", "additionalProperties": false,
+        "required": ["clientMessageId", "messageId", "persistedAt"],
+        "properties": {
+          "clientMessageId": { "$ref": "#/components/schemas/CanonicalUuidV4" },
+          "messageId": { "$ref": "#/components/schemas/ObjectId" },
+          "persistedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MessagePageInfo": {
+        "type": "object", "additionalProperties": false,
+        "required": ["limit", "hasMoreBefore", "nextBeforeCursor"],
+        "properties": {
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "hasMoreBefore": { "type": "boolean" },
+          "nextBeforeCursor": { "type": ["string", "null"] }
+        }
+      },
+      "MessageListResponse": {
+        "type": "object", "required": ["success", "data"],
+        "properties": { "success": { "const": true }, "data": { "type": "object", "required": ["items", "pageInfo"], "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/TicketMessage" } },
+          "pageInfo": { "$ref": "#/components/schemas/MessagePageInfo" }
+        } } }
+      },
+      "MessageMutationResponse": {
+        "type": "object", "required": ["success", "data"],
+        "properties": { "success": { "const": true }, "data": { "type": "object", "required": ["message", "acknowledgement"], "properties": {
+          "message": { "$ref": "#/components/schemas/TicketMessage" },
+          "acknowledgement": { "$ref": "#/components/schemas/MessageAcknowledgement" }
+        } } }
+      },
+      "MessageOnlyResponse": {
+        "type": "object", "required": ["success", "data"],
+        "properties": { "success": { "const": true }, "data": { "type": "object", "required": ["message"], "properties": {
+          "message": { "$ref": "#/components/schemas/TicketMessage" }
+        } } }
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "AUTHENTICATION_REQUIRED", "USER_NOT_PROVISIONED", "USER_INACTIVE", "EFFECTIVE_MEMBERSHIP_REQUIRED",
+          "VALIDATION_ERROR", "INVALID_MESSAGE_CONTENT", "INVALID_CLIENT_MESSAGE_ID", "INVALID_MESSAGE_CURSOR", "PRECONDITION_REQUIRED",
+          "TICKET_NOT_FOUND", "MESSAGE_NOT_FOUND", "MESSAGE_IDEMPOTENCY_CONFLICT", "MESSAGE_NOT_AUTHORED_BY_ACTOR",
+          "MESSAGE_CANNOT_EDIT_DELETED", "MESSAGE_ALREADY_DELETED", "MESSAGE_VERSION_CONFLICT", "EMPTY_MESSAGE_UPDATE"
+        ]
+      },
+      "Error": {
+        "type": "object", "required": ["success", "error"],
+        "properties": { "success": { "const": false }, "error": { "type": "object", "required": ["code", "message"], "properties": {
+          "code": { "$ref": "#/components/schemas/ErrorCode" }, "message": { "type": "string" },
+          "fieldErrors": { "type": ["object", "null"] }, "requestId": { "type": ["string", "null"] }
+        } } }
+      }
+    },
+    "responses": {
+      "BadRequest": { "description": "Invalid, unknown or protected input", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "Missing or invalid Bearer Access Token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden": { "description": "Authenticated actor is not the Message author", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "Ticket or Message absent, or Ticket hidden by current chat scope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Conflict": { "description": "Idempotency, Message state or Message.version conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "PreconditionRequired": { "description": "Message-level If-Match is required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    }
+  },
+  "x-realtime-events": {
+    "events": ["chat:message-created", "chat:message-updated", "chat:message-deleted"],
+    "delivery": "Emitted after persistence to the Ticket System plus every active visible Room and its SubEnvironment. Payloads never contain message content. REST is the only write path."
+  }
+}

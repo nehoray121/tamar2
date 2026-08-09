@@ -35,11 +35,11 @@ import Icon from '../../../components/common/Icon.jsx';
             const navSpacingClass = isExpanded ? 'mt-3' : 'mt-2';
 
             return (
-                <div className={`dashboard-chart-surface relative flex h-full min-h-0 ${chartPaddingClass} flex-col overflow-hidden rounded-b-[28px] bg-gradient-to-b from-[#F8FBFF] via-[#F6F9FF] to-[#EEF5FF]`}>
-                    <div className="pointer-events-none absolute inset-x-4 inset-y-4 rounded-[28px] bg-white/60 ring-1 ring-white/80" />
+                <div className={`dashboard-chart-surface relative flex h-full min-h-0 ${chartPaddingClass} flex-col overflow-hidden rounded-b-[24px] bg-[var(--color-surface-raised)]`}>
+                    <div className="pointer-events-none absolute inset-x-4 inset-y-4 rounded-[24px]  bg-transparent" />
 
                     <div className={`relative z-10 flex min-h-0 flex-1 flex-col ${plotPaddingClass}`}>
-                        <div dir="ltr" className="grid min-h-0 flex-1 grid-cols-[42px_minmax(0,1fr)] gap-3">
+                        <div dir="ltr" className="grid min-h-0 flex-1 grid-cols-[0px_minmax(0,1fr)] gap-3">
                             <div className="flex min-h-0 flex-col">
                                 <div className={`relative ${plotMinHeightClass} min-h-0 flex-1`}>
                                     {yAxisSteps.map((step, index) => (

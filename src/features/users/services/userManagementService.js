@@ -1,66 +1,24 @@
-import { mockUserDirectory } from '../data/mockUserDirectory.js';
-import { initialManagedUsers } from '../data/mockUserManagementData.js';
+import { usersApi } from '../api/usersApi.js';
 
-// Temporary frontend adapter. Replace these async functions with real user-management APIs later.
-let users = initialManagedUsers.map((user) => ({ ...user, assignments: [...user.assignments], history: [...user.history] }));
-let listeners = new Set();
-
-const wait = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms));
-const clone = (user) => ({ ...user, assignments: [...user.assignments], history: [...user.history] });
-const snapshot = () => users.map(clone);
-const notify = () => listeners.forEach((listener) => listener(snapshot()));
-const addHistory = (user, text) => ({ ...user, history: [{ id: `h-${Date.now()}`, text, time: new Date().toLocaleString('he-IL') }, ...user.history] });
+const adaptMembership = (membership) => ({ ...membership, scope: membership });
+const adaptUser = (user) => ({
+    ...user,
+    name: user.displayName,
+    status: user.isActive ? 'active' : 'inactive',
+    primaryScope: user.primaryScope ? adaptMembership(user.primaryScope) : null,
+    assignments: (user.assignments || []).map(adaptMembership),
+    history: (user.history || []).map((item) => ({ ...item, time: item.time ? new Date(item.time).toLocaleString('he-IL') : '' }))
+});
+const adaptResponse = (response) => ({ ...response, data: adaptUser(response.data) });
 
 export const userManagementService = {
-    subscribe(listener) {
-        listeners.add(listener);
-        listener(snapshot());
-        return () => listeners.delete(listener);
+    async list(params, options) {
+        const response = await usersApi.list(params, options);
+        return { ...response.data, items: (response.data?.items || []).map(adaptUser) };
     },
-    async searchDirectory(id) {
-        await wait(80);
-        return mockUserDirectory[id] || null;
-    },
-    async createManagedUser(payload) {
-        await wait();
-        const directoryUser = mockUserDirectory[payload.id];
-        const user = {
-            id: payload.id,
-            name: directoryUser?.name || 'משתמש חדש',
-            status: 'active',
-            primaryRole: payload.role,
-            primaryScope: payload.scope,
-            assignments: [],
-            history: [{ id: `h-${Date.now()}`, text: 'משתמש נוצר בפרוטוטייפ', time: new Date().toLocaleString('he-IL') }]
-        };
-        users = [user, ...users.filter((item) => item.id !== user.id)];
-        notify();
-        return clone(user);
-    },
-    async updatePrimary(userId, payload) {
-        await wait();
-        users = users.map((user) => user.id === userId ? addHistory({ ...user, primaryRole: payload.role, primaryScope: payload.scope }, 'עודכנה דרגה ראשית') : user);
-        notify();
-        return clone(users.find((user) => user.id === userId));
-    },
-    async addManagementAssignment(userId, payload) {
-        await wait();
-        users = users.map((user) => user.id === userId ? addHistory({ ...user, assignments: [...user.assignments, { id: `a-${Date.now()}`, ...payload }] }, 'נוסף שיוך ניהולי') : user);
-        notify();
-    },
-    async updateManagementAssignment(userId, assignmentId, payload) {
-        await wait();
-        users = users.map((user) => user.id === userId ? addHistory({ ...user, assignments: user.assignments.map((assignment) => assignment.id === assignmentId ? { ...assignment, ...payload } : assignment) }, 'עודכן שיוך ניהולי') : user);
-        notify();
-    },
-    async removeManagementAssignment(userId, assignmentId) {
-        await wait();
-        users = users.map((user) => user.id === userId ? addHistory({ ...user, assignments: user.assignments.filter((assignment) => assignment.id !== assignmentId) }, 'הוסר שיוך ניהולי') : user);
-        notify();
-    },
-    async setUserActive(userId, active) {
-        await wait();
-        users = users.map((user) => user.id === userId ? addHistory({ ...user, status: active ? 'active' : 'inactive' }, active ? 'המשתמש הופעל' : 'המשתמש הושבת') : user);
-        notify();
-    }
+    async options(options) { return (await usersApi.options(options)).data; },
+    async createManagedUser(payload) { return adaptResponse(await usersApi.create(payload)).data; },
+    async updateUser(user, updates) { return adaptResponse(await usersApi.update(user.id, updates, user.version)).data; },
+    async addManagementAssignment(userId, payload) { return adaptResponse(await usersApi.addMembership(userId, payload)).data; },
+    async removeManagementAssignment(userId, membershipId) { return adaptResponse(await usersApi.removeMembership(userId, membershipId)).data; }
 };

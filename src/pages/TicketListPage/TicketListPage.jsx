@@ -1,189 +1,279 @@
-import React, { useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/common/Icon.jsx';
+import PageHeader from '../../components/common/PageHeader.jsx';
+import { PageErrorState, PageLoadingState } from '../../components/common/PageLoadingState.jsx';
 import TicketModal from './TicketModal.jsx';
 import { InquiryListRow } from '../../features/tickets/components/InquiryListRow.jsx';
 import InquiryCategoriesDropdown from '../../features/tickets/components/InquiryCategoriesDropdown.jsx';
 import InquiryBulkActions from '../../features/tickets/components/InquiryBulkActions.jsx';
 import CloseInquiryDialog from '../../features/tickets/components/CloseInquiryDialog.jsx';
 import { useInquiryOrganization } from '../../features/tickets/hooks/useInquiryOrganization.js';
+import { resolveBoardTypeFromView } from '../../features/tickets/boards/domain/boardTypes.js';
+import { INQUIRY_RUNTIME_STATE } from '../../features/tickets/boards/domain/inquiryRuntimeState.js';
+import { useRoomSettings } from '../../features/settings/hooks/useRoomSettings.js';
 
-const toolbarButton = 'flex h-9 items-center gap-2 whitespace-nowrap rounded-xl border border-[#C9E1FF] bg-white px-3.5 text-[12px] font-black text-slate-700 shadow-[0_4px_12px_rgba(37,99,235,0.08)] transition hover:border-[#93C5FD] hover:bg-[#EAF4FF] hover:text-[#3B82F6]';
+const toolbarButton = 'inquiry-control flex h-9 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 text-[12px] font-black shadow-[0_4px_12px_rgba(37,99,235,0.08)] transition';
+const dropdownMenu = 'inquiry-menu-surface absolute top-full z-50 mt-1 rounded-lg py-1';
+const priorityValues = {
+    'דחיפות גבוהה': 'HIGH',
+    'דחיפות בינונית': 'MEDIUM',
+    'דחיפות נמוכה': 'LOW'
+};
+const pinLabels = { ALL: 'כל הפניות', PINNED: 'נעוצות', UNPINNED: 'לא נעוצות' };
+
+const RuntimeStatePanel = ({ state, onAction }) => {
+    const loading = [INQUIRY_RUNTIME_STATE.AUTH_LOADING, INQUIRY_RUNTIME_STATE.INITIAL_LOADING].includes(state.kind);
+    const error = [INQUIRY_RUNTIME_STATE.AUTH_ERROR, INQUIRY_RUNTIME_STATE.API_ERROR, INQUIRY_RUNTIME_STATE.CONTEXT_ERROR].includes(state.kind);
+    const actionLabel = state.action === 'select_room'
+        ? 'בחירת חדר'
+        : state.action === 'retry_auth'
+            ? 'בדיקה מחדש'
+            : state.action === 'retry_board'
+                ? 'נסה שוב'
+                : '';
+    const iconName = loading ? 'history' : error ? 'shield' : 'filePlus';
+
+    return (
+        <section
+            data-testid={`inquiry-runtime-state-${state.kind}`}
+            className={`flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-10 text-center ${error ? 'border-red-400/35 bg-red-500/[0.035]' : 'border-[var(--color-border-strong)] bg-[var(--color-surface-raised)]'}`}
+            role={error ? 'alert' : 'status'}
+            aria-live={error ? 'assertive' : 'polite'}
+        >
+            <span className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${error ? 'bg-red-500/10 text-red-500' : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'}`}>
+                {loading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" /> : <Icon name={iconName} className="h-5 w-5" />}
+            </span>
+            <h2 className="text-base font-black text-[var(--color-text-primary)]">{state.title}</h2>
+            {state.message && <p className="mt-2 max-w-lg text-sm font-semibold leading-6 text-[var(--color-text-secondary)]">{state.message}</p>}
+            {state.requestId && <p className="mt-2 text-[11px] font-bold text-[var(--color-text-muted)]">מזהה פנייה: {state.requestId}</p>}
+            {actionLabel && (
+                <button data-testid="inquiry-runtime-action" type="button" onClick={onAction} className="mt-5 rounded-xl bg-[var(--color-primary)] px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-[var(--color-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]">
+                    {actionLabel}
+                </button>
+            )}
+        </section>
+    );
+};
 
 const TicketListPage = ({ title, description, showToggle = false, viewType = 'default' }) => {
     const [toggleState, setToggleState] = useState('received');
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [closingTicket, setClosingTicket] = useState(null);
-    const [draggedTicketId, setDraggedTicketId] = useState(null);
-    const [searchBy, setSearchBy] = useState({ label: 'מספר פניה', iconText: '#' });
-    const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
+    const [pinDropdownOpen, setPinDropdownOpen] = useState(false);
     const [sortBy, setSortBy] = useState('מספר פנייה ↑↓');
     const [priorityFilter, setPriorityFilter] = useState('בחר דחיפות');
-    const organization = useInquiryOrganization({ viewType, toggleState });
+    const [pinMode, setPinMode] = useState('ALL');
+    const [currentPage, setCurrentPage] = useState(1);
+    const deferredSearchQuery = useDeferredValue(searchQuery.trim());
+    const { settings, loaded: settingsLoaded, loadError: settingsLoadError, reload: reloadSettings } = useRoomSettings();
+    const pageSize = Number(settings.general?.inquiriesPerPage) || 7;
+    const closeSound = settings.general?.closeSound || 'off';
+    const boardType = resolveBoardTypeFromView({ viewType, toggleState });
+    const externalBoard = boardType?.startsWith('EXTERNAL_');
+    const serverQuery = useMemo(() => {
+        const chronologicalSort = externalBoard ? 'initiatedAt' : 'createdAt';
+        return {
+            page: currentPage,
+            limit: pageSize,
+            search: deferredSearchQuery || undefined,
+            priority: priorityValues[priorityFilter],
+            pinMode,
+            sortBy: sortBy === 'מספר פנייה ↑↓' ? 'ticketNumber' : chronologicalSort,
+            sortDirection: sortBy === 'ישן יותר' ? 'asc' : 'desc'
+        };
+    }, [currentPage, deferredSearchQuery, externalBoard, pageSize, pinMode, priorityFilter, sortBy]);
+    const organization = useInquiryOrganization({ viewType, toggleState, query: serverQuery });
+    const displayTitle = organization.roomName ? `${title} - ${organization.roomName}` : title;
 
     const closeAllDropdowns = () => {
-        setSearchDropdownOpen(false);
         setSortDropdownOpen(false);
         setPriorityDropdownOpen(false);
+        setPinDropdownOpen(false);
     };
+    const categoryById = useMemo(
+        () => new Map(organization.rawCategories.map((category) => [category.id, category])),
+        [organization.rawCategories]
+    );
+    const visibleItems = organization.tickets;
+    const currentPageIds = useMemo(() => visibleItems.map((item) => item.boardItemId), [visibleItems]);
+    const allPageSelected = currentPageIds.length > 0 && currentPageIds.every((id) => organization.selectedIds.includes(id));
+    const totalPages = Math.max(1, organization.pagination.totalPages || 1);
+    const canAssignCategories = organization.capabilities.canChangeCategory;
+    const canPin = organization.capabilities.canChangePin;
+    const showCategoryNavigation = Boolean(organization.boardType);
 
-    const showOrganizationTools = viewType !== 'history';
-    const canManualOrder = organization.selectedCategoryId !== 'all';
-    const categoryById = new Map(organization.categories.map((category) => [category.id, category]));
-    const items = organization.tickets.filter((ticket) => {
-        if (priorityFilter === 'בחר דחיפות') return true;
-        return ticket.priority.includes(priorityFilter.replace('דחיפות ', '').replace('גבוהה', 'גבוהה').replace('בינונית', 'בינונית').replace('נמוכה', 'נמוכה'));
-    });
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [deferredSearchQuery, pageSize, pinMode, priorityFilter, toggleState, viewType]);
 
-    const handleDrop = (targetId) => {
-        if (!draggedTicketId || draggedTicketId === targetId) return;
-        const orderedIds = items.map((item) => item.id);
-        const from = orderedIds.indexOf(draggedTicketId);
-        const to = orderedIds.indexOf(targetId);
-        orderedIds.splice(from, 1);
-        orderedIds.splice(to, 0, draggedTicketId);
-        organization.saveManualOrder(orderedIds);
-        setDraggedTicketId(null);
-    };
+    useEffect(() => {
+        setCurrentPage((page) => Math.min(page, totalPages));
+    }, [totalPages]);
 
-    const searchOptions = [
-        { label: 'מספר פניה', iconText: '#' },
-        { label: 'שם לקוח', iconName: 'user' },
-        { label: 'מס טלפון', iconName: 'phone' },
-        { label: 'גורם מטפל', iconName: 'search' }
-    ];
+    if (settingsLoadError) {
+        return (
+            <div className="inquiry-page-surface relative flex h-full min-h-0 flex-col overflow-hidden overflow-x-hidden p-4" dir="rtl">
+                <PageErrorState onRetry={reloadSettings} />
+            </div>
+        );
+    }
+
+    if (!settingsLoaded) {
+        return (
+            <div className="inquiry-page-surface relative flex h-full min-h-0 flex-col overflow-hidden overflow-x-hidden p-4" dir="rtl">
+                <PageLoadingState />
+            </div>
+        );
+    }
+
     const priorityOptions = ['בחר דחיפות', 'דחיפות גבוהה', 'דחיפות בינונית', 'דחיפות נמוכה'];
+    const sortOptions = ['מספר פנייה ↑↓', 'חדש יותר', 'ישן יותר'];
 
     return (
-        <div className="relative flex h-full min-h-0 flex-col overflow-hidden overflow-x-hidden bg-[#EEF4FC] p-4" dir="rtl">
-            {(searchDropdownOpen || sortDropdownOpen || priorityDropdownOpen) && <div className="fixed inset-0 z-30" onClick={closeAllDropdowns} />}
+        <div className="inquiry-page-surface relative flex h-full min-h-0 flex-col overflow-hidden overflow-x-hidden p-4" dir="rtl">
+            {(sortDropdownOpen || priorityDropdownOpen || pinDropdownOpen) && <div className="fixed inset-0 z-30" onClick={closeAllDropdowns} />}
 
-            <header className="relative z-10 mb-2.5 shrink-0">
-                <h1 className="mb-1 text-[24px] font-black tracking-tight text-[#0F172A]">{title}</h1>
-                <p className="text-[13px] font-semibold text-slate-500">{description}</p>
-                {showToggle && (
-                    <div className="absolute top-0 left-0 flex w-[240px] rounded-full bg-[#E5E7EB] p-1 shadow-inner">
-                        <div className="absolute bottom-1 top-1 w-[calc(50%-4px)] rounded-full bg-white shadow-sm transition-transform duration-300 ease-out" style={{ transform: toggleState === 'received' ? 'translateX(0)' : 'translateX(-100%)', right: '4px' }} />
-                        <button onClick={() => setToggleState('received')} className={`relative z-10 flex-1 py-1.5 text-xs font-bold transition-colors ${toggleState === 'received' ? 'text-[#1E4DB7]' : 'text-gray-500 hover:text-gray-700'}`}>פניות שהתקבלו</button>
-                        <button onClick={() => setToggleState('sent')} className={`relative z-10 flex-1 py-1.5 text-xs font-bold transition-colors ${toggleState === 'sent' ? 'text-[#1E4DB7]' : 'text-gray-500 hover:text-gray-700'}`}>פניות שנשלחו</button>
-                    </div>
-                )}
-            </header>
+            <PageHeader title={displayTitle} description={description} toggleState={toggleState} setToggleState={setToggleState} showToggle={showToggle} />
 
-            <div className="relative z-40 mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
-                <div className="flex h-9 min-w-[320px] flex-1 rounded-xl border border-[#C9E1FF] bg-white shadow-[0_4px_12px_rgba(37,99,235,0.08)] transition focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-blue-400/20 lg:max-w-[600px]">
-                    <div className="relative border-l border-[#C9E1FF]">
-                        <button onClick={() => { closeAllDropdowns(); setSearchDropdownOpen(!searchDropdownOpen); }} className="flex h-full items-center gap-2 rounded-r-xl bg-[#EAF4FF] px-3 text-[12px] font-black text-[#3B82F6]">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-md border border-[#C9E1FF] bg-white text-xs leading-none">{searchBy.iconText || <Icon name={searchBy.iconName} className="h-3.5 w-3.5" />}</span>
-                            {searchBy.label}
-                            <Icon name="chevronDown" className="h-3 w-3" />
-                        </button>
-                        {searchDropdownOpen && (
-                            <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[#C9E1FF] bg-white py-1 shadow-xl">
-                                {searchOptions.map((opt) => <button key={opt.label} onClick={() => { setSearchBy(opt); closeAllDropdowns(); }} className="flex w-full items-center gap-2 px-4 py-2 text-right text-xs font-bold text-slate-700 hover:bg-[#EAF4FF]">{opt.label}</button>)}
-                            </div>
-                        )}
-                    </div>
-                    <div className="relative flex flex-1 items-center px-3">
-                        <input className="h-full w-full bg-transparent py-2 pl-8 pr-1 text-[12px] font-semibold text-slate-700 outline-none placeholder:text-[#93C5FD]" placeholder={`חפש על ידי ${searchBy.label}...`} />
-                        <Icon name="search" className="absolute left-3 h-4 w-4 text-[#3B82F6]" />
-                    </div>
-                </div>
+            <div className={`relative z-40 mb-3 shrink-0 flex-wrap items-center justify-between gap-3 ${organization.filtersAvailable ? 'flex' : 'hidden'}`}>
+                <label className="inquiry-control flex h-9 min-w-[280px] flex-1 items-center rounded-xl px-3 shadow-[0_4px_12px_rgba(37,99,235,0.08)] transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-400/20 lg:max-w-[600px]">
+                    <input
+                        value={searchQuery}
+                        maxLength={100}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        className="h-full w-full bg-transparent py-2 pl-8 pr-1 text-[12px] font-semibold inquiry-secondary-text outline-none placeholder:inquiry-muted-text"
+                        placeholder="חיפוש לפי מספר פנייה, נושא או תיאור..."
+                    />
+                    <Icon name="search" className="h-4 w-4 shrink-0 text-[var(--color-primary)]" />
+                </label>
 
                 <div className="flex shrink-0 flex-wrap gap-2.5">
-                    {showOrganizationTools && (
+                    {showCategoryNavigation && (
                         <InquiryCategoriesDropdown
                             categories={organization.categories}
                             counts={organization.categoryCounts}
                             selectedId={organization.selectedCategoryId}
-                            onSelect={organization.setSelectedCategoryId}
+                            onSelect={(categoryId) => {
+                                organization.setSelectedCategoryId(categoryId);
+                                setCurrentPage(1);
+                            }}
                             onCreate={organization.createCategory}
                             onRename={organization.renameCategory}
                             onDelete={organization.deleteCategory}
+                            canManage={organization.canManageCategories}
+                            loading={organization.pendingCategoryIds.length > 0}
+                            boardLabel={organization.boardLabel}
                         />
                     )}
-                    <button onClick={() => { closeAllDropdowns(); setSortDropdownOpen(!sortDropdownOpen); }} className={toolbarButton}>
-                        <Icon name="arrowDownUp" className="h-3.5 w-3.5 text-[#3B82F6]" />
-                        {sortBy}
-                        <Icon name="chevronDown" className="h-3 w-3 text-[#3B82F6]" />
-                    </button>
-                    {sortDropdownOpen && (
-                        <div className="absolute top-10 z-50 w-44 rounded-lg border border-[#C9E1FF] bg-white py-1 shadow-xl">
-                            {['מספר פנייה ↑↓', 'חדש יותר', 'ישן יותר'].map((opt) => <button key={opt} onClick={() => { setSortBy(opt); closeAllDropdowns(); }} className="block w-full px-4 py-2 text-right text-xs font-bold text-slate-700 hover:bg-[#EAF4FF]">{opt}</button>)}
-                        </div>
-                    )}
                     <div className="relative">
-                        <button onClick={() => { closeAllDropdowns(); setPriorityDropdownOpen(!priorityDropdownOpen); }} className={toolbarButton}>
-                            <Icon name="filter" className="h-3.5 w-3.5 text-[#3B82F6]" />
-                            {priorityFilter}
-                            <Icon name="chevronDown" className="h-3 w-3 text-[#3B82F6]" />
+                        <button onClick={() => { closeAllDropdowns(); setSortDropdownOpen(!sortDropdownOpen); }} className={toolbarButton}>
+                            <Icon name="arrowDownUp" className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                            {sortBy}
+                            <Icon name="chevronDown" className="h-3 w-3 text-[var(--color-primary)]" />
                         </button>
-                        {priorityDropdownOpen && (
-                            <div className="absolute left-0 top-full z-50 mt-1 w-40 rounded-lg border border-[#C9E1FF] bg-white py-1 shadow-xl">
-                                {priorityOptions.map((opt) => <button key={opt} onClick={() => { setPriorityFilter(opt); closeAllDropdowns(); }} className="w-full px-4 py-2 text-right text-xs font-bold text-slate-700 hover:bg-[#EAF4FF]">{opt}</button>)}
+                        {sortDropdownOpen && (
+                            <div className={`${dropdownMenu} right-0 w-44`}>
+                                {sortOptions.map((option) => (
+                                    <button key={option} onClick={() => { setSortBy(option); closeAllDropdowns(); }} className="inquiry-menu-item block w-full px-4 py-2 text-right text-xs font-bold transition">{option}</button>
+                                ))}
                             </div>
                         )}
                     </div>
-                    {showOrganizationTools && canManualOrder && (
-                        <button type="button" onClick={() => organization.setManualMode((value) => !value)} className={`${toolbarButton} ${organization.manualMode ? 'border-blue-500 bg-blue-50 text-blue-700' : ''}`}>
-                            <Icon name="grip" className="h-3.5 w-3.5 text-[#3B82F6]" />
-                            סדר אישי
-                        </button>
+                    {!externalBoard && (
+                        <div className="relative">
+                            <button onClick={() => { closeAllDropdowns(); setPriorityDropdownOpen(!priorityDropdownOpen); }} className={toolbarButton}>
+                                <Icon name="filter" className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                                {priorityFilter}
+                                <Icon name="chevronDown" className="h-3 w-3 text-[var(--color-primary)]" />
+                            </button>
+                            {priorityDropdownOpen && (
+                                <div className={`${dropdownMenu} left-0 w-40`}>
+                                    {priorityOptions.map((option) => (
+                                        <button key={option} onClick={() => { setPriorityFilter(option); closeAllDropdowns(); }} className="inquiry-menu-item w-full px-4 py-2 text-right text-xs font-bold transition">{option}</button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     )}
-                    {showOrganizationTools && (
+                    <div className="relative">
+                        <button onClick={() => { closeAllDropdowns(); setPinDropdownOpen(!pinDropdownOpen); }} className={toolbarButton}>
+                            <Icon name="pin" className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                            {pinLabels[pinMode]}
+                            <Icon name="chevronDown" className="h-3 w-3 text-[var(--color-primary)]" />
+                        </button>
+                        {pinDropdownOpen && (
+                            <div className={`${dropdownMenu} left-0 w-36`}>
+                                {Object.entries(pinLabels).map(([value, label]) => (
+                                    <button key={value} onClick={() => { setPinMode(value); closeAllDropdowns(); }} className="inquiry-menu-item w-full px-4 py-2 text-right text-xs font-bold transition">{label}</button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {(canAssignCategories || canPin) && (
                         <InquiryBulkActions
                             active={organization.selectionMode}
                             selectedCount={organization.selectedIds.length}
-                            categories={organization.categories}
+                            allMatchingCount={currentPageIds.length}
+                            allMatchingSelected={allPageSelected}
+                            categories={organization.rawCategories}
                             onStart={() => organization.setSelectionMode(true)}
                             onCancel={organization.clearSelection}
+                            onSelectAll={() => organization.selectMany(currentPageIds)}
+                            onClearAll={organization.clearSelection}
                             onAssignCategory={organization.assignManyCategory}
-                            onClearCategory={() => organization.assignManyCategory('all')}
                             onPin={() => organization.setManyPinned(true)}
                             onUnpin={() => organization.setManyPinned(false)}
+                            showCategoryAction={canAssignCategories}
+                            showPinActions={canPin}
+                            progress={organization.bulkProgress}
                         />
                     )}
                 </div>
             </div>
 
-            {organization.error && <div className="mb-2 shrink-0 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600">{organization.error}</div>}
+            {organization.viewState.kind === INQUIRY_RUNTIME_STATE.STALE && (
+                <div data-testid="inquiry-runtime-stale" role="alert" className="mb-2 flex shrink-0 items-center justify-between gap-3 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-700 dark:text-amber-200">
+                    <span>{organization.viewState.message}</span>
+                    <div className="flex shrink-0 gap-2">
+                        {organization.conflict && <button data-testid="board-conflict-retry" type="button" onClick={organization.retryConflict} className="rounded-lg border border-current px-2 py-1">נסה שוב עם הגרסה העדכנית</button>}
+                        <button type="button" onClick={organization.retryCurrentState} className="rounded-lg border border-current px-2 py-1">נסה שוב</button>
+                    </div>
+                </div>
+            )}
 
-            <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-hidden pr-1">
-                {items.length > 0 ? items.map((task) => (
+            <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-hidden pr-1" aria-busy={organization.loading || organization.refreshing}>
+                {organization.viewState.blocking ? (
+                    <RuntimeStatePanel state={organization.viewState} onAction={organization.retryCurrentState} />
+                ) : visibleItems.length > 0 ? visibleItems.map((task) => (
                     <InquiryListRow
-                        key={`${toggleState}-${task.id}`}
+                        key={task.rowKey}
                         ticket={task}
                         viewType={viewType}
                         toggleState={toggleState}
-                        categories={organization.categories}
-                        category={categoryById.get(task.categoryId)}
-                        onTogglePin={showOrganizationTools ? organization.togglePin : undefined}
-                        onAssignCategory={showOrganizationTools ? organization.assignCategory : undefined}
+                        categories={organization.rawCategories}
+                        category={task.category || categoryById.get(task.categoryId)}
+                        onTogglePin={task.canChangePin ? organization.togglePin : undefined}
+                        onAssignCategory={task.canChangeCategory ? organization.assignCategory : undefined}
                         onCloseInquiry={viewType === 'open' ? setClosingTicket : undefined}
-                        loading={organization.loadingIds.includes(task.id)}
+                        loading={organization.loadingIds.includes(task.boardItemId)}
                         selectionMode={organization.selectionMode}
-                        selected={organization.selectedIds.includes(task.id)}
-                        onToggleSelection={() => organization.toggleSelection(task.id)}
-                        manualMode={organization.manualMode}
-                        draggable={organization.manualMode && canManualOrder}
-                        onDragStart={() => setDraggedTicketId(task.id)}
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={() => handleDrop(task.id)}
+                        selected={organization.selectedIds.includes(task.boardItemId)}
+                        onToggleSelection={() => organization.toggleSelection(task.boardItemId)}
+                        onEnterSelectionMode={() => organization.startSelectionWith(task.boardItemId)}
                         onView={setSelectedTicket}
                     />
                 )) : (
-                    <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[#C9E1FF] bg-white/70 text-slate-400">
-                        <Icon name="filePlus" className="mb-2 h-10 w-10" />
-                        <p className="text-sm font-bold">אין פניות להצגה</p>
-                    </div>
+                    <RuntimeStatePanel state={organization.viewState} onAction={organization.retryCurrentState} />
                 )}
             </div>
 
-            <div className="mt-3 flex shrink-0 items-center justify-center gap-3 border-t border-[#C9E1FF]/70 pt-3">
-                <button className="rounded-lg border border-[#C9E1FF] bg-white px-4 py-1.5 text-xs font-bold text-slate-600 shadow-[0_3px_10px_rgba(37,99,235,0.08)]">הבא &lt;</button>
-                <div className="rounded-lg border border-[#C9E1FF] bg-[#EAF4FF] px-8 py-1.5 text-xs font-bold text-[#3B82F6] shadow-[0_3px_10px_rgba(37,99,235,0.08)]">עמוד 1 מתוך 4</div>
-                <button className="rounded-lg border border-[#C9E1FF] bg-white px-4 py-1.5 text-xs font-bold text-slate-600 shadow-[0_3px_10px_rgba(37,99,235,0.08)]">&gt; קודם</button>
+            <div className={`mt-3 shrink-0 items-center justify-center gap-3 border-t border-[var(--color-border-strong)]/70 pt-3 dark:border-none ${organization.filtersAvailable ? 'flex' : 'hidden'}`}>
+                <button disabled={currentPage <= 1 || organization.loading} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} className="inquiry-control rounded-lg px-4 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)] disabled:cursor-not-allowed disabled:opacity-50">&lt; קודם</button>
+                <div className="inquiry-control inquiry-control--active rounded-lg px-8 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)]">עמוד {currentPage} מתוך {totalPages}</div>
+                <button disabled={currentPage >= totalPages || organization.loading} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} className="inquiry-control rounded-lg px-4 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)] disabled:cursor-not-allowed disabled:opacity-50">הבא &gt;</button>
             </div>
 
             {selectedTicket && (
@@ -193,9 +283,23 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                     transferContext={toggleState}
                     onClose={() => setSelectedTicket(null)}
                     onCloseInquiry={() => setClosingTicket(selectedTicket)}
+                    onTransferred={() => {
+                        setSelectedTicket(null);
+                        organization.refresh();
+                    }}
+                    onUpdated={() => organization.refresh()}
                 />
             )}
-            <CloseInquiryDialog open={Boolean(closingTicket)} ticket={closingTicket} onClose={() => setClosingTicket(null)} onClosed={(ticket) => setSelectedTicket((current) => current?.id === ticket.id ? null : current)} />
+            <CloseInquiryDialog
+                open={Boolean(closingTicket)}
+                ticket={closingTicket}
+                closeSound={closeSound}
+                onClose={() => setClosingTicket(null)}
+                onClosed={(ticket) => {
+                    setSelectedTicket((current) => current?.ticketId === ticket.id ? null : current);
+                    organization.refresh();
+                }}
+            />
         </div>
     );
 };

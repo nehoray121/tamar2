@@ -1,0 +1,174 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tamar Organization Hierarchy Management API",
+    "version": "1.0.0",
+    "description": "Authenticated exact-System SUPER_ADMIN creation of canonical SubEnvironments and Rooms."
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/environments/{environmentId}/sub-environments": {
+      "post": {
+        "operationId": "createSubEnvironment",
+        "summary": "Create an active SubEnvironment under an authorized Environment",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EnvironmentId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationEntity"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Canonical persisted SubEnvironment DTO"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sub-environments/{subEnvironmentId}/rooms": {
+      "post": {
+        "operationId": "createRoom",
+        "summary": "Create an active Room under an authorized SubEnvironment",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SubEnvironmentId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationEntity"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Canonical persisted Room DTO"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "EnvironmentId": {
+        "name": "environmentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{24}$"
+        }
+      },
+      "SubEnvironmentId": {
+        "name": "subEnvironmentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{24}$"
+        }
+      }
+    },
+    "schemas": {
+      "CreateOrganizationEntity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Strict validation, invalid ObjectId or inactive canonical parent"
+      },
+      "Unauthorized": {
+        "description": "Verified Bearer token is required"
+      },
+      "Forbidden": {
+        "description": "Active exact-System SUPER_ADMIN membership is required"
+      },
+      "NotFound": {
+        "description": "Canonical parent was not found"
+      },
+      "Conflict": {
+        "description": "A sibling with the derived canonical key already exists"
+      }
+    }
+  },
+  "x-authorization": {
+    "source": "MongoDB active memberships resolved by Backend",
+    "role": "SUPER_ADMIN",
+    "scope": "exact parent System",
+    "frontendAuthority": false
+  }
+}

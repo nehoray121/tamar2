@@ -1,72 +1,137 @@
-import React, { useEffect } from 'react';
+﻿import React from 'react';
 import Icon from '../../../components/common/Icon.jsx';
+import InquiryDrawerShell from '../../inquiries/components/InquiryDrawerShell.jsx';
 import { usePersonalAssignment } from '../hooks/usePersonalAssignment.js';
 
-const PersonalAssignmentDrawer = ({ open, inquiryId, roomId, roomName, onClose }) => {
-    const { users, assignment, loading, assign, clear } = usePersonalAssignment({ inquiryId, roomId });
+const PersonalAssignmentDrawer = ({ open, inquiryId, roomId, roomName, onClose, onSaved }) => {
+    const {
+        filteredUsers,
+        selectedUsers,
+        draftUserIds,
+        loading,
+        saving,
+        error,
+        query,
+        setQuery,
+        toggleUser,
+        removeUser,
+        clearSelection,
+        resetDraft,
+        save,
+        hasChanges,
+        isEmptyResult,
+        hasUsers
+    } = usePersonalAssignment({ inquiryId, roomId, open });
 
-    useEffect(() => {
-        if (!open) return undefined;
-        const handleKeyDown = (event) => {
-            if (event.key === 'Escape') onClose();
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onClose, open]);
+    const handleClose = () => {
+        resetDraft();
+        onClose();
+    };
 
-    if (!open) return null;
+    const handleSave = async () => {
+        const nextAssignment = await save();
+        if (!nextAssignment) return;
+        onSaved?.(nextAssignment);
+        onClose();
+    };
 
     return (
-        <>
-            <div className="absolute inset-0 z-40 bg-slate-900/10 backdrop-blur-[1px]" onClick={onClose} />
-            <aside className="absolute bottom-0 left-0 top-0 z-50 flex w-[380px] max-w-[44%] flex-col border-r border-[#C9E1FF] bg-[#F8FBFF] shadow-[8px_0_32px_rgba(30,64,175,0.16)]" dir="rtl">
-                <div className="flex shrink-0 items-center justify-between border-b border-[#D9E8FA] bg-white px-4 py-3">
-                    <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#C9E1FF] bg-white text-slate-400">
-                        <Icon name="close" className="h-4 w-4" />
+        <InquiryDrawerShell
+            open={open}
+            onClose={handleClose}
+            title="שיוך אישי"
+            subtitle={`חדר נוכחי: ${roomName}`}
+            icon="users"
+            headerMeta={selectedUsers.length ? <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[11px] font-black text-[var(--color-primary)]">{selectedUsers.length} נבחרו</span> : null}
+            bodyClassName="flex flex-col bg-[var(--color-surface-muted)]/55"
+            footer={(
+                <div className="flex items-center justify-between gap-2">
+                    <button type="button" onClick={handleClose} className="inquiry-control h-9 rounded-xl px-4 text-xs font-black">ביטול</button>
+                    <button type="button" onClick={handleSave} disabled={!hasChanges || saving} className="inline-flex h-9 items-center gap-2 rounded-xl bg-blue-700 px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-50">
+                        {saving ? 'שומר...' : 'שמור שיוך'}
+                        <Icon name="check" className="h-4 w-4" />
                     </button>
-                    <div>
-                        <h3 className="text-base font-black text-slate-950">שיוך אישי</h3>
-                        <p className="text-xs font-bold text-slate-400">חדר נוכחי: {roomName}</p>
-                    </div>
                 </div>
+            )}
+        >
+            <div className="flex shrink-0 flex-col gap-3 p-3">
+                <label className="relative block">
+                    <span className="sr-only">חיפוש משתמש</span>
+                    <input
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder="חיפוש לפי שם, תפקיד או מזהה"
+                        className="inquiry-input-surface h-10 w-full rounded-xl px-10 text-right text-xs font-semibold outline-none focus:border-blue-500"
+                    />
+                    <Icon name="search" className="absolute right-3 top-3.5 h-4 w-4 inquiry-muted-text" />
+                </label>
 
-                <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                    <div className="mb-4 rounded-2xl border border-blue-100 bg-white p-3">
-                        <div className="text-xs font-black text-slate-500">משויך כעת</div>
-                        <div className="mt-2 flex items-center justify-between gap-2">
-                            <div className="font-black text-slate-900">{assignment ? assignment.name : 'ללא שיוך אישי'}</div>
-                            {assignment && <button type="button" onClick={clear} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-black text-red-600">נקה</button>}
+                <div className="rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                        <h3 className="text-[13px] font-black inquiry-primary-text">משתמשים נבחרים</h3>
+                        <button type="button" onClick={clearSelection} disabled={!draftUserIds.length} className="text-[11px] font-black text-red-500 disabled:opacity-40">נקה הכול</button>
+                    </div>
+                    {selectedUsers.length ? (
+                        <div className="flex flex-wrap gap-2">
+                            {selectedUsers.map((user) => (
+                                <span key={user.id} className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-primary-soft)] px-3 py-1 text-[11px] font-black text-[var(--color-primary)]">
+                                    <button type="button" onClick={() => removeUser(user.id)} className="text-[var(--color-text-muted)] transition hover:text-red-500" aria-label={`הסר את ${user.name}`}>
+                                        <Icon name="close" className="h-3 w-3" />
+                                    </button>
+                                    <span>{user.name}</span>
+                                </span>
+                            ))}
                         </div>
+                    ) : (
+                        <p className="text-[12px] font-semibold inquiry-muted-text">לא נבחרו משתמשים.</p>
+                    )}
+                </div>
+                {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-bold text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+                <div className="rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-2.5">
+                    <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                        <h3 className="text-[13px] font-black inquiry-primary-text">משתמשים זמינים</h3>
+                        <span className="text-[11px] font-bold inquiry-muted-text">{filteredUsers.length} תוצאות</span>
                     </div>
 
                     {loading ? (
-                        <div className="rounded-2xl border border-dashed border-blue-100 bg-white p-6 text-center text-sm font-bold text-slate-400">טוען משתמשים...</div>
-                    ) : users.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-blue-100 bg-white p-6 text-center text-sm font-bold text-slate-400">אין משתמשים זמינים בחדר זה</div>
+                        <div className="inquiry-empty-state rounded-2xl border border-dashed p-6 text-center text-sm font-bold">טוען משתמשים...</div>
+                    ) : !hasUsers ? (
+                        <div className="inquiry-empty-state rounded-2xl border border-dashed p-6 text-center text-sm font-bold">אין משתמשים זמינים בחדר זה</div>
+                    ) : isEmptyResult ? (
+                        <div className="inquiry-empty-state rounded-2xl border border-dashed p-6 text-center text-sm font-bold">לא נמצאו משתמשים לחיפוש הנוכחי</div>
                     ) : (
                         <div className="space-y-2">
-                            {users.map((user) => (
-                                <button
-                                    key={user.id}
-                                    type="button"
-                                    onClick={() => assign(user.id)}
-                                    className={`flex w-full items-center gap-3 rounded-2xl border bg-white p-3 text-right shadow-sm transition hover:border-blue-300 ${assignment?.id === user.id ? 'border-blue-500 bg-blue-50' : 'border-blue-100'}`}
-                                >
-                                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-500">
-                                        <Icon name="user" className="h-5 w-5" />
-                                    </span>
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block text-sm font-black text-slate-900">{user.name}</span>
-                                        <span className="block text-xs font-bold text-slate-400">{user.role} · {user.personalId}</span>
-                                    </span>
-                                    {assignment?.id === user.id && <Icon name="check" className="h-5 w-5 text-blue-600" />}
-                                </button>
-                            ))}
+                            {filteredUsers.map((user) => {
+                                const selected = draftUserIds.includes(user.id);
+                                return (
+                                    <button
+                                        key={user.id}
+                                        type="button"
+                                        onClick={() => toggleUser(user.id)}
+                                        className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-right transition ${selected ? 'inquiry-row-surface inquiry-row-selected border-[var(--color-primary)]' : 'border-transparent inquiry-panel hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)]'}`}
+                                        aria-pressed={selected}
+                                    >
+                                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${selected ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white' : 'border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] text-transparent'}`} aria-hidden="true">
+                                            <Icon name="check" className="h-3.5 w-3.5" />
+                                        </span>
+                                        <span className="inquiry-icon-chip flex h-10 w-10 items-center justify-center rounded-full">
+                                            <Icon name="user" className="h-5 w-5" />
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block text-sm font-black inquiry-primary-text">{user.name}</span>
+                                            <span className="block text-xs font-bold inquiry-muted-text">{user.role} · {user.personalId}</span>
+                                        </span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
-            </aside>
-        </>
+            </div>
+        </InquiryDrawerShell>
     );
 };
 

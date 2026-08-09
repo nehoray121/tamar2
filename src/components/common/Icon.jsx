@@ -16,6 +16,7 @@ const Icon = ({ name, className = "w-4 h-4", color = "currentColor" }) => {
                 history: <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
                 link: <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />,
                 settings: <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />,
+                edit: <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 3.487a2.25 2.25 0 013.182 3.182L8.25 18.463 3 20l1.537-5.25L16.862 3.487zM15 5.25l3 3" />,
                 globe: <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />,
                 check: <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />,
                 clock: <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
@@ -32,7 +33,8 @@ const Icon = ({ name, className = "w-4 h-4", color = "currentColor" }) => {
                 volume: <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />,
                 arrowDownUp: <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v14m0 0l-3-3m3 3l3-3m9-11V3m0 0l3 3m-3-3l-3 3" />,
                 grip: <path strokeLinecap="round" strokeLinejoin="round" d="M9 9h.01M9 15h.01M15 9h.01M15 15h.01M9 12h.01M15 12h.01" />,
-                pin: <path strokeLinecap="round" strokeLinejoin="round" d="M14.5 4.5l5 5-3.2 1.2-3.8 3.8.5 4.5-2 2-3.2-5.7L2.1 12l2-2 4.5.5 3.8-3.8 1.1-3.2z" />,
+                pin: <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />,
+                folder: <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />,
                 filter: <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />,
                 arrowUpStraight: <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />,
                 arrowDownStraight: <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />,
@@ -43,8 +45,15 @@ const Icon = ({ name, className = "w-4 h-4", color = "currentColor" }) => {
                 sun: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4V2m0 20v-2m8-8h2M2 12h2m14.95 6.95l1.41 1.41M3.64 3.64l1.41 1.41m0 13.9l-1.41 1.41M20.36 3.64l-1.41 1.41M12 16a4 4 0 100-8 4 4 0 000 8z" />,
                 moon: <path strokeLinecap="round" strokeLinejoin="round" d="M21 14.8A8.5 8.5 0 119.2 3a6.7 6.7 0 0011.8 11.8z" />,
                 monitor: <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h16a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zm8 13v3m-4 0h8" />,
-                plus: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                ,
+                plus: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />,
+                hash: <path strokeLinecap="round" strokeLinejoin="round" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />,
+                shield: <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v5c0 4.55-2.91 8.63-7 10-4.09-1.37-7-5.45-7-10V6l7-3z M9 12l2 2 4-5" />,
+                alertTriangle: <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l10 18H2L12 3z M12 9v5m0 4h.01" />,
+                database: <path strokeLinecap="round" strokeLinejoin="round" d="M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4-3.58 4-8 4-8-1.79-8-4zm0 0v5c0 2.21 3.58 4 8 4s8-1.79 8-4V7m-16 5v5c0 2.21 3.58 4 8 4s8-1.79 8-4v-5" />,
+                table: <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h16v14H4V5zm0 5h16M9 5v14m6-14v14" />,
+                activity: <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h4l2-6 4 12 2-6h6" />,
+                refresh: <path strokeLinecap="round" strokeLinejoin="round" d="M20 11a8.1 8.1 0 00-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0015.5 2M20 20v-5h-5" />,
+                info: <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v-5m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
                 minus: <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
             };
             return (
@@ -55,3 +64,4 @@ const Icon = ({ name, className = "w-4 h-4", color = "currentColor" }) => {
         };
 
 export default Icon;
+

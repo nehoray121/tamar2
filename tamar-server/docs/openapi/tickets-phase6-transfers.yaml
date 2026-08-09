@@ -1,0 +1,286 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tamar Ticket Transfers API",
+    "version": "6.0.0",
+    "description": "Sequential same-System Ticket ownership transfers with pending destination review, immutable history and server-derived capabilities."
+  },
+  "servers": [{ "url": "/api" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/tickets/{id}/transfers": {
+      "parameters": [{ "$ref": "#/components/parameters/TicketId" }],
+      "post": {
+        "operationId": "initiateTicketTransfer",
+        "summary": "Initiate an OPEN Ticket transfer to another active Room in the same System",
+        "parameters": [{ "$ref": "#/components/parameters/IfMatch" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InitiateTransferRequest" } } } },
+        "responses": {
+          "201": { "description": "Transfer initiated atomically", "headers": { "ETag": { "$ref": "#/components/headers/ETag" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MutationResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "428": { "$ref": "#/components/responses/PreconditionRequired" }
+        }
+      },
+      "get": {
+        "operationId": "listTicketTransferHistory",
+        "summary": "List immutable Transfer history for one visible Ticket",
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/SortDirection" }
+        ],
+        "responses": {
+          "200": { "description": "Transfer history", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransferHistoryResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/tickets/{id}/transfer-targets": {
+      "parameters": [{ "$ref": "#/components/parameters/TicketId" }],
+      "get": {
+        "operationId": "listTicketTransferTargets",
+        "summary": "List active same-System destination Rooms available to the source manager",
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "name": "search", "in": "query", "schema": { "type": "string", "maxLength": 100 } },
+          { "name": "environmentId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "name": "subEnvironmentId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } }
+        ],
+        "responses": {
+          "200": { "description": "Eligible target Rooms", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransferTargetsResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/ticket-transfers": {
+      "get": {
+        "operationId": "listTicketTransfers",
+        "summary": "List authorized incoming, outgoing or combined Transfer queues",
+        "parameters": [
+          { "name": "direction", "in": "query", "schema": { "type": "string", "enum": ["INCOMING", "OUTGOING", "ALL"], "default": "INCOMING" } },
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/TransferStatus" } },
+          { "name": "externalState", "in": "query", "schema": { "type": "string", "enum": ["PENDING", "PROCESSING", "DONE", "CANCELLED"] } },
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/Limit" },
+          { "name": "search", "in": "query", "schema": { "type": "string", "maxLength": 100 } },
+          { "name": "ticketId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "name": "sourceRoomId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "name": "destinationRoomId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "name": "sourceSubEnvironmentId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "name": "destinationSubEnvironmentId", "in": "query", "schema": { "$ref": "#/components/schemas/ObjectId" } },
+          { "name": "initiatedFrom", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "initiatedTo", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "resolvedFrom", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "resolvedTo", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string", "enum": ["initiatedAt", "acceptedAt", "cancelledAt", "updatedAt", "ticketNumber", "sequence"], "default": "initiatedAt" } },
+          { "$ref": "#/components/parameters/SortDirection" }
+        ],
+        "responses": {
+          "200": { "description": "Authorized Transfer queue", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransferListResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/ticket-transfers/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/TransferId" }],
+      "get": {
+        "operationId": "getTicketTransfer",
+        "summary": "Get an authorized Transfer detail with source and destination summaries",
+        "responses": {
+          "200": { "description": "Transfer detail", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransferDetailResponse" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/ticket-transfers/{id}/accept": {
+      "parameters": [{ "$ref": "#/components/parameters/TransferId" }],
+      "post": {
+        "operationId": "acceptTicketTransfer",
+        "summary": "Accept a pending Transfer as an authorized destination manager",
+        "parameters": [{ "$ref": "#/components/parameters/IfMatch" }],
+        "requestBody": { "content": { "application/json": { "schema": { "type": "object", "additionalProperties": false, "maxProperties": 0 } } } },
+        "responses": {
+          "200": { "description": "Transfer accepted", "headers": { "ETag": { "$ref": "#/components/headers/ETag" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MutationResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "428": { "$ref": "#/components/responses/PreconditionRequired" }
+        }
+      }
+    },
+    "/ticket-transfers/{id}/cancel": {
+      "parameters": [{ "$ref": "#/components/parameters/TransferId" }],
+      "post": {
+        "operationId": "cancelTicketTransfer",
+        "summary": "Cancel a pending Transfer as an authorized destination manager and restore its immediate source",
+        "parameters": [{ "$ref": "#/components/parameters/IfMatch" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CancelTransferRequest" } } } },
+        "responses": {
+          "200": { "description": "Transfer cancelled", "headers": { "ETag": { "$ref": "#/components/headers/ETag" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MutationResponse" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "428": { "$ref": "#/components/responses/PreconditionRequired" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "parameters": {
+      "TicketId": { "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } },
+      "TransferId": { "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/ObjectId" } },
+      "IfMatch": { "name": "If-Match", "in": "header", "required": true, "description": "Current Ticket version, optionally quoted", "schema": { "type": "string", "pattern": "^\\\"?[1-9][0-9]*\\\"?$" } },
+      "Page": { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100000, "default": 1 } },
+      "Limit": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 } },
+      "SortDirection": { "name": "sortDirection", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" } }
+    },
+    "headers": {
+      "ETag": { "description": "Updated Ticket version", "schema": { "type": "string" } }
+    },
+    "schemas": {
+      "ObjectId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+      "TransferStatus": { "type": "string", "enum": ["PENDING_ACCEPTANCE", "ACCEPTED", "CANCELLED"] },
+      "InitiateTransferRequest": {
+        "type": "object", "additionalProperties": false,
+        "required": ["destinationRoomId", "reason"],
+        "properties": {
+          "destinationRoomId": { "$ref": "#/components/schemas/ObjectId" },
+          "reason": { "type": "string", "minLength": 3, "maxLength": 5000 }
+        }
+      },
+      "CancelTransferRequest": {
+        "type": "object", "additionalProperties": false,
+        "required": ["reason"],
+        "properties": { "reason": { "type": "string", "minLength": 3, "maxLength": 5000 } }
+      },
+      "SafeUser": {
+        "type": ["object", "null"], "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" },
+          "displayName": { "type": ["string", "null"] },
+          "email": { "type": ["string", "null"], "format": "email" }
+        }
+      },
+      "Capabilities": {
+        "type": "object", "additionalProperties": false,
+        "required": ["canView", "canEdit", "canClose", "canAssign", "canTransfer", "canAcceptTransfer", "canCancelTransfer", "isReadOnly"],
+        "properties": {
+          "canView": { "type": "boolean" }, "canEdit": { "type": "boolean" },
+          "canClose": { "type": "boolean" }, "canAssign": { "type": "boolean" },
+          "canTransfer": { "type": "boolean" }, "canAcceptTransfer": { "type": "boolean" },
+          "canCancelTransfer": { "type": "boolean" }, "canChangeCategory": { "type": "boolean" },
+          "canChangePin": { "type": "boolean" }, "canWriteChat": { "type": "boolean" },
+          "isReadOnly": { "type": "boolean" }, "readOnlyReason": { "type": ["string", "null"] }
+        }
+      },
+      "Transfer": {
+        "type": "object",
+        "required": ["id", "ticketId", "ticketNumber", "systemId", "sourceRoomId", "destinationRoomId", "status", "sequence", "reason", "initiatedBy", "initiatedAt"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" }, "ticketId": { "$ref": "#/components/schemas/ObjectId" },
+          "ticketNumber": { "type": "string" }, "systemId": { "$ref": "#/components/schemas/ObjectId" },
+          "sourceEnvironmentId": { "$ref": "#/components/schemas/ObjectId" }, "sourceSubEnvironmentId": { "$ref": "#/components/schemas/ObjectId" },
+          "sourceRoomId": { "$ref": "#/components/schemas/ObjectId" }, "destinationEnvironmentId": { "$ref": "#/components/schemas/ObjectId" },
+          "destinationSubEnvironmentId": { "$ref": "#/components/schemas/ObjectId" }, "destinationRoomId": { "$ref": "#/components/schemas/ObjectId" },
+          "status": { "$ref": "#/components/schemas/TransferStatus" },
+          "externalState": { "type": "string", "enum": ["PENDING", "PROCESSING", "DONE", "CANCELLED"] },
+          "sequence": { "type": "integer", "minimum": 1 }, "reason": { "type": "string" },
+          "initiatedBy": { "$ref": "#/components/schemas/SafeUser" }, "initiatedAt": { "type": "string", "format": "date-time" },
+          "acceptedBy": { "$ref": "#/components/schemas/SafeUser" }, "acceptedAt": { "type": ["string", "null"], "format": "date-time" },
+          "cancelledBy": { "$ref": "#/components/schemas/SafeUser" }, "cancelledAt": { "type": ["string", "null"], "format": "date-time" },
+          "cancellationReason": { "type": ["string", "null"] },
+          "ticketVersionBeforeInitiation": { "type": "integer" }, "ticketVersionAfterInitiation": { "type": "integer" },
+          "ticketVersionBeforeResolution": { "type": ["integer", "null"] }, "ticketVersionAfterResolution": { "type": ["integer", "null"] },
+          "capabilities": { "$ref": "#/components/schemas/Capabilities" }
+        }
+      },
+      "TicketSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "#/components/schemas/ObjectId" }, "ticketNumber": { "type": "string" },
+          "subject": { "type": "string" }, "priority": { "type": "string" }, "status": { "type": "string" },
+          "currentRoomId": { "$ref": "#/components/schemas/ObjectId" },
+          "activeTransferId": { "oneOf": [{ "$ref": "#/components/schemas/ObjectId" }, { "type": "null" }] },
+          "version": { "type": "integer" }, "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RoomSummary": {
+        "type": ["object", "null"],
+        "properties": { "id": { "$ref": "#/components/schemas/ObjectId" }, "key": { "type": "string" }, "name": { "type": "string" } }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer" }, "limit": { "type": "integer" }, "totalItems": { "type": "integer" },
+          "totalPages": { "type": "integer" }, "hasNextPage": { "type": "boolean" }, "hasPreviousPage": { "type": "boolean" }
+        }
+      },
+      "MutationResponse": {
+        "type": "object", "required": ["success", "data"],
+        "properties": { "success": { "const": true }, "data": { "type": "object", "properties": {
+          "transfer": { "$ref": "#/components/schemas/Transfer" }, "ticket": { "$ref": "#/components/schemas/TicketSummary" }
+        } } }
+      },
+      "TransferListResponse": {
+        "type": "object", "properties": { "success": { "const": true }, "data": { "type": "object", "properties": {
+          "items": { "type": "array", "items": { "type": "object", "properties": {
+            "transfer": { "$ref": "#/components/schemas/Transfer" }, "ticket": { "$ref": "#/components/schemas/TicketSummary" }
+          } } }, "pagination": { "$ref": "#/components/schemas/Pagination" }
+        } } }
+      },
+      "TransferHistoryResponse": {
+        "type": "object", "properties": { "success": { "const": true }, "data": { "type": "object", "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Transfer" } },
+          "pagination": { "$ref": "#/components/schemas/Pagination" }, "capabilities": { "$ref": "#/components/schemas/Capabilities" }
+        } } }
+      },
+      "TransferDetailResponse": {
+        "type": "object", "properties": { "success": { "const": true }, "data": { "type": "object", "properties": {
+          "transfer": { "$ref": "#/components/schemas/Transfer" }, "ticket": { "$ref": "#/components/schemas/TicketSummary" },
+          "sourceRoom": { "$ref": "#/components/schemas/RoomSummary" }, "destinationRoom": { "$ref": "#/components/schemas/RoomSummary" }
+        } } }
+      },
+      "TransferTargetsResponse": {
+        "type": "object", "properties": { "success": { "const": true }, "data": { "type": "object", "properties": {
+          "items": { "type": "array", "items": { "type": "object", "properties": {
+            "id": { "$ref": "#/components/schemas/ObjectId" }, "key": { "type": "string" }, "name": { "type": "string" },
+            "environment": { "$ref": "#/components/schemas/RoomSummary" }, "subEnvironment": { "$ref": "#/components/schemas/RoomSummary" }
+          } } }, "pagination": { "$ref": "#/components/schemas/Pagination" }
+        } } }
+      },
+      "Error": {
+        "type": "object", "properties": { "success": { "const": false }, "error": { "type": "object", "properties": {
+          "code": { "type": "string" }, "message": { "type": "string" }, "requestId": { "type": ["string", "null"] }
+        } } }
+      }
+    },
+    "responses": {
+      "BadRequest": { "description": "Invalid or protected input", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "Missing or invalid Bearer Access Token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden": { "description": "Insufficient exact-scope authority", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "Resource absent or hidden by scope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Conflict": { "description": "State, version, hierarchy or uniqueness conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "PreconditionRequired": { "description": "If-Match is required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    }
+  }
+}

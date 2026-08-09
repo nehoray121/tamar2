@@ -1,0 +1,29 @@
+{
+  "database": "tamar_dev",
+  "collections": {
+    "environments": {
+      "count": 1,
+      "sha256": "597b805eb281f9df12a1f1d7b40fa15c485473598fb0e552fa37c4b91a8d1aa0"
+    },
+    "organizationMemberships": {
+      "count": 1,
+      "sha256": "4c5a4f0360fa73e6136720420fa87d3f2923884734d21d834cc53d66ecb8468e"
+    },
+    "rooms": {
+      "count": 3,
+      "sha256": "4098618014b718dc6e9eebf22e9d9a4e0269a87669c919462e1fde89df28daa7"
+    },
+    "subEnvironments": {
+      "count": 1,
+      "sha256": "719025c5a81d941204bf96367d5e421cfb603e1a7e6040727775a2beeed65ad7"
+    },
+    "systems": {
+      "count": 1,
+      "sha256": "a9aeaf590baa01a3cd621f1a381eb9e37573d3f0f64a8cf489882132f2f02774"
+    },
+    "users": {
+      "count": 1,
+      "sha256": "7634452bdd2417d8f3a36220a5d5f7c52e57b327b9099949decad6850e21573b"
+    }
+  }
+}

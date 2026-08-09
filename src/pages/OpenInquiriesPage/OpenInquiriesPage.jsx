@@ -3,7 +3,7 @@ import TicketListPage from '../TicketListPage/TicketListPage.jsx';
 
 const OpenInquiriesPage = () => (
     <TicketListPage
-        title="פניות פתוחות - מנדיי"
+        title="פניות פתוחות"
         description="כאן ניתן לצפות בכל הפניות הפתוחות שקיימות במערכת וניתן לסנן אותן בעזרת סל מסננים"
         viewType="open"
     />

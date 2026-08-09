@@ -1,0 +1,27 @@
+const BOARD_TYPES = Object.freeze({
+    OPEN: 'OPEN',
+    CLOSED: 'CLOSED',
+    EXTERNAL_SENT: 'EXTERNAL_SENT',
+    EXTERNAL_RECEIVED: 'EXTERNAL_RECEIVED'
+});
+
+const BOARD_TYPE_VALUES = Object.freeze(Object.values(BOARD_TYPES));
+const BOARD_ITEM_TYPES = Object.freeze({ TICKET: 'TICKET', TRANSFER: 'TRANSFER' });
+const CATEGORY_MODES = Object.freeze(['ALL', 'CATEGORIZED', 'UNCATEGORIZED']);
+const PIN_MODES = Object.freeze(['ALL', 'PINNED', 'UNPINNED']);
+const TICKET_BOARD_TYPES = Object.freeze([BOARD_TYPES.OPEN, BOARD_TYPES.CLOSED]);
+const EXTERNAL_BOARD_TYPES = Object.freeze([BOARD_TYPES.EXTERNAL_SENT, BOARD_TYPES.EXTERNAL_RECEIVED]);
+
+const itemTypeForBoard = (boardType) => TICKET_BOARD_TYPES.includes(boardType)
+    ? BOARD_ITEM_TYPES.TICKET : BOARD_ITEM_TYPES.TRANSFER;
+
+module.exports = {
+    BOARD_TYPES,
+    BOARD_TYPE_VALUES,
+    BOARD_ITEM_TYPES,
+    CATEGORY_MODES,
+    PIN_MODES,
+    TICKET_BOARD_TYPES,
+    EXTERNAL_BOARD_TYPES,
+    itemTypeForBoard
+};

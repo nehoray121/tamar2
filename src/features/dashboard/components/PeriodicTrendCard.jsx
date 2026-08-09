@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Icon from '../../../components/common/Icon.jsx';
 import { exportDashboardCsv } from '../utils/dashboard.utils.js';
 import { DashboardCard } from './DashboardPrimitives.jsx';
@@ -21,13 +21,13 @@ const PeriodicTrendCard = ({
 
     return (
         <DashboardCard className={`dashboard-card-motion flex h-full min-h-0 flex-col ${isBarExpanded ? 'dashboard-expanded-card' : ''}`}>
-            <div className={`shrink-0 border-b border-slate-100 bg-white/90 ${isBarExpanded ? 'px-5 py-4' : 'px-4 py-2'}`}>
+            <div className={`shrink-0   bg-transparent ${isBarExpanded ? 'px-5 py-4' : 'px-4 py-2'}`}>
                 <div className={`flex flex-wrap justify-between ${isBarExpanded ? 'items-center gap-3' : 'items-start gap-3'}`} dir="rtl">
                     <div>
-                        <h2 className="flex items-center gap-2 text-[22px] font-black leading-7 text-slate-950">
+                        <h2 className="flex items-center gap-2 text-[22px] font-black leading-7 inquiry-primary-text">
                             <Icon name="chartBar" className="h-6 w-6 text-blue-600" /> מגמת פניות תקופתית
                         </h2>
-                        <p className="mt-1 text-sm font-semibold text-slate-400">גרף עמודות עם 12 עמודות בתצוגה, סינון, מיון וייצוא.</p>
+                        <p className="mt-1 text-sm font-semibold inquiry-secondary-text">גרף עמודות עם 12 עמודות בתצוגה, סינון, מיון וייצוא.</p>
                     </div>
                     <div className="flex items-center gap-3">
                         {isBarExpanded && <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-black text-blue-700">סה״כ מוצגות: <span className="text-lg">{filteredBarData.length}</span></div>}

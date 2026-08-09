@@ -1,0 +1,70 @@
+﻿ M codex-backups/before-new-inquiry-four-fixes-20260624-151026/SystemFieldsCard.jsx
+ M codex-backups/before-visual-refinement-20260629-111027/src/features/tickets/components/InquiryListRow.jsx
+ M src/app/AppRoutes.jsx
+ M src/components/common/Icon.jsx
+ M src/components/layout/AppShell.jsx
+ M src/components/layout/Sidebar.jsx
+ M src/components/ui/FormControls.jsx
+ M src/features/dashboard/components/DashboardFilterToolbar.jsx
+ M src/features/dashboard/components/DashboardHeader.jsx
+ M src/features/dashboard/components/DashboardKpiCard.jsx
+ M src/features/dashboard/components/DashboardKpiGrid.jsx
+ M src/features/dashboard/components/DashboardPrimitives.jsx
+ M src/features/dashboard/components/ImmediateTreatmentPanel.jsx
+ M src/features/dashboard/components/PeriodicBarChart.jsx
+ M src/features/dashboard/components/PeriodicTrendCard.jsx
+ M src/features/dashboard/components/SectionExpandButton.jsx
+ M src/features/dashboard/components/UrgencyBreakdownCard.jsx
+ M src/features/dashboard/components/UrgencyDonutChart.jsx
+ M src/features/dashboard/components/WorkloadPanel.jsx
+ M src/features/dashboard/hooks/useUrgencySelection.js
+ M src/features/inquiries/components/CustomerHistoryDrawer.jsx
+ M src/features/inquiries/components/InquiryTabs.jsx
+ M src/features/inquiries/components/InternalChatDrawer.jsx
+ M src/features/inquiries/components/PublishActions.jsx
+ M src/features/inquiries/components/RoomFieldsCard.jsx
+ M src/features/inquiries/components/SystemFieldsCard.jsx
+ M src/features/inquiries/hooks/useInquiryForm.js
+ M src/features/rooms/data/roomHierarchy.mock.js
+ M src/features/rooms/hooks/useRoomHierarchy.js
+ M src/features/tickets/components/CloseInquiryDialog.jsx
+ M src/features/tickets/components/InquiryBulkActions.jsx
+ M src/features/tickets/components/InquiryCategoriesDropdown.jsx
+ M src/features/tickets/components/InquiryCategoryBadge.jsx
+ M src/features/tickets/components/InquiryCategoryDialog.jsx
+ M src/features/tickets/components/InquiryListRow.jsx
+ M src/features/tickets/components/InquiryPinButton.jsx
+ M src/features/tickets/components/PersonalAssignmentDrawer.jsx
+ M src/features/tickets/hooks/useInquiryOrganization.js
+ M src/features/tickets/hooks/usePersonalAssignment.js
+ M src/features/tickets/services/personalAssignmentService.js
+ M src/features/users/data/mockUserManagementData.js
+ M src/features/users/services/userManagementService.js
+ M src/pages/DashboardPage/DashboardPage.jsx
+ M src/pages/HierarchyPage/CreateItemModal.jsx
+ M src/pages/HierarchyPage/EnvironmentSelectionModal.jsx
+ M src/pages/HierarchyPage/HierarchyPage.jsx
+ M src/pages/NewInquiryPage/NewInquiryPage.jsx
+ M src/pages/SettingsPage/SettingsPage.jsx
+ M src/pages/TicketListPage/TicketListPage.jsx
+ M src/pages/TicketListPage/TicketModal.jsx
+ M src/pages/UserManagementPage/UserManagementPage.jsx
+ M src/store/session.store.js
+ M src/styles.css
+ M tailwind.config.js
+?? .codex-artifacts/
+?? .codex-edge-check/
+?? codex-backups/20260705-darkmode-corrections/
+?? codex-backups/20260705-dependency-darkmode-followup/
+?? src.7z
+?? src/components/common/PageHeader.jsx
+?? src/components/common/PageLoadingState.jsx
+?? src/components/common/PortalMenu.jsx
+?? src/features/inquiries/components/InquiryDrawerShell.jsx
+?? src/features/inquiries/services/
+?? src/features/settings/
+?? src/features/superAdmin/
+?? src/features/tickets/components/CategoryColorPicker.jsx
+?? src/features/tickets/services/inquirySelectionModel.js
+?? src/features/tickets/services/notificationSoundService.js
+?? src/pages/SuperAdminPage/
