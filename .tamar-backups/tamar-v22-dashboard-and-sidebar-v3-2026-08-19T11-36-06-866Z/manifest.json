@@ -1,0 +1,72 @@
+[
+  {
+    "path": "src/styles.css",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\styles.css",
+    "sha256": "f7e5fcaa04c2b4d793a56008de9ef5dfc771122f83c936da07b9f61fae03010b"
+  },
+  {
+    "path": "src/components/layout/Sidebar.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\components\\layout\\Sidebar.jsx",
+    "sha256": "d354c845b4c3f4079c839a6cace8257bcb5678afa85adc2fa81e42fe8a1a0f0b"
+  },
+  {
+    "path": "src/features/dashboard/components/DashboardHeader.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\DashboardHeader.jsx",
+    "sha256": "a7d841e4c223e9ddf8dc39321e3c5a509b1a3b4bbc892f91dcd95e42b65ff584"
+  },
+  {
+    "path": "src/features/dashboard/components/DashboardKpiCard.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\DashboardKpiCard.jsx",
+    "sha256": "95e292629581b355dbe2e8ae1bc30b76c402dc2ff47aeb20a80278f2093b33b1"
+  },
+  {
+    "path": "src/features/dashboard/components/DashboardKpiGrid.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\DashboardKpiGrid.jsx",
+    "sha256": "2318cb876e3d94e3395f70b64ea7aff634ad58a48dab7a25d498130a1b842ac8"
+  },
+  {
+    "path": "src/features/dashboard/components/DashboardPrimitives.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\DashboardPrimitives.jsx",
+    "sha256": "84f65f2b1f790220c6d7e8eca56b164cc3b98d8a0973835cc40795e50620ea56"
+  },
+  {
+    "path": "src/features/dashboard/components/PeriodicTrendCard.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\PeriodicTrendCard.jsx",
+    "sha256": "ef02bc3b30a01495a5bf01abcc43e2fc880312f625dfd50e9c960ed5786e786f"
+  },
+  {
+    "path": "src/features/dashboard/components/PeriodicBarChart.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\PeriodicBarChart.jsx",
+    "sha256": "825ae087cde9853c4a3ccac2846b922d6a06aa5b449198c28ec511645b1c760e"
+  },
+  {
+    "path": "src/features/dashboard/components/UrgencyBreakdownCard.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\UrgencyBreakdownCard.jsx",
+    "sha256": "5dc6b45b6b3955340ae0d036994c7c16fd5cbd6f73fb9e7be417ba6f31207ee4"
+  },
+  {
+    "path": "src/features/dashboard/components/UrgencyDonutChart.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\UrgencyDonutChart.jsx",
+    "sha256": "a94fa4bfe1507cd7c298f5d641cdc4591083b5bb4d02695acbe7f4e62d74a3c0"
+  },
+  {
+    "path": "src/features/dashboard/components/WorkloadPanel.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\WorkloadPanel.jsx",
+    "sha256": "d52a3e5b19d884c120397f80f8a9d2353697f3e47c6b106bb3c5845798677f07"
+  },
+  {
+    "path": "src/features/dashboard/components/ImmediateTreatmentPanel.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\ImmediateTreatmentPanel.jsx",
+    "sha256": "3268e0c9727cbe1dbdccdcdadad84977edda2ae2b481ccc107fbd9d55f65b8f9"
+  },
+  {
+    "path": "src/features/dashboard/components/SectionExpandButton.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\features\\dashboard\\components\\SectionExpandButton.jsx",
+    "sha256": "70fbaa0a7cee1427d48efed2ee93f0b963ad64590f7f82bc527a65a83c6d9113"
+  },
+  {
+    "path": "src/pages/DashboardPage/DashboardPage.jsx",
+    "backup": ".tamar-backups\\tamar-v22-dashboard-and-sidebar-v3-2026-08-19T11-36-06-866Z\\src\\pages\\DashboardPage\\DashboardPage.jsx",
+    "sha256": "143ff3efb23d44503e060de374396aec3f24eb5a7266bc2b789567d086fd5a03"
+  }
+]

@@ -3,6 +3,7 @@ import { createDefaultSettings } from '../constants/settingsDefaults.js';
 import { settingsRepository } from '../services/settingsRepository.js';
 import { createLatestSettingsSaveQueue } from '../services/settingsSaveQueue.js';
 import { useSessionStore } from '../../../store/session.store.js';
+import { subscribeRoomSettingsRealtime } from '../../tickets/boards/realtime/boardSocket.js';
 
 const objectIdPattern = /^[0-9a-f]{24}$/iu;
 
@@ -74,7 +75,20 @@ export const useRoomSettings = ({ autosave = false, debounceMs = 450 } = {}) => 
     }, [roomId, loadRevision]);
 
     useEffect(() => {
-        if (!autosave || !loaded || !dirtyRef.current || !roomId) return undefined;
+    if (!roomId) return undefined;
+    return subscribeRoomSettingsRealtime({
+        roomId,
+        onInvalidate: () => {
+            if (!dirtyRef.current) {
+                setLoadRevision((revision) => revision + 1);
+            }
+        }
+    });
+}, [roomId]);
+
+useEffect(() => {
+    if (!autosave || !loaded || !dirtyRef.current || !roomId) return undefined;
+
         const revision = saveRevisionRef.current;
         const snapshot = settings;
         const timer = window.setTimeout(() => {

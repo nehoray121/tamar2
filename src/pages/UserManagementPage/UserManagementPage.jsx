@@ -6,6 +6,19 @@ import { ROLE_KEYS, roleLabels } from '../../features/users/constants/userRoles.
 
 const SYSTEM_ROLE_GUIDE = [
     {
+        id: ROLE_KEYS.ENVIRONMENT_ADMIN,
+        label: roleLabels[ROLE_KEYS.ENVIRONMENT_ADMIN],
+        summary: 'ניהול מלא של סביבה אחת, כולל תתי־הסביבות והחדרים שלה.',
+        scope: 'סביבה אחת וכל תתי־הסביבות והחדרים שבתוכה.',
+        capabilities: [
+            'יצירת תתי־סביבות וחדרים בתוך הסביבה.',
+            'ניהול פניות, משתמשים והרשאות בכל חדרי הסביבה.',
+            'ניהול הגדרות החדרים והצגת נתוני הדאשבורד בתחום הסביבה.',
+            'אישור בקשות גישה לתפקידי חדר בתחום הסביבה.',
+            'ללא גישה למרכז השליטה של מנהל־על וללא יצירת סביבות חדשות.'
+        ]
+    },
+    {
         id: ROLE_KEYS.SYSTEM_ADMIN,
         label: roleLabels[ROLE_KEYS.SYSTEM_ADMIN],
         summary: 'ניהול ממוקד של תת־סביבה אחת וכל החדרים המשויכים אליה.',
@@ -57,7 +70,16 @@ const buildScope = (role, selection, options) => {
     const room = options.rooms.find((item) => item.id === selection.roomId)
         || options.rooms.find((item) => !subEnvironment || item.subEnvironmentId === subEnvironment.id);
     if (role === ROLE_KEYS.SUPER_ADMIN && system) return { scopeType: 'SYSTEM', scopeId: system.id, systemId: system.id };
-    if (role === ROLE_KEYS.SYSTEM_ADMIN && subEnvironment) {
+if (role === ROLE_KEYS.ENVIRONMENT_ADMIN && environment) {
+    return {
+        scopeType: 'ENVIRONMENT',
+        scopeId: environment.id,
+        systemId: environment.systemId,
+        environmentId: environment.id
+    };
+}
+if (role === ROLE_KEYS.SYSTEM_ADMIN && subEnvironment) {
+
         return { scopeType: 'SUB_ENVIRONMENT', scopeId: subEnvironment.id, systemId: subEnvironment.systemId, environmentId: subEnvironment.environmentId, subEnvironmentId: subEnvironment.id };
     }
     if ([ROLE_KEYS.ROOM_MANAGER, ROLE_KEYS.ROOM_USER].includes(role) && room) {
@@ -90,8 +112,9 @@ const RoleScopeForm = ({ role, setRole, scope, setScope, roleOptions, organizati
                     {environments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
             )}
-            {role !== ROLE_KEYS.SUPER_ADMIN && (
-                <select value={scope.subEnvironmentId || subEnvironment?.id || ''} onChange={(event) => setScope({ ...scope, systemId: system?.id, environmentId: environment?.id, subEnvironmentId: event.target.value })} className={selectClass}>
+            {![ROLE_KEYS.SUPER_ADMIN, ROLE_KEYS.ENVIRONMENT_ADMIN].includes(role) && (
+    <select value={scope.subEnvironmentId || subEnvironment?.id || ''} onChange={(event) => setScope({ ...scope, systemId: system?.id, environmentId: environment?.id, subEnvironmentId: event.target.value })} className={selectClass}>
+
                     {subEnvironments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
             )}
@@ -199,8 +222,14 @@ const PermissionsExplanationCard = ({ compact = false }) => {
     );
 };
 
-export const CreateUserPanel = ({ initialId = '', onCancel, onCreated }) => {
-    const api = useUserManagement();
+export const CreateUserPanel = ({
+    initialId = '',
+    onCancel,
+    onCreated,
+    managementApi = null
+}) => {
+    const fallbackApi = useUserManagement();
+    const api = managementApi || fallbackApi;
     const capabilities = useUserManagementCapabilities(api.options.roles);
     const roleOptions = capabilities.allowedRoles;
     const [personalNumber, setPersonalNumber] = useState(initialId || '');

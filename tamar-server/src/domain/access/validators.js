@@ -97,6 +97,14 @@ const assertHierarchyReferences = ({
     }
 
     assertObjectId(environmentId, 'environmentId');
+
+    if (scopeType === SCOPE_TYPES.ENVIRONMENT) {
+        if (!sameId(scopeId, environmentId) || subEnvironmentId || roomId) {
+            throw validationError('ENVIRONMENT scope references are inconsistent');
+        }
+        return;
+    }
+
     assertObjectId(subEnvironmentId, 'subEnvironmentId');
 
     if (scopeType === SCOPE_TYPES.SUB_ENVIRONMENT) {
@@ -122,4 +130,15 @@ const assertApprovedRoleNotHigher = (requestedRole, approvedRole) => {
 
 const toIdSet = (values = []) => new Set(values.filter(Boolean).map((value) => String(value)));
 
-module.exports = { normalizeExternalIdentity, assertKnownRole, assertKnownScopeType, assertRoleScopeCompatibility, assertRequestableRole, assertRequestRoleScopeCompatibility, assertObjectId, assertHierarchyReferences, assertApprovedRoleNotHigher, toIdSet };
+module.exports = {
+    normalizeExternalIdentity,
+    assertKnownRole,
+    assertKnownScopeType,
+    assertRoleScopeCompatibility,
+    assertRequestableRole,
+    assertRequestRoleScopeCompatibility,
+    assertObjectId,
+    assertHierarchyReferences,
+    assertApprovedRoleNotHigher,
+    toIdSet
+};

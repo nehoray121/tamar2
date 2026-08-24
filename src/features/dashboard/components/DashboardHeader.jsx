@@ -1,21 +1,30 @@
-﻿import React from 'react';
+import React from 'react';
 import Icon from '../../../components/common/Icon.jsx';
 
-const DashboardHeader = ({ totalInquiries }) => (
-    <header className="flex h-[78px] shrink-0 items-center justify-between px-6 py-3">
-        <div className="flex items-start gap-3 text-right">
-            <div className="mt-1 rounded-xl bg-[var(--color-primary-soft)] p-2 text-[var(--color-primary)]">
-                <Icon name="dashboard" className="h-4 w-4" />
-            </div>
-            <div>
-                <h1 className="text-[26px] font-black leading-8 tracking-tight text-[var(--color-text-primary)]">דשבורד פניות</h1>
-                <p className="mt-1 text-sm font-semibold text-[var(--color-text-secondary)]">מבט ניהולי כולל</p>
-            </div>
+const DashboardHeader = ({ totalInquiries, onCreateInquiry, onExport }) => (
+    <header className="tamar-v22-dashboard-header flex shrink-0 items-start justify-between gap-5" aria-label={`לוח בקרה · ${totalInquiries} פניות`}>
+        <div className="tamar-v22-dashboard-heading text-right">
+            <h1>לוח בקרה</h1>
+            <p>מעקב, תעדוף וניהול הפניות שלך במקום אחד.</p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-1.5 text-sm shadow-sm">
-            <span className="font-medium text-[var(--color-text-secondary)]">סה״כ פניות:</span>
-            <span className="font-bold text-[var(--color-primary)]">{totalInquiries}</span>
+        <div className="tamar-v22-dashboard-actions flex shrink-0 items-center gap-2.5">
+            <button
+                type="button"
+                onClick={onCreateInquiry}
+                className="tamar-v22-header-button tamar-v22-header-button--primary inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+            >
+                <Icon name="plus" className="h-4 w-4" />
+                <span>פנייה חדשה</span>
+            </button>
+            <button
+                type="button"
+                onClick={onExport}
+                className="tamar-v22-header-button tamar-v22-header-button--secondary inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+            >
+                <Icon name="arrowDownStraight" className="h-4 w-4" />
+                <span>ייצוא לאקסל</span>
+            </button>
         </div>
     </header>
 );

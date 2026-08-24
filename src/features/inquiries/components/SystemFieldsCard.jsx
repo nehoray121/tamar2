@@ -51,7 +51,6 @@ const SystemFieldsCard = ({
     incidentDescriptionSettings,
     onOpenHistory,
     openedBy,
-    openedByContext,
     historyCount = 0
 }) => {
     const templateButtonRef = useRef(null);
@@ -79,7 +78,6 @@ const SystemFieldsCard = ({
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-slate-700">ע</span>
                     <span>{LABEL_OPENED_BY}</span>
                     <span className="font-black inquiry-primary-text">{openedBy || 'המשתמש המחובר'}</span>
-                    {openedByContext && <span>· {openedByContext}</span>}
                 </div>
             </div>
 
@@ -106,7 +104,7 @@ const SystemFieldsCard = ({
                     </select>
                 </div>
 
-                <div className="relative flex min-h-0 flex-1 flex-col">
+                <div className="relative flex min-h-0 flex-1 flex-col px-[2px] pb-[2px] pt-[3px]">
                     <div className="mb-1 flex h-6 items-center justify-between gap-2">
                         <label className="text-[12px] font-black inquiry-primary-text">{descriptionLabel} {descriptionRequired && <span className="text-red-500">*</span>}</label>
                         <button
@@ -143,7 +141,7 @@ const SystemFieldsCard = ({
                     <textarea
                         value={fields.description}
                         onChange={(event) => setField('description', event.target.value)}
-                        className="inquiry-input-surface min-h-[120px] flex-1 resize-y rounded-xl border-2 border-blue-600 px-4 py-3 text-right text-[13px] font-semibold leading-6 outline-none"
+                        className="inquiry-input-surface min-h-0 flex-1 resize-none overflow-y-auto rounded-xl border-2 border-blue-600 px-4 py-3 text-right text-[13px] font-semibold leading-6 outline-none box-border"
                         placeholder={descriptionPlaceholder}
                     />
                     {descriptionHelpText && <p className="mt-2 text-right text-[11px] font-semibold leading-5 inquiry-muted-text">{descriptionHelpText}</p>}

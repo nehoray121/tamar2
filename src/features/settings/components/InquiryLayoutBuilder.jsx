@@ -55,7 +55,7 @@ const normalizeSections = (sections, fields) => {
 };
 
 const WidthSelector = ({ field, width, onChange }) => (
-    <div className="flex h-7 items-center rounded-md bg-[var(--color-surface-muted)] p-0.5" aria-label={`רוחב ${field.name}`}>
+    <div className="flex h-6 items-center rounded-md bg-[var(--color-surface-muted)] p-0.5" aria-label={`רוחב ${field.name}`}>
         {widthOptions.map((option) => {
             const canonicalRestriction = isCanonicalIncidentDescriptionField(field) && option !== 'רוחב מלא';
             return (
@@ -67,7 +67,7 @@ const WidthSelector = ({ field, width, onChange }) => (
                     data-testid={`layout-width-${field.id}-${inquiryWidthToGridSpan(option)}`}
                     onClick={() => onChange(option)}
                     className={join(
-                        'h-6 rounded px-2 text-[10px] font-black transition focus:outline-none focus:ring-2 focus:ring-blue-400/40 disabled:cursor-not-allowed disabled:opacity-30',
+                        'h-5 rounded px-1.5 text-[9px] font-black transition focus:outline-none focus:ring-2 focus:ring-blue-400/40 disabled:cursor-not-allowed disabled:opacity-30',
                         width === option ? 'bg-blue-600 text-white shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                     )}
                 >
@@ -92,14 +92,14 @@ const LayoutFieldEditor = ({
 }) => (
     <div
         className={join(
-            'group min-w-0 rounded-xl bg-[var(--color-surface-muted)] ring-1 ring-inset transition',
+            'group min-w-0 rounded-lg bg-[var(--color-surface-muted)] ring-1 ring-inset transition [&_input]:h-8 [&_select]:h-8 [&_textarea]:min-h-[54px] [&_textarea]:py-1',
             item.visible ? 'ring-[var(--color-border)]' : 'opacity-55 ring-[var(--color-border-strong)]'
         )}
         data-testid={`layout-field-${field.id}`}
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => onDrop(event, section.id, item.itemIndex)}
     >
-        <div className="flex min-h-9 items-center justify-between gap-2 px-2 py-1">
+        <div className="flex min-h-8 items-center justify-between gap-1.5 px-2 py-0.5">
             <span className="min-w-0 flex-1 truncate text-right text-[12px] font-black text-[var(--color-text-primary)]" dir="auto">{field.name}</span>
             <div className="flex shrink-0 items-center gap-1">
                 <button
@@ -107,7 +107,7 @@ const LayoutFieldEditor = ({
                     draggable
                     onDragStart={(event) => onDragStart(event, section.id, item.itemIndex, item.id)}
                     onKeyDown={(event) => onKeyboardMove(event, section.id, item.id)}
-                    className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
+                    className="flex h-6 w-6 cursor-grab items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                     aria-label={`גרירת ${field.name}; חיצים למעלה ולמטה משנים סדר`}
                 >
                     <Icon name="grip" className="h-4 w-4" />
@@ -116,7 +116,7 @@ const LayoutFieldEditor = ({
                 <button
                     type="button"
                     onClick={() => onToggleVisible(section.id, item.id)}
-                    className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                     title={item.visible ? 'הסתרה בתצוגת משתמש' : 'הצגה בתצוגת משתמש'}
                 >
                     <Icon name={item.visible ? 'eye' : 'close'} className="h-3.5 w-3.5" />
@@ -125,7 +125,7 @@ const LayoutFieldEditor = ({
                     <button
                         type="button"
                         onClick={() => onRemove(section.id, item.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-muted)] transition hover:bg-red-500/10 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-400/40"
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] transition hover:bg-red-500/10 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-400/40"
                         title="הסרה מהתצוגה בלבד"
                     >
                         <Icon name="trash" className="h-3.5 w-3.5" />
@@ -168,7 +168,7 @@ const TableLayoutEditor = ({ fields, tableFields, setSettings }) => {
             <header className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
                 <div>
                     <h3 className="text-[16px] font-black text-[var(--color-text-primary)]">שדות בשורת פנייה</h3>
-                    <p className="mt-1 text-[12px] font-semibold text-[var(--color-text-muted)]">גרור את הכרטיסים כדי לשנות את סדר העמודות בתצוגת הטבלה.</p>
+                    <p className="mt-0.5 text-[11px] font-semibold leading-4 text-[var(--color-text-muted)]">גרור את הכרטיסים כדי לשנות את סדר העמודות בתצוגת הטבלה.</p>
                 </div>
                 <span className="flex h-8 items-center rounded-lg bg-[var(--color-primary-soft)] px-3 text-[12px] font-black text-[var(--color-primary)]">
                     {normalized.length} מתוך 6 עמודות
@@ -345,22 +345,22 @@ const InquiryLayoutBuilder = ({
             : 'השינויים נשמרו באופן אוטומטי';
 
     return (
-        <div className="space-y-4 pb-5">
-            <section className="inquiry-panel mx-auto w-full max-w-[1120px] rounded-2xl px-4 py-3">
+        <div className="space-y-2 pb-2">
+            <section className="inquiry-panel mx-auto w-full max-w-[1240px] rounded-xl px-3 py-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-[20px] font-black text-[var(--color-text-primary)]">עריכת תצורת פנייה</h2>
+                        <h2 className="text-[17px] font-black leading-5 text-[var(--color-text-primary)]">עריכת תצורת פנייה</h2>
                         <p className="mt-1 text-[12px] font-semibold text-[var(--color-text-muted)]">ניהול מבנה השדות, הסדר והרוחב בקנה מידה זהה לחלון הפנייה.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => setViewMode('edit')} className={join('inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[12px] font-black transition', viewMode === 'edit' ? 'border-blue-600 bg-blue-600 text-white' : 'border-[var(--color-border)] text-[var(--color-text-secondary)]')}><Icon name="settings" className="h-3.5 w-3.5" />עריכה פעילה</button>
-                        <button type="button" onClick={() => setViewMode('user')} className={join('inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[12px] font-black transition', viewMode === 'user' ? 'border-blue-600 bg-blue-600 text-white' : 'border-[var(--color-border)] text-[var(--color-text-secondary)]')}><Icon name="eye" className="h-3.5 w-3.5" />תצוגת משתמש</button>
+                        <button type="button" onClick={() => setViewMode('edit')} className={join('inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-black transition', viewMode === 'edit' ? 'border-blue-600 bg-blue-600 text-white' : 'border-[var(--color-border)] text-[var(--color-text-secondary)]')}><Icon name="settings" className="h-3.5 w-3.5" />עריכה פעילה</button>
+                        <button type="button" onClick={() => setViewMode('user')} className={join('inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-black transition', viewMode === 'user' ? 'border-blue-600 bg-blue-600 text-white' : 'border-[var(--color-border)] text-[var(--color-text-secondary)]')}><Icon name="eye" className="h-3.5 w-3.5" />תצוגת משתמש</button>
                     </div>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3">
-                    <nav className="flex items-center gap-6">
-                        <button type="button" onClick={() => setSurface('details')} className={join('relative pb-2 text-[12px] font-black', surface === 'details' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]')}>תצורת פנייה{surface === 'details' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-600" />}</button>
-                        <button type="button" onClick={() => setSurface('table')} className={join('relative pb-2 text-[12px] font-black', surface === 'table' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]')}>פנייה בטבלה{surface === 'table' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-600" />}</button>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2">
+                    <nav className="flex items-center gap-4">
+                        <button type="button" onClick={() => setSurface('details')} className={join('relative pb-1.5 text-[11px] font-black', surface === 'details' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]')}>תצורת פנייה{surface === 'details' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-600" />}</button>
+                        <button type="button" onClick={() => setSurface('table')} className={join('relative pb-1.5 text-[11px] font-black', surface === 'table' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]')}>פנייה בטבלה{surface === 'table' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-600" />}</button>
                     </nav>
                     <div className={join('flex items-center gap-2 text-[11px] font-bold', saveStatus === 'error' ? 'text-red-400' : saveStatus === 'saving' ? 'text-blue-400' : 'text-emerald-400')}>
                         <Icon name={saveStatus === 'error' ? 'close' : saveStatus === 'saving' ? 'clock' : 'check'} className="h-3.5 w-3.5" />
@@ -373,6 +373,11 @@ const InquiryLayoutBuilder = ({
                 <TableLayoutEditor fields={displayFields} tableFields={tableFields} setSettings={setSettings} />
             ) : (
                 <InquiryFormCanvas
+                    connectedSections
+                    data-tamar-layout-compact
+                    className={viewMode === 'edit'
+                        ? '[&>div]:space-y-2 [&_[data-inquiry-grid]]:p-2 [&_[data-inquiry-grid]]:gap-2 [&_section]:rounded-xl'
+                        : ''}
                     fields={displayFields}
                     sections={normalizedSections}
                     values={previewValues}
@@ -406,7 +411,7 @@ const InquiryLayoutBuilder = ({
                     ) : undefined}
                     renderSectionHeader={viewMode === 'edit' ? ({ section, sectionIndex, items }) => (
                         <header
-                            className="flex min-h-11 items-center justify-between gap-3 border-b border-[var(--color-border)] px-4 py-2"
+                            className="flex min-h-9 items-center justify-between gap-2 border-b border-[var(--color-border)] px-3 py-1"
                             onDragOver={(event) => event.preventDefault()}
                             onDrop={() => reorderSection(section.id)}
                         >
@@ -429,7 +434,7 @@ const InquiryLayoutBuilder = ({
                                             return next;
                                         });
                                     }}
-                                    className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
+                                    className="flex h-6 w-6 cursor-grab items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                                     aria-label={`גרירת המקטע ${section.title}`}
                                 >
                                     <Icon name="grip" className="h-4 w-4" />
@@ -437,14 +442,14 @@ const InquiryLayoutBuilder = ({
                                 <input
                                     value={section.title}
                                     onChange={(event) => updateSections((current) => current.map((item) => item.id === section.id ? { ...item, title: event.target.value } : item))}
-                                    className="h-8 min-w-0 flex-1 bg-transparent text-right text-[14px] font-black text-[var(--color-text-primary)] outline-none focus:border-b focus:border-blue-500"
+                                    className="h-7 min-w-0 flex-1 bg-transparent text-right text-[13px] font-black text-[var(--color-text-primary)] outline-none focus:border-b focus:border-blue-500"
                                     aria-label="שם מקטע"
                                 />
-                                <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-1 text-[10px] font-black text-[var(--color-text-muted)]">{items.length} שדות</span>
+                                <span className="rounded-md bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-[9px] font-black text-[var(--color-text-muted)]">{items.length} שדות</span>
                             </div>
                             <div className="flex items-center gap-1">
-                                <button type="button" onClick={() => setCollapsedSections((current) => { const next = new Set(current); if (next.has(section.id)) next.delete(section.id); else next.add(section.id); return next; })} className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)]" title="כיווץ או הרחבה"><Icon name="chevronDown" className={join('h-3.5 w-3.5 transition', collapsedSections.has(section.id) && 'rotate-180')} /></button>
-                                <button type="button" onClick={() => updateSections((current) => current.filter((item) => item.id !== section.id))} className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-red-500/10 hover:text-red-400" title="מחיקת מקטע"><Icon name="trash" className="h-3.5 w-3.5" /></button>
+                                <button type="button" onClick={() => setCollapsedSections((current) => { const next = new Set(current); if (next.has(section.id)) next.delete(section.id); else next.add(section.id); return next; })} className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)]" title="כיווץ או הרחבה"><Icon name="chevronDown" className={join('h-3.5 w-3.5 transition', collapsedSections.has(section.id) && 'rotate-180')} /></button>
+                                <button type="button" onClick={() => updateSections((current) => current.filter((item) => item.id !== section.id))} className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-red-500/10 hover:text-red-400" title="מחיקת מקטע"><Icon name="trash" className="h-3.5 w-3.5" /></button>
                             </div>
                         </header>
                     ) : undefined}
@@ -453,7 +458,7 @@ const InquiryLayoutBuilder = ({
                         if (collapsedSections.has(section.id)) return null;
                         return (
                             <div
-                                className="border-t border-[var(--color-border)] px-4 py-2"
+                                className="border-t border-[var(--color-border)] px-3 py-1.5"
                                 onDragOver={(event) => event.preventDefault()}
                                 onDrop={(event) => {
                                     event.preventDefault();

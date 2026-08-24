@@ -11,36 +11,106 @@ const forbidden = () => new AppError({
 
 class OrganizationHierarchyAuthorizationService {
     constructor({ scopeResolver, integrityService }) {
-        this.scopeResolver = scopeResolver;
-        this.integrityService = integrityService;
+        Object.assign(this, { scopeResolver, integrityService });
     }
 
-    async assertSystemSuperAdmin(userId, systemId) {
+    async access(userId) {
         const access = await this.scopeResolver.resolveEffectiveAccess(userId);
-        const authorized = access.memberships.some((membership) => (
-            membership.role === ROLES.SUPER_ADMIN
-            && sameId(membership.systemId, systemId)
-        ));
-        if (!authorized) throw forbidden();
+        if (!access.isActive) throw forbidden();
         return access;
     }
 
-    async assertCanCreateSubEnvironment(userId, environmentId) {
-        const lineage = await this.integrityService.resolveEnvironment(environmentId, {
+    hasRole(access, role, predicate) {
+        return access.memberships.some((membership) => (
+            membership.role === role && predicate(membership)
+        ));
+    }
+
+    async assertCanCreateEnvironment(userId, systemId) {
+        const lineage = await this.integrityService.resolveSystem(systemId, {
             requireOperational: true
         });
-        await this.assertSystemSuperAdmin(userId, lineage.system._id);
+        const access = await this.access(userId);
+        const authorized = this.hasRole(
+            access,
+            ROLES.SUPER_ADMIN,
+            (membership) => sameId(membership.systemId, lineage.system._id)
+        );
+        if (!authorized) throw forbidden();
+        return lineage;
+    }
+
+    async assertCanCreateSubEnvironment(userId, environmentId) {
+        const lineage = await this.integrityService.resolveEnvironment(
+            environmentId,
+            { requireOperational: true }
+        );
+        const access = await this.access(userId);
+        const authorized = (
+            this.hasRole(
+                access,
+                ROLES.SUPER_ADMIN,
+                (membership) => sameId(
+                    membership.systemId,
+                    lineage.system._id
+                )
+            )
+            || this.hasRole(
+                access,
+                ROLES.ENVIRONMENT_ADMIN,
+                (membership) => sameId(
+                    membership.environmentId,
+                    lineage.environment._id
+                )
+            )
+        );
+        if (!authorized) throw forbidden();
         return lineage;
     }
 
     async assertCanCreateRoom(userId, subEnvironmentId) {
-        const lineage = await this.integrityService.resolveSubEnvironment(subEnvironmentId, {
-            requireOperational: true
-        });
-        await this.assertSystemSuperAdmin(userId, lineage.system._id);
+        const lineage = await this.integrityService.resolveSubEnvironment(
+            subEnvironmentId,
+            { requireOperational: true }
+        );
+        const access = await this.access(userId);
+        const authorized = (
+            this.hasRole(
+                access,
+                ROLES.SUPER_ADMIN,
+                (membership) => sameId(
+                    membership.systemId,
+                    lineage.system._id
+                )
+            )
+            || this.hasRole(
+                access,
+                ROLES.ENVIRONMENT_ADMIN,
+                (membership) => sameId(
+                    membership.environmentId,
+                    lineage.environment._id
+                )
+            )
+            || this.hasRole(
+                access,
+                ROLES.SYSTEM_ADMIN,
+                (membership) => sameId(
+                    membership.subEnvironmentId,
+                    lineage.subEnvironment._id
+                )
+            )
+            || this.hasRole(
+                access,
+                ROLES.ROOM_MANAGER,
+                (membership) => sameId(
+                    membership.subEnvironmentId,
+                    lineage.subEnvironment._id
+                )
+            )
+        );
+        if (!authorized) throw forbidden();
         return lineage;
     }
 }
 
 module.exports = OrganizationHierarchyAuthorizationService;
-

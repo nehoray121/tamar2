@@ -19,9 +19,13 @@ const toTicketDto = (ticket, capabilities, activeAssignees = []) => ({
     creator: { id: id(ticket.createdBy) },
     activeAssigneeIds: (ticket.activeAssigneeIds || []).map(id),
     activeAssignees,
-    closure: ticket.status === 'CLOSED' ? {
-        closedBy: id(ticket.closedBy), closedAt: ticket.closedAt, summary: ticket.closureSummary
-    } : null,
+    closure: ticket.status === 'CLOSED'
+        ? {
+            closedBy: id(ticket.closedBy),
+            closedAt: ticket.closedAt,
+            summary: ticket.closureSummary
+        }
+        : null,
     version: ticket.version,
     createdAt: ticket.createdAt,
     updatedAt: ticket.updatedAt,
@@ -30,25 +34,55 @@ const toTicketDto = (ticket, capabilities, activeAssignees = []) => ({
 
 const toAssignmentDto = (assignment, summaries) => ({
     id: id(assignment._id),
-    user: summaries.get(id(assignment.userId)) || { id: id(assignment.userId), displayName: null, email: null },
+    user: summaries.get(id(assignment.userId)) || {
+        id: id(assignment.userId),
+        displayName: null,
+        email: null
+    },
     roomId: id(assignment.roomId),
-    assignedBy: summaries.get(id(assignment.assignedBy)) || { id: id(assignment.assignedBy), displayName: null, email: null },
+    assignedBy: summaries.get(id(assignment.assignedBy)) || {
+        id: id(assignment.assignedBy),
+        displayName: null,
+        email: null
+    },
     assignedAt: assignment.assignedAt,
     source: assignment.assignmentSource,
     isActive: assignment.isActive,
     endedBy: assignment.endedBy
-        ? (summaries.get(id(assignment.endedBy)) || { id: id(assignment.endedBy), displayName: null, email: null })
+        ? (summaries.get(id(assignment.endedBy)) || {
+            id: id(assignment.endedBy),
+            displayName: null,
+            email: null
+        })
         : null,
     endedAt: assignment.endedAt || null,
     endedReason: assignment.endedReason || null
 });
+
+const actorSummary = (actor) => {
+    if (actor && typeof actor === 'object' && actor._id) {
+        return {
+            userId: id(actor._id),
+            displayName: actor.displayName || null,
+            email: actor.email || null
+        };
+    }
+    return {
+        userId: id(actor),
+        displayName: null,
+        email: null
+    };
+};
 
 const toHistoryDto = (entry) => ({
     id: id(entry._id),
     ticketId: id(entry.ticketId),
     ticketNumber: entry.ticketNumber,
     eventType: entry.eventType,
-    actor: { userId: id(entry.actorUserId), roleContext: entry.actorRoleContext },
+    actor: {
+        ...actorSummary(entry.actorUserId),
+        roleContext: entry.actorRoleContext
+    },
     versionBefore: entry.versionBefore,
     versionAfter: entry.versionAfter,
     changedFields: entry.changedFields,

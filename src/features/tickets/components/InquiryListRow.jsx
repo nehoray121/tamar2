@@ -35,6 +35,14 @@ const submissionStatusStyles = {
             'border-emerald-200/90 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200',
         iconWrapClassName:
             'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-100'
+    },
+    cancelled: {
+        label: 'בוטלה',
+        icon: 'close',
+        className:
+            'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-500/25 dark:bg-slate-500/10 dark:text-slate-200',
+        iconWrapClassName:
+            'bg-slate-100 text-slate-700 dark:bg-slate-400/20 dark:text-slate-100'
     }
 };
 
@@ -49,6 +57,50 @@ const getSubmissionStatus = (ticket) => (
         ? ticket.submissionStatus
         : null
 );
+
+const fieldIcons = Object.freeze({
+    priority: 'target',
+    handler: 'user',
+    customerId: 'search',
+    treatment: 'activity',
+    description: 'list',
+    location: 'location',
+    phone: 'phone',
+    status: 'activity',
+    openDate: 'calendar',
+    closingDate: 'calendar',
+    network: 'globe'
+});
+
+const configuredFieldValue = (ticket, field) => {
+    const id = field?.id;
+    if (!id) return '';
+    if (id === 'priority') return ticket.priority;
+    if (id === 'handler') return ticket.handler || ticket.room;
+    if (id === 'customerId') return ticket.customerId;
+    if (id === 'treatment') return ticket.treatment;
+    if (id === 'description') return ticket.description;
+    if (id === 'location') return ticket.fieldValues?.location || ticket.room;
+    if (id === 'phone') return ticket.phone;
+    if (id === 'status') {
+        return ticket.submissionStatus === 'done'
+            ? 'טופלה'
+            : ticket.submissionStatus === 'cancelled'
+                ? 'בוטלה'
+                : ticket.submissionStatus
+                    ? 'בטיפול'
+                    : ticket.status === 'closed'
+                        ? 'סגורה'
+                        : 'פתוחה';
+    }
+    if (id === 'openDate') return ticket.date;
+    if (id === 'closingDate') {
+        return ticket.closedAt
+            ? new Date(ticket.closedAt).toLocaleDateString('he-IL')
+            : 'טרם נסגר';
+    }
+    return ticket.fieldValues?.[id] ?? '';
+};
 
 const LightBlueIcon = ({ children }) => (
     <span className="inquiry-icon-chip flex h-7 w-7 shrink-0 items-center justify-center rounded-lg">
@@ -185,26 +237,40 @@ const InquiryListRow = ({
     onDragStart,
     onDragOver,
     onDrop,
-    onEnterSelectionMode
+    onEnterSelectionMode,
+    tableFields = [],
+    fieldDefinitions = []
 }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const triggerRef = useRef(null);
     const showCloseAction = viewType === 'open' && Boolean(onCloseInquiry);
     const shouldShowExternalSubmissionStatus = viewType === 'external' && toggleState === 'sent' && (ticket?.isOutgoingExternal ?? true);
     const submissionStatus = shouldShowExternalSubmissionStatus ? getSubmissionStatus(ticket) : null;
+const definitionsById = new Map(
+    fieldDefinitions.map((field) => [field.id, field])
+);
+const configuredFields = tableFields
+    .map((id) => definitionsById.get(id))
+    .filter((field) => field && field.showInRow !== false)
+    .slice(0, 8);
+const rowFields = configuredFields.length
+    ? configuredFields
+    : [
+        { id: 'priority', name: 'דחיפות' },
+        { id: 'handler', name: 'גורם מטפל' },
+        { id: 'phone', name: 'טלפון' },
+        { id: 'openDate', name: 'תאריך' }
+    ];
 
-    const gridCols = [
-        selectionMode ? '40px' : '',
-        manualMode ? '40px' : '',
-        'minmax(100px, 1.2fr)',
-        '85px',
-        'minmax(110px, 1.2fr)',
-        'minmax(110px, 1.5fr)',
-        'minmax(110px, 1.2fr)',
-        'minmax(100px, 1.2fr)',
-        '160px',
-        '260px'
-    ].filter(Boolean).join(' ');
+const gridCols = [
+    selectionMode ? '40px' : '',
+    manualMode ? '40px' : '',
+    'minmax(100px, 1.1fr)',
+    ...rowFields.map(() => 'minmax(105px, 1fr)'),
+    '150px',
+    '260px'
+].filter(Boolean).join(' ');
+
 
     return (
         <article
@@ -236,20 +302,38 @@ const InquiryListRow = ({
                 </div>
             )}
 
-            <InquiryRowField icon="hash" value={ticket.displayId || ticket.ticketId} className="min-w-0" />
+            <InquiryRowField
+    icon="hash"
+    value={ticket.displayId || ticket.ticketId}
+    className="min-w-0"
+/>
 
-            <div className="flex">
+{rowFields.map((field) => (
+    field.id === 'priority'
+        ? (
+            <div key={field.id} className="flex">
                 <InquiryUrgencyBadge priority={ticket.priority} />
             </div>
+        )
+        : (
+            <InquiryRowField
+                key={field.id}
+                icon={fieldIcons[field.id] || 'filePlus'}
+                value={String(
+                    configuredFieldValue(ticket, field)
+                    || 'לא זמין'
+                )}
+                className="min-w-0"
+            />
+        )
+))}
 
-            <InquiryRowField icon="location" value={ticket.room} className="min-w-0" />
-            <InquiryRowField icon="user" value={ticket.name} className="min-w-0" />
-            <InquiryRowField icon="phone" value={ticket.phone || 'לא זמין'} className="min-w-0" />
-            <InquiryRowField icon="calendar" value={ticket.date} className="min-w-0" />
+<div className="flex min-w-0 items-center">
+    {category
+        ? <InquiryCategoryBadge category={category} compact />
+        : <div className="h-6" aria-hidden="true" />}
+</div>
 
-            <div className="flex min-w-0 items-center">
-                {category ? <InquiryCategoryBadge category={category} compact /> : <div className="h-6" aria-hidden="true" />}
-            </div>
 
             <div className="relative flex w-[260px] shrink-0 items-center justify-start gap-2" dir="ltr">
                 {onAssignCategory && (

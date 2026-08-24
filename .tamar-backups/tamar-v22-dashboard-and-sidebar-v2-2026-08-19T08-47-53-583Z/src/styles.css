@@ -1,0 +1,1378 @@
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-page: #f4f5fa;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f8fbff;
+  --color-border: #e5e7eb;
+  --color-border-strong: #c9e1ff;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #eff6ff;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #10b981;
+  --color-focus: #60a5fa;
+  --shadow-card: 0 14px 34px rgba(37, 99, 235, 0.07);
+  --shadow-overlay: 0 24px 60px rgba(15, 23, 42, 0.2);
+  --chart-track: #eef4ff;
+  --chart-connector: #cbd5e1;
+  --chart-label: #334155;
+  --chart-label-secondary: #64748b;
+  --chart-grid: rgba(191, 219, 254, 0.8);
+  --chart-plot: linear-gradient(to bottom, #f8fbff, #f6f9ff, #eef5ff);
+}
+
+[data-theme="dark"] {
+  --color-page: #0b1120;
+  --color-surface: #111827;
+  --color-surface-raised: #172033;
+  --color-surface-muted: #1e293b;
+  --color-border: #26354d;
+  --color-border-strong: #355071;
+  --color-text-primary: #edf4ff;
+  --color-text-secondary: #c5d2e4;
+  --color-text-muted: #8ea0b8;
+  --color-primary: #69a2ff;
+  --color-primary-hover: #8bb8ff;
+  --color-primary-soft: rgba(59, 130, 246, 0.16);
+  --color-danger: #fb7185;
+  --color-warning: #fbbf24;
+  --color-success: #34d399;
+  --color-focus: #93c5fd;
+  --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  --shadow-overlay: 0 26px 70px rgba(0, 0, 0, 0.56);
+  --chart-track: #25344d;
+  --chart-connector: rgba(148, 163, 184, 0.72);
+  --chart-label: #f8fafc;
+  --chart-label-secondary: #cbd5e1;
+  --chart-grid: rgba(96, 165, 250, 0.16);
+  --chart-plot: linear-gradient(to bottom, #111827, #151f31, #0f172a);
+}
+
+/* חסימת גלילה כללית ברמת הדף */
+        body { font-family: 'Assistant', sans-serif; background-color: var(--color-page); color: var(--color-text-primary); margin: 0; overflow: hidden; height: 100vh; }
+        #root { height: 100%; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        
+        /* טאבים בסגנון התמונה החדשה */
+        .tab-active { border-bottom: 2px solid #1E4DB7; color: #1E4DB7; font-weight: 700; background-color: transparent; }
+        .tab-inactive { color: #6B7280; background-color: transparent; border-bottom: 2px solid transparent; }
+        .tab-inactive:hover { color: #374151; border-bottom: 2px solid #D1D5DB; }
+        
+        .glass-modal { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        
+        /* רקע גלים עדין למערכת */
+        .wave-bg {
+            background-color: var(--color-page);
+            background-image:
+                radial-gradient(ellipse 1000px 1000px at 50% 50%, rgba(255, 182, 193, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 800px 800px at 70% 30%, rgba(173, 216, 230, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 600px 600px at 30% 70%, rgba(216, 191, 216, 0.06) 0%, transparent 50%);
+        }
+        
+        /* אנימציה בעת גרירת שדה */
+        .dragging-item { opacity: 0.4; transform: scale(0.98); }
+
+.animate-fade-in { animation: dashboardFadeIn 180ms ease-out; }
+@keyframes dashboardFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.dashboard-bar-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-bar-columns,
+.dashboard-bar-columns .group {
+  overflow: visible;
+}
+
+.dashboard-bar-columns .group > div:first-child > span.absolute:not(.dashboard-bar-tooltip) {
+  display: none;
+}
+
+.donut-center {
+  pointer-events: none;
+  user-select: none;
+}
+
+.dashboard-motion {
+  transition:
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease,
+    max-height 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.dashboard-card-motion {
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease,
+    box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.dashboard-expanded-card {
+  animation: dashboardExpandIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-inline-details-panel {
+  transition:
+    max-height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-inline-details-body {
+  transition:
+    opacity 220ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-inline-details-body[data-expanded="false"] {
+  opacity: 0.96;
+  transform: translateY(-2px);
+}
+
+.dashboard-inline-details-body[data-expanded="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dashboard-legend-reveal > * {
+  animation: dashboardLegendIn 180ms ease-out both;
+}
+
+.dashboard-legend-reveal > *:nth-child(2) { animation-delay: 28ms; }
+.dashboard-legend-reveal > *:nth-child(3) { animation-delay: 56ms; }
+.dashboard-legend-reveal > *:nth-child(4) { animation-delay: 84ms; }
+.dashboard-legend-reveal > *:nth-child(5) { animation-delay: 112ms; }
+.dashboard-legend-reveal > *:nth-child(6) { animation-delay: 140ms; }
+
+@keyframes dashboardExpandIn {
+  from { opacity: 0.88; transform: scale(0.985) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes dashboardLegendIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-motion,
+  .dashboard-card-motion,
+  .dashboard-expanded-card,
+  .dashboard-inline-details-panel,
+  .dashboard-inline-details-body,
+  .dashboard-legend-reveal > * {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    transform: none !important;
+  }
+}
+
+.theme-control {
+  position: absolute;
+  left: 1.5rem;
+  top: 1.25rem;
+  z-index: 60;
+}
+
+.app-shell-theme-control {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 120;
+}
+
+.app-shell-theme-control .theme-control {
+  position: static;
+}
+
+.theme-control__buttons {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
+  box-shadow: var(--shadow-card);
+}
+
+.theme-control__toggle,
+.theme-control__menu-button,
+.theme-control__option {
+  color: var(--color-primary);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.theme-control__toggle {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-control__menu-button {
+  display: inline-flex;
+  height: 2rem;
+  width: 1.65rem;
+  align-items: center;
+  justify-content: center;
+  border-inline-start: 1px solid var(--color-border);
+}
+
+.theme-control__toggle:hover,
+.theme-control__menu-button:hover {
+  background: var(--color-primary-soft);
+}
+
+.theme-control__toggle:focus-visible,
+.theme-control__menu-button:focus-visible,
+.theme-control__option:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.theme-control__menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.5rem);
+  min-width: 12rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 1rem;
+  background: var(--color-surface-raised);
+  padding: 0.35rem;
+  box-shadow: var(--shadow-overlay);
+}
+
+.theme-control__option {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.theme-control__option:hover,
+.theme-control__option--selected {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+:root:not([data-theme="dark"]) body,
+:root:not([data-theme="dark"]) #root {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] #root {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] * {
+  scrollbar-color: #526882 transparent;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #526882;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #6f86a4;
+}
+
+[data-theme="dark"] .wave-bg {
+  background-color: var(--color-page);
+  background-image:
+    radial-gradient(ellipse 1000px 780px at 70% 12%, rgba(37, 99, 235, 0.14) 0%, transparent 56%),
+    radial-gradient(ellipse 820px 760px at 18% 72%, rgba(236, 72, 153, 0.08) 0%, transparent 52%),
+    radial-gradient(ellipse 700px 620px at 50% 50%, rgba(14, 165, 233, 0.07) 0%, transparent 58%);
+}
+
+[data-theme="dark"] .glass-modal {
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border-strong) !important;
+  color: var(--color-text-primary) !important;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--color-text-muted) !important;
+  opacity: 0.86;
+}
+
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] textarea:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] [disabled] {
+  opacity: 0.62;
+}
+
+[data-theme="dark"] :where(input, textarea, select, button):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] option {
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] :where(
+  [class*="shadow"],
+  [class*="shadow-["]
+) {
+  --tw-shadow-color: rgba(0, 0, 0, 0.42) !important;
+}
+
+[data-theme="dark"] .dashboard-card-motion,
+[data-theme="dark"] :where([class~="rounded-3xl"], [class~="rounded-[28px]"], [class~="rounded-[26px]"], [class~="rounded-[24px]"], [class~="rounded-2xl"]) {
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="dark"] .dashboard-chart-surface {
+  background: var(--chart-plot) !important;
+}
+
+[data-theme="dark"] .dashboard-chart-surface > .absolute {
+  background: rgba(15, 23, 42, 0.42) !important;
+  border-color: rgba(148, 163, 184, 0.08) !important;
+}
+
+[data-theme="dark"] .dashboard-chart-grid-line {
+  border-color: var(--chart-grid) !important;
+}
+
+[data-theme="dark"] .dashboard-bar-tooltip,
+[data-theme="dark"] .dashboard-bar-columns span.rounded-full {
+  background: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .donut-center {
+  background: rgba(23, 32, 51, 0.88) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .donut-halo {
+  background-image: linear-gradient(to bottom, rgba(59, 130, 246, 0.14), rgba(15, 23, 42, 0.18)) !important;
+}
+
+[data-theme="dark"] :where(.bg-red-500, .bg-rose-500) {
+  background-color: #f43f5e !important;
+}
+
+[data-theme="dark"] :where(.bg-orange-500, .bg-amber-500) {
+  background-color: #f59e0b !important;
+}
+
+[data-theme="dark"] :where(.bg-emerald-500, .bg-green-500, [class~="bg-[#22C55E]"]) {
+  background-color: #10b981 !important;
+}
+
+[data-theme="dark"] :where(.bg-blue-500, .bg-blue-600, .bg-blue-700, [class~="bg-[#1E4DB7]"]) {
+  background-color: #2563eb !important;
+}
+
+[data-theme="dark"] .tab-active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+[data-theme="dark"] .tab-inactive {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .tab-inactive:hover {
+  color: var(--color-text-secondary);
+  border-bottom-color: var(--color-border-strong);
+}
+
+[data-theme="dark"] a {
+  color: var(--color-primary);
+}
+
+.theme-add-card {
+  border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-surface-muted) 92%, var(--color-surface-raised));
+  color: var(--color-primary);
+}
+
+.theme-add-card:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 36%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 52%, var(--color-surface-raised));
+}
+
+.theme-add-card__icon {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+}
+
+.inquiry-page-surface {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+}
+
+.inquiry-panel {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+}
+
+.inquiry-soft-panel {
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-muted) 90%, var(--color-surface-raised));
+  color: var(--color-text-primary);
+}
+
+.inquiry-control {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+}
+
+.inquiry-control:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 44%, var(--color-surface-raised));
+  color: var(--color-primary);
+}
+
+.inquiry-control--active {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary-soft) 70%, var(--color-surface-raised));
+  color: var(--color-primary);
+}
+
+.inquiry-input-surface {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+
+.inquiry-input-surface::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.inquiry-icon-chip {
+  border: 1px solid var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-primary-soft) 72%, var(--color-surface-raised));
+  color: var(--color-primary);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.16);
+}
+
+.inquiry-row-surface {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.10);
+}
+
+.inquiry-row-surface:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 42%, var(--color-surface-raised));
+}
+
+.inquiry-row-selected {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 64%, var(--color-surface-raised));
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.14);
+}
+
+.inquiry-menu-surface {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-overlay);
+}
+
+.inquiry-menu-item {
+  color: var(--color-text-secondary);
+}
+
+.inquiry-menu-item:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+}
+
+.inquiry-empty-state {
+  border-color: var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-surface-muted) 92%, var(--color-surface-raised));
+  color: var(--color-text-muted);
+}
+
+.inquiry-selection-bar {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 48%, var(--color-border-strong));
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-overlay);
+}
+
+.inquiry-backdrop {
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="dark"] .inquiry-backdrop {
+  background: rgba(2, 6, 23, 0.64);
+}
+
+.inquiry-overlay-panel {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-overlay);
+}
+
+.inquiry-primary-text { color: var(--color-text-primary); }
+.inquiry-secondary-text { color: var(--color-text-secondary); }
+.inquiry-muted-text { color: var(--color-text-muted); }
+
+.inquiry-tab-button {
+  border-color: transparent;
+}
+
+.inquiry-tab-button--active {
+  border-color: var(--color-border-strong);
+  border-bottom-color: var(--color-surface-raised);
+  background: var(--color-surface-raised);
+  color: var(--color-primary);
+  box-shadow: 0 -1px 10px rgba(37, 99, 235, 0.08);
+}
+
+.inquiry-tab-button--inactive {
+  background: color-mix(in srgb, var(--color-surface-muted) 88%, var(--color-surface-raised));
+  color: var(--color-text-muted);
+}
+
+.inquiry-tab-button--inactive:hover {
+  color: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  [data-theme="dark"] :where(.dashboard-card-motion, aside, section, article, button, input, textarea, select) {
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      box-shadow 160ms ease;
+  }
+}
+
+
+.hierarchy-layout {
+  display: grid;
+  direction: ltr;
+  gap: 1rem;
+  grid-template-areas:
+    "content"
+    "sidebar";
+  grid-template-columns: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.hierarchy-layout__content {
+  direction: rtl;
+  grid-area: content;
+}
+
+.hierarchy-layout__sidebar {
+  direction: rtl;
+  grid-area: sidebar;
+}
+
+@media (min-width: 1024px) {
+  .hierarchy-layout {
+    grid-template-areas: "content sidebar";
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 320px);
+  }
+}
+
+/* focused override: inline donut details animation */
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-inline-details-panel {
+    transition:
+      max-height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease,
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  .dashboard-inline-details-body {
+    transition:
+      opacity 220ms ease,
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
+.dashboard-inquiry-list-reveal {
+  will-change: max-height, opacity, transform;
+}
+
+/* focused override: inline inquiry list animation */
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-inquiry-list-reveal {
+    transition:
+      max-height 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease,
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-inquiry-list-reveal {
+    transition-duration: 0ms !important;
+    transform: none !important;
+  }
+}
+
+/* tamar-dashboard-dark-two-panel:v1 */
+/*
+ * Keep the dashboard drill-down search input transparent inside its themed pill.
+ * This intentionally has higher specificity than the global dark input rule.
+ */
+input.dashboard-inquiry-search-input,
+[data-theme="dark"] input.dashboard-inquiry-search-input {
+  min-width: 0;
+  appearance: none;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-text-primary) !important;
+  caret-color: var(--color-text-primary);
+  outline: 0 !important;
+}
+
+.dashboard-accent-badge {
+  --dashboard-badge-accent: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--dashboard-badge-accent) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--dashboard-badge-accent) 13%, var(--color-surface-raised));
+  color: var(--dashboard-badge-accent);
+  --tw-ring-color: transparent;
+}
+
+.dashboard-status-badge {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  --tw-ring-color: transparent;
+}
+
+.dashboard-status-badge--open {
+  border-color: color-mix(in srgb, var(--color-success) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 13%, var(--color-surface-raised));
+  color: var(--color-success);
+}
+
+.dashboard-status-badge--closed {
+  border-color: var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-surface-muted) 88%, var(--color-surface-raised));
+  color: var(--color-text-secondary);
+}
+
+/* tamar-dropdown-polish:v2 */
+/*
+ * One clean chevron for every single-select in Tamar.
+ * The dashboard category select keeps its own overlay chevron, so it is excluded
+ * from the global background arrow to prevent the old double-arrow bug.
+ */
+select:not([multiple]):not(.dashboard-select-input) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364758b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: left 8px center !important;
+  background-size: 14px 14px !important;
+  padding-left: 2rem !important;
+  border-radius: 14px;
+}
+
+select:not([multiple]):not(.dashboard-select-input)::-ms-expand {
+  display: none;
+}
+
+/* Slightly softer controls site-wide without forcing colors over theme tokens. */
+select:not([multiple]) {
+  min-height: 36px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+select:not([multiple]):focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #2563eb) 16%, transparent);
+}
+
+/* Dashboard select: exactly one arrow, positioned a little farther inside. */
+.dashboard-select-pill {
+  min-width: 0;
+  border-radius: 18px;
+}
+
+.dashboard-select-shell {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dashboard-select-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none !important;
+  padding-left: 2rem !important;
+  padding-right: 0.1rem;
+  border-radius: 14px;
+}
+
+.dashboard-select-input::-ms-expand {
+  display: none;
+}
+
+.dashboard-select-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.dashboard-select-arrow {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  pointer-events: none;
+}
+
+/* The browser/Windows owns the opened native option popup, but these improve
+   the option colors/spacing where the browser supports them. */
+select option {
+  padding: 8px 12px;
+  background: var(--color-surface-raised, #fff);
+  color: var(--color-text-primary, #0f172a);
+}
+
+/* keep graph filters stable in expanded mode */
+.dashboard-expanded-card .dashboard-chart-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.dashboard-expanded-card .dashboard-chart-filters-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 1400px) {
+  .dashboard-expanded-card .dashboard-chart-filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .dashboard-expanded-card .dashboard-chart-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-expanded-card .dashboard-chart-filters-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* tamar-sidebar-typography-system:v1 */
+:root {
+  --font-ui: 'Assistant', Arial, sans-serif;
+  --font-weight-ui: 500;
+  --font-weight-emphasis: 600;
+  --font-weight-strong: 700;
+  --tracking-ui: -0.01em;
+  --tracking-heading: -0.018em;
+}
+
+html, body, #root {
+  font-family: var(--font-ui) !important;
+}
+
+body {
+  font-weight: var(--font-weight-ui);
+  letter-spacing: var(--tracking-ui);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea, optgroup, option {
+  font-family: var(--font-ui) !important;
+  letter-spacing: inherit;
+}
+
+.font-black { font-weight: var(--font-weight-strong) !important; }
+.font-extrabold { font-weight: var(--font-weight-strong) !important; }
+.font-bold { font-weight: var(--font-weight-strong) !important; }
+.font-semibold { font-weight: var(--font-weight-emphasis) !important; }
+.font-medium { font-weight: var(--font-weight-ui) !important; }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-ui) !important;
+  font-weight: var(--font-weight-strong);
+  letter-spacing: var(--tracking-heading);
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-family: var(--font-ui);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+table, th, td, [role="dialog"], [role="menu"], [role="listbox"] {
+  font-family: var(--font-ui);
+}
+
+/* tamar-reference-final-system:v3:start */
+:root {
+  --tamar-ref-card-radius: 18px;
+  --tamar-ref-panel-radius: 20px;
+  --tamar-ref-control-radius: 12px;
+  --tamar-ref-border: color-mix(in srgb, var(--color-border) 82%, var(--color-border-strong));
+  --tamar-ref-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.025),
+    0 8px 24px rgba(15, 23, 42, 0.052);
+  --tamar-ref-shadow-hover:
+    0 2px 5px rgba(15, 23, 42, 0.035),
+    0 14px 34px rgba(15, 23, 42, 0.075);
+}
+
+[data-theme="dark"] {
+  --tamar-ref-border: color-mix(in srgb, var(--color-border) 90%, var(--color-border-strong));
+  --tamar-ref-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.22),
+    0 10px 28px rgba(0, 0, 0, 0.25);
+  --tamar-ref-shadow-hover:
+    0 2px 5px rgba(0, 0, 0, 0.26),
+    0 16px 38px rgba(0, 0, 0, 0.32);
+}
+
+/* ================================================================
+   SIDEBAR — same right-side skeleton, cleaner reference-style state
+   ================================================================ */
+
+.tamar-reference-sidebar {
+  border-left-color: var(--tamar-ref-border) !important;
+  background: var(--color-surface-raised) !important;
+  box-shadow: -10px 0 32px rgba(15, 23, 42, 0.045) !important;
+}
+
+[data-theme="dark"] .tamar-reference-sidebar {
+  box-shadow: -10px 0 34px rgba(0, 0, 0, 0.28) !important;
+}
+
+.tamar-reference-sidebar-brand {
+  height: 88px !important;
+  margin-inline: 22px !important;
+  gap: 10px !important;
+  border-bottom-color: var(--color-border) !important;
+}
+
+.tamar-reference-sidebar-nav {
+  padding: 14px 14px 18px !important;
+}
+
+.tamar-reference-sidebar-item {
+  position: relative;
+  min-height: 46px;
+  margin: 3px 0;
+  border: 0 !important;
+  border-radius: 12px !important;
+  padding: 0 15px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tamar-reference-sidebar-item::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  opacity: 0;
+  transform: scaleY(0.45);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.tamar-reference-sidebar-item:hover {
+  background: var(--color-surface-muted) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.tamar-reference-sidebar-item--active {
+  background: color-mix(in srgb, var(--color-primary-soft) 66%, var(--color-surface-raised)) !important;
+  color: var(--color-primary) !important;
+}
+
+.tamar-reference-sidebar-item--active::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.tamar-reference-sidebar-item:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 22%, transparent) !important;
+}
+
+.tamar-reference-sidebar-badge {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 12%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary-soft) 70%, var(--color-surface-raised));
+  color: var(--color-primary);
+}
+
+.tamar-reference-sidebar-footer {
+  min-height: 82px;
+  border-top-color: var(--color-border) !important;
+  padding: 16px 20px !important;
+  background: var(--color-surface-raised);
+}
+
+.tamar-reference-sidebar-footer:hover {
+  background: var(--color-surface-muted) !important;
+}
+
+/* ================================================================
+   PAGE / HEADER — distinct top card like the reference, same position
+   ================================================================ */
+
+.tamar-reference-dashboard-page {
+  padding: 12px 14px 14px !important;
+  background: var(--color-page) !important;
+  background-image: none !important;
+}
+
+.tamar-reference-dashboard-header {
+  margin-bottom: 12px;
+  border: 1px solid var(--tamar-ref-border);
+  border-radius: var(--tamar-ref-panel-radius);
+  background: var(--color-surface-raised);
+  box-shadow: var(--tamar-ref-shadow);
+}
+
+.tamar-reference-dashboard-heading-icon {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 14%, var(--color-border));
+  background: var(--color-primary-soft);
+}
+
+.tamar-reference-dashboard-total {
+  border: 1px solid var(--tamar-ref-border);
+  background: color-mix(in srgb, var(--color-surface-muted) 76%, var(--color-surface-raised));
+}
+
+.tamar-reference-dashboard-main {
+  overflow: hidden !important;
+}
+
+.tamar-reference-dashboard-layout {
+  grid-template-rows: minmax(270px, 1.62fr) minmax(148px, 0.82fr) !important;
+  gap: 12px !important;
+}
+
+/* ================================================================
+   KPI ROW — one primary card + clean neutral cards, same six positions
+   ================================================================ */
+
+.tamar-reference-kpi-grid {
+  max-height: 124px !important;
+  margin-bottom: 12px !important;
+}
+
+.tamar-reference-kpi-grid-inner {
+  height: 120px !important;
+  gap: 12px !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"] {
+  height: 120px !important;
+  min-height: 120px !important;
+  overflow: hidden;
+  border: 1px solid var(--tamar-ref-border) !important;
+  border-radius: var(--tamar-ref-card-radius) !important;
+  background: var(--color-surface-raised) !important;
+  box-shadow: var(--tamar-ref-shadow) !important;
+  padding: 14px 15px 12px !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"]:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-primary) 18%, var(--tamar-ref-border)) !important;
+  box-shadow: var(--tamar-ref-shadow-hover) !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"] > div:first-of-type {
+  gap: 11px !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"] > div:first-of-type > div:last-child {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 12px !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"] > div:first-of-type > div:last-child svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"] > div:last-child {
+  padding-top: 4px !important;
+  padding-bottom: 0 !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"] > div:last-child > div:first-child {
+  font-size: 31px !important;
+  line-height: 1 !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"] > button {
+  left: 12px !important;
+  bottom: 10px !important;
+  top: auto !important;
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  border-radius: 999px !important;
+  transform: translateY(4px) !important;
+}
+
+.tamar-reference-kpi-card[data-mode="dashboard"]:hover > button,
+.tamar-reference-kpi-card[data-mode="dashboard"]:focus-within > button {
+  transform: translateY(0) !important;
+}
+
+/* The first visible KPI becomes the primary reference-style card.
+   It uses Tamar's existing primary blue, not a new palette. */
+.tamar-reference-kpi-grid-inner > .tamar-reference-kpi-card[data-mode="dashboard"]:first-child {
+  border-color: transparent !important;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.19), transparent 28%),
+    linear-gradient(145deg, var(--color-primary), var(--color-primary-hover)) !important;
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--color-primary) 24%, transparent) !important;
+}
+
+.tamar-reference-kpi-grid-inner > .tamar-reference-kpi-card[data-mode="dashboard"]:first-child :where(h4, p, span, svg),
+.tamar-reference-kpi-grid-inner > .tamar-reference-kpi-card[data-mode="dashboard"]:first-child > div:last-child > div {
+  color: #fff !important;
+}
+
+.tamar-reference-kpi-grid-inner > .tamar-reference-kpi-card[data-mode="dashboard"]:first-child > div:first-of-type > div:last-child {
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+.tamar-reference-kpi-grid-inner > .tamar-reference-kpi-card[data-mode="dashboard"]:first-child > button {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  background: rgba(255, 255, 255, 0.13) !important;
+  color: #fff !important;
+}
+
+.tamar-reference-add-kpi {
+  height: 120px !important;
+  min-height: 120px !important;
+  border-radius: var(--tamar-ref-card-radius) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 18%, var(--tamar-ref-border)) !important;
+  background: color-mix(in srgb, var(--color-surface-muted) 72%, var(--color-surface-raised)) !important;
+  box-shadow: none !important;
+}
+
+/* ================================================================
+   SHARED DASHBOARD CARDS / HEADERS
+   ================================================================ */
+
+.tamar-reference-dashboard-card {
+  border: 1px solid var(--tamar-ref-border) !important;
+  border-radius: var(--tamar-ref-panel-radius) !important;
+  background: var(--color-surface-raised) !important;
+  box-shadow: var(--tamar-ref-shadow) !important;
+}
+
+.tamar-reference-dashboard-card:hover {
+  box-shadow: var(--tamar-ref-shadow-hover) !important;
+}
+
+.tamar-reference-dashboard-card > .relative.z-10 {
+  border-radius: inherit;
+}
+
+.tamar-reference-trend-card > .relative.z-10 > div:first-child,
+.tamar-reference-donut-card > .relative.z-10 > div:first-child,
+.tamar-reference-attention-card > .relative.z-10 > div:first-child {
+  padding-inline: 18px !important;
+}
+
+.tamar-reference-workload-card {
+  padding: 14px 16px !important;
+}
+
+.tamar-reference-attention-card > .relative.z-10 > div:first-child {
+  min-height: 54px;
+  border-bottom-color: var(--color-border) !important;
+}
+
+.tamar-reference-expand-button {
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.tamar-reference-expand-button:hover {
+  transform: none !important;
+  background: var(--color-primary-soft) !important;
+}
+
+/* ================================================================
+   BAR CHART — capsule bars and quieter plotting surface
+   ================================================================ */
+
+.tamar-reference-bar-chart {
+  border-radius: 0 0 var(--tamar-ref-panel-radius) var(--tamar-ref-panel-radius) !important;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-surface-muted) 42%, var(--color-surface-raised)),
+      var(--color-surface-raised)
+    ) !important;
+}
+
+.tamar-reference-bar-chart > .absolute {
+  inset: 12px !important;
+  border-radius: 15px !important;
+  background: color-mix(in srgb, var(--color-surface-muted) 46%, transparent) !important;
+}
+
+.tamar-reference-bar-chart .dashboard-bar-columns {
+  gap: 14px !important;
+  padding-inline: 8px;
+}
+
+.tamar-reference-bar-chart .dashboard-bar-columns button > .flex > span {
+  max-width: 48px !important;
+  border-radius: 999px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 16px rgba(37, 99, 235, 0.11);
+}
+
+.tamar-reference-bar-chart .dashboard-chart-grid-line {
+  border-color: color-mix(in srgb, var(--color-border) 70%, transparent) !important;
+  opacity: 0.72;
+}
+
+.tamar-reference-bar-chart .dashboard-bar-tooltip {
+  border: 1px solid var(--tamar-ref-border);
+  background: var(--color-surface-raised) !important;
+  box-shadow: var(--tamar-ref-shadow) !important;
+}
+
+/* ================================================================
+   DONUT / OPERATIONAL CARDS
+   ================================================================ */
+
+.tamar-reference-donut-chart .donut-halo {
+  background: color-mix(in srgb, var(--color-surface-muted) 68%, transparent) !important;
+  box-shadow: inset 0 0 0 1px var(--color-border) !important;
+}
+
+.tamar-reference-donut-chart svg {
+  filter: drop-shadow(0 8px 13px rgba(15, 23, 42, 0.06));
+}
+
+.tamar-reference-donut-chart .donut-center {
+  border: 1px solid var(--tamar-ref-border);
+  box-shadow: var(--tamar-ref-shadow) !important;
+}
+
+.tamar-reference-workload-card [class*="space-y-2.5"] {
+  row-gap: 12px;
+}
+
+.tamar-reference-attention-card [class*="group/item"] {
+  border-radius: 12px !important;
+}
+
+/* ================================================================
+   FILTERS / CONTROLS
+   ================================================================ */
+
+.tamar-reference-filter-toolbar > div > div {
+  border-radius: 16px !important;
+  border-color: var(--tamar-ref-border) !important;
+  background: color-mix(in srgb, var(--color-surface-muted) 62%, var(--color-surface-raised)) !important;
+  box-shadow: none !important;
+}
+
+.tamar-reference-toolbar-pill {
+  min-height: 40px;
+  border-radius: var(--tamar-ref-control-radius) !important;
+  box-shadow: none !important;
+}
+
+.tamar-reference-segmented-button {
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+/* ================================================================
+   SAME CARD LANGUAGE THROUGHOUT TAMAR
+   ================================================================ */
+
+.inquiry-panel,
+.inquiry-row-surface,
+.inquiry-overlay-panel,
+.inquiry-menu-surface,
+.theme-add-card {
+  border-radius: var(--tamar-ref-card-radius) !important;
+  border-color: var(--tamar-ref-border);
+  box-shadow: var(--tamar-ref-shadow);
+}
+
+.inquiry-soft-panel {
+  border-radius: var(--tamar-ref-card-radius) !important;
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.inquiry-row-surface:hover,
+.inquiry-panel:hover {
+  box-shadow: var(--tamar-ref-shadow-hover);
+}
+
+.inquiry-control,
+.inquiry-input-surface {
+  border-radius: var(--tamar-ref-control-radius) !important;
+}
+
+.inquiry-menu-item {
+  border-radius: 10px !important;
+}
+
+.inquiry-icon-chip,
+.theme-add-card__icon {
+  border-radius: 11px !important;
+}
+
+/* ================================================================
+   ONE-SCREEN DESKTOP DENSITY — no page-level dashboard scrolling
+   ================================================================ */
+
+@media (max-height: 780px) and (min-width: 1024px) {
+  .tamar-reference-dashboard-page {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .tamar-reference-dashboard-header {
+    height: 64px !important;
+    margin-bottom: 8px;
+  }
+
+  .tamar-reference-kpi-grid {
+    max-height: 112px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .tamar-reference-kpi-grid-inner,
+  .tamar-reference-kpi-card[data-mode="dashboard"],
+  .tamar-reference-add-kpi {
+    height: 108px !important;
+    min-height: 108px !important;
+  }
+
+  .tamar-reference-kpi-card[data-mode="dashboard"] {
+    padding-top: 11px !important;
+    padding-bottom: 9px !important;
+  }
+
+  .tamar-reference-dashboard-layout {
+    grid-template-rows: minmax(238px, 1.55fr) minmax(136px, 0.78fr) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 1366px) {
+  .tamar-reference-kpi-grid-inner,
+  .tamar-reference-dashboard-layout {
+    gap: 9px !important;
+  }
+
+  .tamar-reference-kpi-card[data-mode="dashboard"] {
+    padding-inline: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tamar-reference-kpi-card,
+  .tamar-reference-dashboard-card,
+  .tamar-reference-sidebar-item,
+  .inquiry-panel,
+  .inquiry-row-surface {
+    transition:
+      transform 170ms ease,
+      border-color 170ms ease,
+      background-color 170ms ease,
+      color 170ms ease,
+      box-shadow 190ms ease;
+  }
+}
+/* tamar-reference-final-system:v3:end */

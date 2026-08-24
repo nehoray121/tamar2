@@ -6,7 +6,7 @@ import { CreateUserPanel, UserDetailPanel } from '../../../pages/UserManagementP
 
 const PAGE_SIZE = 5;
 
-const UsersPermissionsTab = ({ data }) => {
+const UsersPermissionsTab = ({ data, onRefresh }) => {
     const api = useUserManagement();
     const capabilities = useUserManagementCapabilities(api.options.roles);
     const [query, setQuery] = useState('');
@@ -30,6 +30,19 @@ const UsersPermissionsTab = ({ data }) => {
     }));
     const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
     const managedUser = drawerItem?.id ? api.users.find((user) => user.id === drawerItem.id) : null;
+    const refreshAfter = async (operation) => {
+        const result = await operation;
+        onRefresh?.();
+        return result;
+    };
+    const managementApi = {
+        ...api,
+        createUser: (...args) => refreshAfter(api.createUser(...args)),
+        updatePrimary: (...args) => refreshAfter(api.updatePrimary(...args)),
+        addAssignment: (...args) => refreshAfter(api.addAssignment(...args)),
+        removeAssignment: (...args) => refreshAfter(api.removeAssignment(...args)),
+        setUserActive: (...args) => refreshAfter(api.setUserActive(...args))
+    };
 
     return (
         <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
@@ -68,11 +81,12 @@ const UsersPermissionsTab = ({ data }) => {
                 {drawerItem?.mode === 'create' ? (
                     <CreateUserPanel
                         initialId={query}
+                        managementApi={managementApi}
                         onCancel={() => setDrawerItem(null)}
                         onCreated={(user) => setDrawerItem({ mode: 'manage', id: user.id, name: user.name })}
                     />
                 ) : managedUser ? (
-                    <UserDetailPanel user={managedUser} api={api} roleOptions={capabilities.allowedRoles} compact />
+                    <UserDetailPanel user={managedUser} api={managementApi} roleOptions={capabilities.allowedRoles} compact />
                 ) : (
                     <div className="space-y-3 text-[13px] font-semibold leading-6 text-[var(--color-text-secondary)]">
                         <StatusBadge severity={drawerItem?.anomalies ? 'warning' : 'success'}>{drawerItem?.anomalies ? `${drawerItem.anomalies} חריגות` : 'תקין'}</StatusBadge>

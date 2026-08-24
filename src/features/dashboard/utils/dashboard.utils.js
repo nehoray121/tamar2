@@ -1,4 +1,4 @@
-import { DASHBOARD_KPI_STORAGE_KEY, DEFAULT_DASHBOARD_KPI_IDS } from '../constants/dashboard.constants.js';
+import { DASHBOARD_KPI_AVAILABLE_IDS, DASHBOARD_KPI_STORAGE_KEY, DEFAULT_DASHBOARD_KPI_IDS } from '../constants/dashboard.constants.js';
 
 const dashboardPad = (value) => String(value).padStart(2, '0');
 const parseDashboardDate = (dateString) => {
@@ -6,7 +6,7 @@ const parseDashboardDate = (dateString) => {
     return new Date(parts[0], parts[1] - 1, parts[2]);
 };
 const formatDashboardDate = (dateString, options) => parseDashboardDate(dateString).toLocaleDateString('he-IL', options);
-const sanitizeDashboardKpiIds = (ids, availableIds = DEFAULT_DASHBOARD_KPI_IDS) => {
+const sanitizeDashboardKpiIds = (ids, availableIds = DASHBOARD_KPI_AVAILABLE_IDS) => {
     const uniqueIds = [];
     (Array.isArray(ids) ? ids : []).forEach((id) => {
         if (availableIds.includes(id) && !uniqueIds.includes(id)) uniqueIds.push(id);
@@ -22,7 +22,7 @@ const loadDashboardKpiLayout = () => {
         const storedValue = window.localStorage.getItem(DASHBOARD_KPI_STORAGE_KEY);
         if (!storedValue) return DEFAULT_DASHBOARD_KPI_IDS;
         const parsedValue = JSON.parse(storedValue);
-        return sanitizeDashboardKpiIds(Array.isArray(parsedValue) ? parsedValue : parsedValue?.visibleIds);
+        return sanitizeDashboardKpiIds(Array.isArray(parsedValue) ? parsedValue : parsedValue?.visibleIds, DASHBOARD_KPI_AVAILABLE_IDS);
     } catch {
         return DEFAULT_DASHBOARD_KPI_IDS;
     }

@@ -1,0 +1,31 @@
+{
+  "package": "tamardashboarddarkfix2",
+  "createdAt": "2026-08-12T12:56:42.835Z",
+  "changed": [
+    {
+      "path": "src/features/dashboard/components/DashboardInquiryModal.jsx",
+      "beforeSha256": "947e7509759c1054c7808e8b323f49ab3a487923e153cc69d7a32f82eee57540",
+      "afterSha256": "450091eac3661069e52904f98281092041b123dea59c09aab93c20f47d9469d2"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardPrimitives.jsx",
+      "beforeSha256": "dc0f0cd542aaabd9012ea8eec6b4a88f72a5fc5717bc52b0640ad30b89f29e64",
+      "afterSha256": "9a2b92c686855bf6d1745657d2a11170a8915680df93c1034b1dfe7ef58153dd"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardInquiryListItem.jsx",
+      "beforeSha256": "e76cceec8e033a87769361a9e0e394fabe36e71aedad5a4bcbb38daa0fefe05b",
+      "afterSha256": "6d0e6cc03aa3873450401daa526cadbe2e806fc3b86320f5676cefe6513af69a"
+    },
+    {
+      "path": "src/features/dashboard/components/UrgencyBreakdownCard.jsx",
+      "beforeSha256": "36339f2d9d2558920f044c1abe570141ff7d53207fc1790f424de8f3fa3e6450",
+      "afterSha256": "8bd2285cd54796f29860611b6502dddc9e5722872fdab329ec0a28f2aa3b41b7"
+    },
+    {
+      "path": "src/styles.css",
+      "beforeSha256": "f24f5d4f81dd23c9ab64027f1ee3c692bdaaa452693604d6f6c04d1db4fde716",
+      "afterSha256": "0a6b072884907ffcbb7cb0b9e1815bf330327f49d14466cacd089e7fd6b032f0"
+    }
+  ]
+}

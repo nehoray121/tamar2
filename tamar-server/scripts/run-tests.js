@@ -46,7 +46,9 @@ const testFiles = [
     'tests/phase8-ticket-boards-contract.test.js',
     'tests/phase8-ticket-boards.integration.test.js',
     'tests/phase8-ticket-boards-acceptance.integration.test.js',
-    'tests/phase8-ticket-boards-http.integration.test.js'
+    'tests/phase8-ticket-boards-http.integration.test.js',
+    'tests/phase11-role-permissions.unit.test.js',
+    'tests/phase11-socket.unit.test.js'
 ];
 
 const child = spawn(process.execPath, [

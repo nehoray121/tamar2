@@ -1,43 +1,69 @@
 import { useEffect, useMemo, useState } from 'react';
 import { personalAssignmentService } from '../services/personalAssignmentService.js';
+import { subscribeAssignmentRealtime } from '../boards/realtime/boardSocket.js';
 
 const byName = (query, user) => {
     const haystack = `${user.name} ${user.role} ${user.personalId}`.toLowerCase();
     return haystack.includes(query.toLowerCase());
 };
 
-export const usePersonalAssignment = ({ inquiryId, roomId, open }) => {
+export const usePersonalAssignment = ({
+    inquiryId,
+    roomId,
+    open
+}) => {
     const [users, setUsers] = useState([]);
-    const [savedAssignment, setSavedAssignment] = useState({ assignedUserIds: [], assignedUsers: [] });
+    const [savedAssignment, setSavedAssignment] = useState({
+        assignedUserIds: [],
+        assignedUsers: []
+    });
     const [draftUserIds, setDraftUserIds] = useState([]);
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [reloadRevision, setReloadRevision] = useState(0);
 
     useEffect(() => {
-        if (!open) return undefined;
+        if (!open || !inquiryId) return undefined;
+
         let alive = true;
         setLoading(true);
         setError('');
 
         Promise.all([
-            personalAssignmentService.getEligibleRoomUsers(inquiryId),
-            personalAssignmentService.getAssignment(inquiryId)
-        ]).then(([eligibleUsers, currentAssignment]) => {
+            personalAssignmentService
+                .getEligibleRoomUsers(inquiryId),
+            personalAssignmentService
+                .getAssignment(inquiryId)
+        ]).then(([
+            eligibleUsers,
+            currentAssignment
+        ]) => {
             if (!alive) return;
+
             const mergedUsers = [...eligibleUsers];
-            (currentAssignment?.assignedUsers || []).forEach((user) => {
-                if (!mergedUsers.some((candidate) => candidate.id === user.id)) {
+
+            (
+                currentAssignment?.assignedUsers || []
+            ).forEach((user) => {
+                if (!mergedUsers.some(
+                    (candidate) => candidate.id === user.id
+                )) {
                     mergedUsers.push(user);
                 }
             });
+
             setUsers(mergedUsers);
             setSavedAssignment(currentAssignment);
-            setDraftUserIds(currentAssignment?.assignedUserIds || []);
+            setDraftUserIds(
+                currentAssignment?.assignedUserIds || []
+            );
         }).catch(() => {
             if (!alive) return;
-            setError('לא הצלחנו לטעון את אפשרויות השיוך.');
+            setError(
+                'לא הצלחנו לטעון את אפשרויות השיוך.'
+            );
         }).finally(() => {
             if (alive) setLoading(false);
         });
@@ -45,29 +71,82 @@ export const usePersonalAssignment = ({ inquiryId, roomId, open }) => {
         return () => {
             alive = false;
         };
-    }, [inquiryId, open, roomId]);
+    }, [
+        inquiryId,
+        open,
+        reloadRevision,
+        roomId
+    ]);
+
+    useEffect(() => {
+        if (!open || !inquiryId) return undefined;
+
+        return subscribeAssignmentRealtime({
+            ticketId: inquiryId,
+            onInvalidate: () => {
+                setReloadRevision(
+                    (revision) => revision + 1
+                );
+            }
+        });
+    }, [inquiryId, open]);
 
     const filteredUsers = useMemo(() => {
         const normalizedQuery = query.trim();
         if (!normalizedQuery) return users;
-        return users.filter((user) => byName(normalizedQuery, user));
+
+        return users.filter(
+            (user) => byName(normalizedQuery, user)
+        );
     }, [query, users]);
 
-    const selectedUsers = useMemo(() => draftUserIds.map((userId) => users.find((user) => user.id === userId)).filter(Boolean), [draftUserIds, users]);
+    const selectedUsers = useMemo(
+        () => draftUserIds
+            .map((userId) => users.find(
+                (user) => user.id === userId
+            ))
+            .filter(Boolean),
+        [draftUserIds, users]
+    );
+
     const hasChanges = useMemo(() => {
-        const current = [...draftUserIds].sort().join('|');
-        const saved = [...(savedAssignment?.assignedUserIds || [])].sort().join('|');
+        const current = [...draftUserIds]
+            .sort()
+            .join('|');
+        const saved = [
+            ...(savedAssignment?.assignedUserIds || [])
+        ].sort().join('|');
+
         return current !== saved;
-    }, [draftUserIds, savedAssignment]);
+    }, [
+        draftUserIds,
+        savedAssignment
+    ]);
 
     const toggleUser = (userId) => {
-        setDraftUserIds((current) => current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId]);
+        setDraftUserIds((current) => (
+            current.includes(userId)
+                ? current.filter((id) => id !== userId)
+                : [...current, userId]
+        ));
     };
 
-    const removeUser = (userId) => setDraftUserIds((current) => current.filter((id) => id !== userId));
-    const clearSelection = () => setDraftUserIds([]);
+    const removeUser = (userId) => {
+        setDraftUserIds(
+            (current) => current.filter(
+                (id) => id !== userId
+            )
+        );
+    };
+
+    const clearSelection = () => {
+        setDraftUserIds([]);
+    };
+
     const resetDraft = () => {
-        setDraftUserIds(savedAssignment?.assignedUserIds || []);
+        setDraftUserIds(
+            savedAssignment?.assignedUserIds || []
+        );
         setQuery('');
         setError('');
     };
@@ -75,13 +154,23 @@ export const usePersonalAssignment = ({ inquiryId, roomId, open }) => {
     const save = async () => {
         setSaving(true);
         setError('');
+
         try {
-            const nextAssignment = await personalAssignmentService.saveAssignment(inquiryId, draftUserIds);
+            const nextAssignment = await personalAssignmentService
+                .saveAssignment(
+                    inquiryId,
+                    draftUserIds
+                );
+
             setSavedAssignment(nextAssignment);
-            setDraftUserIds(nextAssignment.assignedUserIds || []);
+            setDraftUserIds(
+                nextAssignment.assignedUserIds || []
+            );
             return nextAssignment;
         } catch {
-            setError('שמירת השיוך נכשלה. נסו שוב.');
+            setError(
+                'שמירת השיוך נכשלה. נסו שוב.'
+            );
             return null;
         } finally {
             setSaving(false);
@@ -104,7 +193,11 @@ export const usePersonalAssignment = ({ inquiryId, roomId, open }) => {
         resetDraft,
         save,
         hasChanges,
-        isEmptyResult: !loading && !error && filteredUsers.length === 0,
+        isEmptyResult: (
+            !loading
+            && !error
+            && filteredUsers.length === 0
+        ),
         hasUsers: users.length > 0
     };
 };

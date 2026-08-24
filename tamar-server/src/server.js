@@ -78,6 +78,7 @@ const start = async () => {
         httpServer = createServer(app);
         io = initializeSocket({ httpServer, config, logger, services });
         services.realtimePublisher?.setIo(io);
+services.organizationRealtimePublisher?.setIo(io);
         services.tickets?.realtimePublisher?.setIo(io);
         services.tickets?.assignmentRealtimePublisher?.setIo(io);
         services.tickets?.transferRealtimePublisher?.setIo(io);

@@ -29,7 +29,17 @@ class SubEnvironmentRepository {
     }
 
     async findByEnvironmentId(environmentId, { operationalOnly = false, session } = {}) {
-        const query = { environmentId };
+        return this.findByEnvironmentIds([environmentId], { operationalOnly, session });
+    }
+
+    async findBySystemIds(systemIds, { operationalOnly = false, session } = {}) {
+        const query = { systemId: { $in: systemIds } };
+        if (operationalOnly) Object.assign(query, { isActive: true, archivedAt: null });
+        return SubEnvironment.find(query).session(session || null).lean().exec();
+    }
+
+    async findByEnvironmentIds(environmentIds, { operationalOnly = false, session } = {}) {
+        const query = { environmentId: { $in: environmentIds } };
         if (operationalOnly) Object.assign(query, { isActive: true, archivedAt: null });
         return SubEnvironment.find(query).session(session || null).lean().exec();
     }
@@ -41,7 +51,9 @@ class SubEnvironmentRepository {
 
     async updateById(id, updates, options = {}) {
         return SubEnvironment.findByIdAndUpdate(id, { $set: updates }, {
-            returnDocument: 'after', runValidators: true, session: options.session
+            returnDocument: 'after',
+            runValidators: true,
+            session: options.session
         }).exec();
     }
 }

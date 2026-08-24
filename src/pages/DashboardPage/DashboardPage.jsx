@@ -11,9 +11,12 @@ import { useDashboardData } from '../../features/dashboard/hooks/useDashboardDat
 import { useDashboardKpis } from '../../features/dashboard/hooks/useDashboardKpis.js';
 import { useExpandedDashboardPanel } from '../../features/dashboard/hooks/useExpandedDashboardPanel.js';
 import { useUrgencySelection } from '../../features/dashboard/hooks/useUrgencySelection.js';
+import { exportDashboardCsv } from '../../features/dashboard/utils/dashboard.utils.js';
+import { useSessionStore } from '../../store/session.store.js';
 
 const DashboardPage = () => {
     const dashboard = useDashboardData();
+    const navigate = useSessionStore((state) => state.navigate);
     const { data, status, error, retry, filters, setFilters, filteredBarData, groupedBarData, categoryOptions, sortOptions, hasActiveFilters } = dashboard;
     const inquiries = data.inquiries;
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', subtitle: '', filteredData: [] });
@@ -130,10 +133,14 @@ const DashboardPage = () => {
         );
     }
     return (
-        <div dir="rtl" className={`inquiry-page-surface wave-bg flex h-full min-h-0 flex-col overflow-hidden px-3 pb-3 pt-2 shadow-none ${fullSectionExpansion ? 'lg:p-3' : ''}`}>
-            <DashboardHeader totalInquiries={totalInquiries} />
+        <div dir="rtl" className={`tamar-v22-dashboard-page inquiry-page-surface flex h-full min-h-0 flex-col overflow-hidden shadow-none ${fullSectionExpansion ? 'lg:p-3' : ''}`}>
+            <DashboardHeader
+                totalInquiries={totalInquiries}
+                onCreateInquiry={() => navigate('new_complaint')}
+                onExport={() => exportDashboardCsv(groupedBarData)}
+            />
 
-            <main className="flex min-h-0 flex-1 flex-col overflow-auto">
+            <main className="tamar-v22-dashboard-main flex min-h-0 flex-1 flex-col overflow-hidden">
                 <DashboardKpiGrid fullSectionExpansion={fullSectionExpansion} selectedKpis={selectedKpis} onEdit={openKpiEditor} onRemove={removeSelectedKpi} />
 
                 <div className="min-h-0 flex-1 overflow-hidden">
@@ -185,7 +192,7 @@ const DashboardPage = () => {
                             </div>
                         </div>
                     ) : (
-                        <div dir="ltr" className="dashboard-motion grid h-full min-h-0 grid-cols-12 grid-rows-[minmax(300px,400px)_minmax(158px,178px)] gap-2">
+                        <div dir="ltr" className="tamar-v22-dashboard-layout dashboard-motion grid h-full min-h-0 grid-cols-12">
                             {expandedSection !== 'workload' && (
                                 <div className="dashboard-motion col-span-12 min-h-0 lg:col-span-4 lg:col-start-1 lg:row-start-1">
                                     <UrgencyBreakdownCard
@@ -233,7 +240,7 @@ const DashboardPage = () => {
                                 </div>
                             )}
 
-                            <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-1 ${expandedSection === 'workload' ? 'lg:col-span-4 lg:row-span-2' : 'lg:col-span-4 lg:row-start-2'}`}>
+                            <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-5 ${expandedSection === 'workload' ? 'lg:col-span-8 lg:row-span-2 lg:row-start-1' : 'lg:col-span-8 lg:row-start-2'}`}>
                                 <WorkloadPanel
                                     rows={workloadRows}
                                     expanded={expandedSection === 'workload'}
@@ -241,7 +248,7 @@ const DashboardPage = () => {
                                 />
                             </div>
 
-                            <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-5 ${expandedSection === 'urgentQueue' ? 'lg:col-span-8 lg:row-span-2' : 'lg:col-span-8 lg:row-start-2'}`}>
+                            <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-1 ${expandedSection === 'urgentQueue' ? 'lg:col-span-4 lg:row-span-2 lg:row-start-1' : 'lg:col-span-4 lg:row-start-2'}`}>
                                 <ImmediateTreatmentPanel
                                     items={urgentQueueItems}
                                     expanded={expandedSection === 'urgentQueue'}

@@ -1,0 +1,71 @@
+{
+  "package": "tamardashboardfieldcategories-v3",
+  "root": "C:\\Users\\nehor\\Desktop\\tamar",
+  "changed": [
+    {
+      "path": "src/features/dashboard/constants/dashboard.constants.js",
+      "existed": true,
+      "beforeSha256": "9181f911f38f1f5e90e8735e5bef209f726e4cbde71eea1f3e4225382a0acc0b"
+    },
+    {
+      "path": "src/features/dashboard/utils/dashboard.utils.js",
+      "existed": true,
+      "beforeSha256": "d11dc601a18c09bea29e8b39972cef1eb6acb3255309bc0b59a8eb4a972d33cc"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardKpiCard.jsx",
+      "existed": true,
+      "beforeSha256": "694f632f578e922bda0db40b50e2239834a3cfec374726dc8f25a758ffe1b875"
+    },
+    {
+      "path": "src/features/dashboard/components/KpiEditorModal.jsx",
+      "existed": true,
+      "beforeSha256": "6c4ee0764aa2b64f5569f47fa925aaa914b009692174fbe4ee2822228f24f5e9"
+    },
+    {
+      "path": "src/features/dashboard/hooks/useDashboardKpis.js",
+      "existed": true,
+      "beforeSha256": "bb0e70f02a080c59be89e10ea176519db297fff06ebe6ee071c8d609d8bddc78"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardPrimitives.jsx",
+      "existed": true,
+      "beforeSha256": "9a2b92c686855bf6d1745657d2a11170a8915680df93c1034b1dfe7ef58153dd"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardFilterToolbar.jsx",
+      "existed": true,
+      "beforeSha256": "e4e61cc24a176cada32c51f137255abe2f42843e11b35035ab1a858518b3b08a"
+    },
+    {
+      "path": "src/features/dashboard/components/PeriodicBarChart.jsx",
+      "existed": true,
+      "beforeSha256": "96b7db4afcd992387426de296f1ecbcf1f0173f024864f3133172ca05533d83f"
+    },
+    {
+      "path": "src/features/dashboard/components/PeriodicTrendCard.jsx",
+      "existed": true,
+      "beforeSha256": "1d3e7f1a85d8ebba91d0688935121e9d03591b8b0e948b3e63634f68f25b9ea1"
+    },
+    {
+      "path": "src/features/dashboard/hooks/useDashboardData.js",
+      "existed": true,
+      "beforeSha256": "38e4fa3b6559787b2c8b7747c9a7916d4fb49f41d9329b542c7893d06d6b96c2"
+    },
+    {
+      "path": "tamar-server/src/routes/analytics.routes.js",
+      "existed": true,
+      "beforeSha256": "ed89178b9f7d6abeee9db0f8dfeba6feab8da8a42557999a3c3ee25ce36cfff6"
+    },
+    {
+      "path": "tamar-server/src/services/analytics/AnalyticsService.js",
+      "existed": true,
+      "beforeSha256": "15d51fada0ab031cb8cd5242389e61ac05ebd59d0921c703e2657cb3bab265d3"
+    },
+    {
+      "path": "tamar-server/tests/tamar-dashboard-dynamic-categories.unit.test.js",
+      "existed": false,
+      "beforeSha256": null
+    }
+  ]
+}

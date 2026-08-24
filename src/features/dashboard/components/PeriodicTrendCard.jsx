@@ -20,21 +20,29 @@ const PeriodicTrendCard = ({
     const isBarExpanded = expandedSection === 'barChart';
 
     return (
-        <DashboardCard className={`dashboard-card-motion flex h-full min-h-0 flex-col ${isBarExpanded ? 'dashboard-expanded-card' : ''}`}>
-            <div className={`shrink-0   bg-transparent ${isBarExpanded ? 'px-5 py-4' : 'px-4 py-2'}`}>
-                <div className={`flex flex-wrap justify-between ${isBarExpanded ? 'items-center gap-3' : 'items-start gap-3'}`} dir="rtl">
-                    <div>
-                        <h2 className="flex items-center gap-2 text-[22px] font-black leading-7 inquiry-primary-text">
-                            <Icon name="chartBar" className="h-6 w-6 text-blue-600" /> מגמת פניות תקופתית
-                        </h2>
-                        <p className="mt-1 text-sm font-semibold inquiry-secondary-text">גרף עמודות עם 12 עמודות בתצוגה, סינון, מיון וייצוא.</p>
+        <DashboardCard className={`tamar-v22-trend-card dashboard-card-motion flex h-full min-h-0 flex-col ${isBarExpanded ? 'dashboard-expanded-card' : ''}`}>
+            <div className={`tamar-v22-card-header shrink-0 ${isBarExpanded ? 'px-5 py-4' : 'px-4 py-3'}`}>
+                <div className="flex items-start justify-between gap-3" dir="rtl">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                            <span className="tamar-v22-card-icon-chip">
+                                <Icon name="chartBar" className="h-4 w-4" />
+                            </span>
+                            <h2 className="tamar-v22-card-title">פניות לפי תקופה</h2>
+                        </div>
+                        <p className="tamar-v22-card-subtitle">מגמת פניות לפי התקופה והסינון הנוכחי</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {isBarExpanded && <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-black text-blue-700">סה״כ מוצגות: <span className="text-lg">{filteredBarData.length}</span></div>}
+
+                    <div className="flex shrink-0 items-center gap-2">
+                        {isBarExpanded && (
+                            <span className="tamar-v22-count-chip">
+                                סה״כ מוצגות: <strong>{filteredBarData.length}</strong>
+                            </span>
+                        )}
                         <SectionExpandButton
                             expanded={isBarExpanded}
                             onClick={() => toggleExpandedSection('barChart')}
-                            title={isBarExpanded ? 'מזער מגמת פניות תקופתית' : 'הרחב מגמת פניות תקופתית'}
+                            title={isBarExpanded ? 'מזער פניות לפי תקופה' : 'הרחב פניות לפי תקופה'}
                         />
                     </div>
                 </div>
@@ -48,13 +56,18 @@ const PeriodicTrendCard = ({
                     onExport={() => exportDashboardCsv(groupedBarData)}
                 />
             </div>
-            <div className={`${isBarExpanded ? 'min-h-[220px]' : 'min-h-[168px]'} flex-1 overflow-hidden`}>
-                <PeriodicBarChart data={groupedBarData} onBarClick={handleBarClick} barsPerPage={isBarExpanded ? 12 : 6} isExpanded={isBarExpanded} />
+
+            <div className={`${isBarExpanded ? 'min-h-[220px]' : 'min-h-[150px]'} flex-1 overflow-hidden`}>
+                <PeriodicBarChart
+                    data={groupedBarData}
+                    onBarClick={handleBarClick}
+                    barsPerPage={isBarExpanded ? 12 : 6}
+                    isExpanded={isBarExpanded}
+                    resetKey={`${filters.category}|${filters.grouping}|${filters.dateFrom}|${filters.dateTo}`}
+                />
             </div>
         </DashboardCard>
     );
 };
 
 export default PeriodicTrendCard;
-
-

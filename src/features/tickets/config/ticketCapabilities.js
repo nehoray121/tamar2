@@ -15,14 +15,14 @@ const ticketCapabilitiesByView = {
     },
     history: {
         canView: true,
-        canEdit: true,
+        canEdit: false,
         canChat: true,
         canSend: false,
         canClose: false
     },
     external: {
         canView: true,
-        canEdit: false,
+        canEdit: true,
         canChat: true,
         canSend: false,
         canClose: false
@@ -36,13 +36,17 @@ const ticketCapabilitiesByView = {
     }
 };
 
-const getTicketCapabilities = (viewType = 'default') => {
-    return ticketCapabilitiesByView[viewType] ?? ticketCapabilitiesByView.default;
-};
+const getTicketCapabilities = (viewType = 'default') => (
+    ticketCapabilitiesByView[viewType]
+    ?? ticketCapabilitiesByView.default
+);
 
 const getTicketModalTabs = (viewType = 'default') => {
     const capabilities = getTicketCapabilities(viewType);
-    const tabs = [{ id: 'info', label: 'הפנייה הנוכחית' }];
+    const tabs = [
+        { id: 'info', label: 'הפנייה הנוכחית' },
+        { id: 'history', label: 'היסטוריית שינויים' }
+    ];
 
     if (capabilities.canSend) {
         tabs.push({ id: 'send', label: 'שליחת פנייה' });

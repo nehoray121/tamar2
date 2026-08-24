@@ -25,9 +25,12 @@ const COPY = {
     parent: 'הורה ארגוני',
     managementActions: 'פעולות ניהול',
     noSupportedActions: 'אין פעולות נוספות הנתמכות בישות זו.',
-    createSub: 'יצירת תת-סביבה',
-    createRoom: 'יצירת חדר',
-    createSubTitle: 'יצירת תת-סביבה חדשה',
+    createEnvironment: 'יצירת סביבה',
+createSub: 'יצירת תת-סביבה',
+createRoom: 'יצירת חדר',
+createEnvironmentTitle: 'יצירת סביבה חדשה',
+createSubTitle: 'יצירת תת-סביבה חדשה',
+
     createRoomTitle: 'יצירת חדר חדש',
     savedOnServer: 'הפריט יישמר בשרת לאחר אימות הרשאה.',
     noEnvironment: 'לא נבחרה סביבה.',
@@ -53,7 +56,11 @@ const OrganizationTab = ({ data, onRefresh }) => {
     const [query, setQuery] = useState('');
     const [organization, setOrganization] = useState(data.organization);
     const [selectedId, setSelectedId] = useState(data.organization.selected?.id || null);
-    const [drawerMode, setDrawerMode] = useState(null);
+const [drawerMode, setDrawerMode] = useState(null);
+const systemId = organization.systems?.[0]?.id
+    || data.organization.systems?.[0]?.id
+    || '';
+
 
     useEffect(() => {
         setOrganization(data.organization);
@@ -89,7 +96,24 @@ const OrganizationTab = ({ data, onRefresh }) => {
         ? [{ id: 'sub', label: COPY.createSub }]
         : current?.kind === 'sub' ? [{ id: 'room', label: COPY.createRoom }] : [];
 
-    const createSubEnvironment = async ({ name, description }) => {
+    const createEnvironment = async ({ name, description }) => {
+    if (!systemId) throw new Error('לא נמצאה מערכת פעילה ליצירת הסביבה.');
+    const response = await organizationHierarchyApi.createEnvironment({
+        systemId,
+        input: { name, description }
+    });
+    const created = normalizeEntity(response.data, 'environment');
+    setOrganization((state) => ({
+        ...state,
+        environments: [...(state.environments || []), created]
+    }));
+    setSelectedId(created.id);
+    setDrawerMode(null);
+    onRefresh?.();
+    return created;
+};
+
+const createSubEnvironment = async ({ name, description }) => {
         if (!environmentId) throw new Error(COPY.noEnvironment);
         const response = await organizationHierarchyApi.createSubEnvironment({ environmentId, input: { name, description } });
         const created = normalizeEntity(response.data, 'sub');
@@ -116,10 +140,19 @@ const OrganizationTab = ({ data, onRefresh }) => {
         <div className="grid h-full min-h-0 gap-3 overflow-hidden xl:grid-cols-[340px_minmax(0,1fr)]" dir="rtl">
             <SuperAdminCard className="flex min-h-0 flex-col overflow-hidden">
                 <div className="shrink-0 border-b border-[var(--color-border)] p-3">
-                    <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-[15px] font-black text-[var(--color-text-primary)]">{COPY.systemTree}</h3>
-                        <Icon name="building" className="h-4 w-4 text-[var(--color-primary)]" />
-                    </div>
+                    <div className="mb-3 flex items-center justify-between gap-2">
+    <h3 className="text-[15px] font-black text-[var(--color-text-primary)]">{COPY.systemTree}</h3>
+    <button
+        type="button"
+        data-testid="super-admin-create-environment"
+        disabled={!systemId}
+        onClick={() => setDrawerMode('environment')}
+        className="rounded-lg bg-[var(--color-primary)] px-2.5 py-1.5 text-[11px] font-black text-white disabled:opacity-50"
+    >
+        {COPY.createEnvironment}
+    </button>
+</div>
+
                     <input value={query} onChange={(event) => setQuery(event.target.value)} className="inquiry-input-surface h-9 w-full rounded-lg px-3 text-[12px] font-bold outline-none" placeholder={COPY.search} />
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -158,10 +191,52 @@ const OrganizationTab = ({ data, onRefresh }) => {
                 </> : <div className="flex flex-1 items-center justify-center text-[13px] font-bold text-[var(--color-text-muted)]">{COPY.noEntity}</div>}
             </SuperAdminCard>
 
-            <Drawer title={drawerMode === 'sub' ? COPY.createSubTitle : COPY.createRoomTitle} subtitle={COPY.savedOnServer} item={drawerMode ? { mode: drawerMode } : null} onClose={() => setDrawerMode(null)} widthClassName="max-w-[720px]">
-                {drawerMode === 'sub' && <CreateItemFormPanel type="sub_env" onCancel={() => setDrawerMode(null)} onCreateSubEnvironment={createSubEnvironment} onCreateRoom={createRoom} onSuccess={() => setDrawerMode(null)} />}
-                {drawerMode === 'room' && <CreateItemFormPanel type="room" currentSubEnvironment={subEnvironment} onCancel={() => setDrawerMode(null)} onCreateSubEnvironment={createSubEnvironment} onCreateRoom={createRoom} onSuccess={() => setDrawerMode(null)} />}
-            </Drawer>
+            <Drawer
+    title={
+        drawerMode === 'environment'
+            ? COPY.createEnvironmentTitle
+            : drawerMode === 'sub'
+                ? COPY.createSubTitle
+                : COPY.createRoomTitle
+    }
+    subtitle={COPY.savedOnServer}
+    item={drawerMode ? { mode: drawerMode } : null}
+    onClose={() => setDrawerMode(null)}
+    widthClassName="max-w-[720px]"
+>
+    {drawerMode === 'environment' && (
+        <CreateItemFormPanel
+            type="environment"
+            onCancel={() => setDrawerMode(null)}
+            onCreateEnvironment={createEnvironment}
+            onCreateSubEnvironment={createSubEnvironment}
+            onCreateRoom={createRoom}
+            onSuccess={() => setDrawerMode(null)}
+        />
+    )}
+    {drawerMode === 'sub' && (
+        <CreateItemFormPanel
+            type="sub_env"
+            onCancel={() => setDrawerMode(null)}
+            onCreateEnvironment={createEnvironment}
+            onCreateSubEnvironment={createSubEnvironment}
+            onCreateRoom={createRoom}
+            onSuccess={() => setDrawerMode(null)}
+        />
+    )}
+    {drawerMode === 'room' && (
+        <CreateItemFormPanel
+            type="room"
+            currentSubEnvironment={subEnvironment}
+            onCancel={() => setDrawerMode(null)}
+            onCreateEnvironment={createEnvironment}
+            onCreateSubEnvironment={createSubEnvironment}
+            onCreateRoom={createRoom}
+            onSuccess={() => setDrawerMode(null)}
+        />
+    )}
+</Drawer>
+
         </div>
     );
 };

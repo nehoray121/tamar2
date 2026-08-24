@@ -1,0 +1,39 @@
+{
+    "name": "tamar-react-app",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "test": "node --test src/features/tickets/boards/__tests__/boardTypes.test.js src/features/tickets/boards/__tests__/boardItemAdapter.test.js src/features/tickets/boards/__tests__/boardQuerySerializer.test.js src/features/tickets/boards/__tests__/ticketBoardsApi.test.js src/features/tickets/boards/__tests__/boardSocket.test.js src/features/tickets/boards/__tests__/boardFlows.test.js src/features/tickets/boards/__tests__/phase9vArchitecture.test.js src/features/tickets/boards/__tests__/phase9vTraceability.test.js src/features/tickets/boards/__tests__/runtimeIntegration.test.js src/features/tickets/chat/__tests__/ticketMessageModel.test.js src/features/tickets/chat/__tests__/ticketMessagesApi.test.js src/features/tickets/chat/__tests__/ticketChatArchitecture.test.js src/features/tickets/chat/__tests__/ticketChatComponent.test.js src/features/tickets/chat/__tests__/phase10Traceability.test.js src/features/auth/__tests__/localAuthentication.test.js src/features/rooms/__tests__/organizationHierarchy.test.js src/features/integration/__tests__/realDataArchitecture.test.js src/features/integration/__tests__/accessRequestsRealtimeArchitecture.test.js src/features/settings/__tests__/inquiryLayoutBuilder.test.js",
+        "test:e2e:phase9v": "playwright test --config=playwright.phase9v.config.cjs",
+        "test:e2e:phase10": "playwright test --config=playwright.phase10.config.cjs",
+        "preview": "vite preview",
+        "dev:tamar": "node scripts/dev-tamar.cjs",
+        "seed:tamar-dev": "node scripts/dev-tamar.cjs --seed-only",
+        "reset:tamar-dev": "node scripts/dev-tamar.cjs --seed-only --reset --confirm-reset=tamar_dev",
+        "dev:tamar:reset-data": "node scripts/dev-tamar.cjs --seed-only --reset --confirm-reset=tamar_dev",
+        "verify:real-data": "node scripts/verify-real-data-integration.cjs",
+        "verify:production-auth": "node scripts/verify-production-auth.cjs",
+        "verify:local-auth-matrix": "node scripts/verify-local-auth-matrix.cjs",
+        "test:e2e:local-auth": "playwright test --config=playwright.local-auth.config.cjs",
+        "test:e2e:hierarchy": "playwright test --config=playwright.hierarchy.config.cjs",
+        "test:e2e:real-data": "playwright test --config=playwright.real-data.config.cjs",
+        "test:inquiry-layout": "node --test --experimental-test-isolation=none src/features/settings/__tests__/inquiryLayoutBuilder.test.js"
+    },
+    "dependencies": {
+        "@vitejs/plugin-react": "^4.3.4",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "socket.io-client": "^4.8.3",
+        "vite": "^6.0.7",
+        "zustand": "^5.0.14"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.55.0",
+        "autoprefixer": "^10.4.20",
+        "postcss": "^8.4.49",
+        "tailwindcss": "^3.4.17"
+    }
+}

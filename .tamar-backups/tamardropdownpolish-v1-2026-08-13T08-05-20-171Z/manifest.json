@@ -1,0 +1,14 @@
+{
+  "package": "tamardropdownpolish-v1",
+  "root": "C:\\Users\\nehor\\Desktop\\tamar",
+  "files": [
+    {
+      "path": "src/features/dashboard/components/DashboardPrimitives.jsx",
+      "beforeSha256": "87560b38ee58f0d73ed9a7278be612714cc9c2320280645466e244531394028d"
+    },
+    {
+      "path": "src/styles.css",
+      "beforeSha256": "0a6b072884907ffcbb7cb0b9e1815bf330327f49d14466cacd089e7fd6b032f0"
+    }
+  ]
+}

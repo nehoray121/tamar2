@@ -6,6 +6,7 @@ import { ticketMessagesApi } from '../../tickets/chat/api/ticketMessagesApi.js';
 import { ticketsApi } from '../../tickets/api/ticketsApi.js';
 import { buildInquiryDraftKey, inquiryDraftRepository } from '../services/inquiryDraftRepository.js';
 import { personalAssignmentService } from '../../tickets/services/personalAssignmentService.js';
+import { notifyError, notifySuccess } from '../../notifications/notificationBus.js';
 
 const baseInitialFields = {
     personalId: '',
@@ -134,6 +135,8 @@ export function useInquiryForm() {
     const [subEnvironmentId, setSubEnvironmentIdState] = useState(sessionRoom?.subEnvironmentId || '');
     const [roomId, setRoomIdState] = useState(sessionRoom?.id || '');
     const [createdTicket, setCreatedTicket] = useState(null);
+    const [numberReservation, setNumberReservation] = useState(null);
+    const [numberReservationError, setNumberReservationError] = useState('');
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [openCustomerInquiries, setOpenCustomerInquiries] = useState([]);
     const [isTemplateOpen, setIsTemplateOpen] = useState(false);
@@ -169,8 +172,9 @@ export function useInquiryForm() {
     const selectedRoom = selectedSubEnvironment?.rooms.find((item) => item.id === roomId) || null;
     const currentRoomName = selectedRoom?.name || sessionRoom?.name || '';
     const ticketId = createdTicket?.id || '';
-    const inquiryId = createdTicket?.ticketNumber || 'טרם הוקצה';
-    const assignmentEnabled = Boolean(ticketId) && generalSettings.userAssignmentEnabled !== false;
+    const inquiryId = createdTicket?.ticketNumber || numberReservation?.ticketNumber || 'מקצה מספר...';
+    const assignmentEnabled = generalSettings.userAssignmentEnabled !== false;
+    const assignmentReady = Boolean(ticketId);
     const currentUserId = String(currentUser?.id || 'anonymous');
 
     useEffect(() => {
@@ -190,6 +194,27 @@ export function useInquiryForm() {
         return () => {
             alive = false;
         };
+    }, [loadRevision, roomId]);
+
+    useEffect(() => {
+        if (!roomId) {
+            setNumberReservation(null);
+            setNumberReservationError('');
+            return undefined;
+        }
+
+        const controller = new AbortController();
+        setNumberReservation(null);
+        setNumberReservationError('');
+
+        ticketsApi.reserveNumber(roomId, { signal: controller.signal })
+            .then((response) => setNumberReservation(response.data || null))
+            .catch((error) => {
+                if (error?.name === 'AbortError') return;
+                setNumberReservationError('לא ניתן להקצות מספר פנייה ייחודי');
+            });
+
+        return () => controller.abort();
     }, [loadRevision, roomId]);
 
     const draftKey = useMemo(() => buildInquiryDraftKey({
@@ -254,7 +279,7 @@ export function useInquiryForm() {
     }, [fields.personalId, isHistoryOpen]);
 
     useEffect(() => {
-        if (!assignmentEnabled) {
+        if (!assignmentEnabled || !ticketId) {
             setAssignedUsers([]);
             return undefined;
         }
@@ -374,13 +399,47 @@ export function useInquiryForm() {
         if (publishing) return null;
         if (!roomId || requiredDone < requiredKeys.length) {
             setDraftNotice('יש להשלים את כל שדות החובה לפני הפרסום');
+            notifyError('יש להשלים את כל שדות החובה לפני הפרסום');
+            return null;
+        }
+        if (!numberReservation?.id) {
+            setDraftNotice(numberReservationError || 'ממתין להקצאת מספר פנייה ייחודי');
+            notifyError(numberReservationError || 'ממתין להקצאת מספר פנייה ייחודי');
             return null;
         }
         setPublishing(true);
-        try {
-            const dynamicValues = Object.fromEntries(dynamicFields.map((field) => [field.id, fields[field.id] ?? '']));
-            const response = await ticketsApi.create({
+try {
+    if (
+        generalSettings.duplicateWarning === 'פעילה'
+        && fields.personalId.trim()
+    ) {
+        const duplicateResponse = await ticketsApi.list({
+            view: 'OPEN',
+            page: 1,
+            limit: 5,
+            roomId,
+            customerId: fields.personalId.trim(),
+            sortBy: 'updatedAt',
+            sortDirection: 'desc'
+        });
+        const duplicates = duplicateResponse.data?.items || [];
+        if (
+            duplicates.length > 0
+            && !window.confirm(
+                `קיימות ${duplicates.length} פניות פתוחות ללקוח זה בחדר. להמשיך וליצור פנייה נוספת?`
+            )
+        ) {
+            setDraftNotice('יצירת הפנייה בוטלה בעקבות זיהוי כפילות');
+            return null;
+        }
+    }
+
+    const dynamicValues = Object.fromEntries(dynamicFields.map((field) => [field.id, fields[field.id] ?? '']));
+    const response = await ticketsApi.create({
+
                 roomId,
+
+                reservationId: numberReservation.id,
                 subject: fields.customerName.trim() ? `פנייה עבור ${fields.customerName.trim()}` : fields.description.trim().slice(0, 200),
                 description: fields.description.trim(),
                 priority: priorityValues[fields.priority] || 'MEDIUM',
@@ -410,10 +469,26 @@ export function useInquiryForm() {
             setChatDraft('');
             setChatMessages([]);
             setIsPublishConfirmOpen(false);
-            navigate('open_complaints');
+            const sentToAnotherRoom = Boolean(sessionRoom?.id)
+                && String(roomId) !== String(sessionRoom.id);
+            const successTitle = sentToAnotherRoom
+                ? 'הפנייה נשלחה בהצלחה'
+                : 'הפנייה נפתחה בהצלחה';
+
+            notifySuccess(
+                ticket?.ticketNumber ? `מספר פנייה: ${ticket.ticketNumber}` : '',
+                { title: successTitle, duration: 5000 }
+            );
+
+            setCreatedTicket(null);
+            setAssignedUsers([]);
+            setActiveTab('form');
+            setNumberReservation(null);
+            setLoadRevision((revision) => revision + 1);
             return ticket;
         } catch (error) {
             setDraftNotice(error?.message || 'לא ניתן לפרסם את הפנייה כעת');
+            notifyError(error?.message || 'לא ניתן לפרסם את הפנייה כעת');
             return null;
         } finally {
             setPublishing(false);
@@ -441,6 +516,7 @@ export function useInquiryForm() {
         openAssignment,
         closeAssignment,
         inquiryId,
+        numberReservationError,
         ticketId,
         currentUser,
         currentRoomName,
@@ -479,6 +555,7 @@ export function useInquiryForm() {
         draftNotice,
         draftKey,
         assignmentEnabled,
+        assignmentReady,
         assignedUsers,
         assignedUsersSummary,
         refreshAssignment,

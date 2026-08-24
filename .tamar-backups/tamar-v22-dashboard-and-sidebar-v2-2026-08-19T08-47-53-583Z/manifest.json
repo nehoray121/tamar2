@@ -1,0 +1,71 @@
+{
+  "package": "tamar-v22-dashboard-and-sidebar-v2",
+  "root": "C:\\Users\\nehor\\Desktop\\tamar",
+  "createdAt": "2026-08-19T08:47:53.616Z",
+  "files": [
+    {
+      "path": "src/styles.css",
+      "sha256Before": "1dcdc71efd49f141a9827d5d54db1fc55f4deeaf657f9798d2795415155d894c"
+    },
+    {
+      "path": "src/components/layout/AppShell.jsx",
+      "sha256Before": "4f5a00abda814b6bd5d56318590a64aed35cff738e73a8d6d3159fdd5c679189"
+    },
+    {
+      "path": "src/components/layout/Sidebar.jsx",
+      "sha256Before": "1ca26a6942859a41b1942dcc8147aeb06889a907197cc5ec686084fc5250d005"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardHeader.jsx",
+      "sha256Before": "67260298a335d57d94919c2164c8f13f76ee8cb3d64c5251c399bc35c1f7a415"
+    },
+    {
+      "path": "src/pages/DashboardPage/DashboardPage.jsx",
+      "sha256Before": "3af1ec6c0291faeb97184c251a86be0d5a856a595c95ce0d89ca0761dad2f94a"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardKpiCard.jsx",
+      "sha256Before": "181de9fcd4a67a595fffc81f8b54803a0dfb1d2e3cd808205f987f14ef635696"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardKpiGrid.jsx",
+      "sha256Before": "238f6070635e766f2fa4d43f854d8eedf34850cf38f6fbafada818694601d6ae"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardPrimitives.jsx",
+      "sha256Before": "353fe4ec0f7306d09676d6862f6098b1ad9ad4ace92ff30524c0e63ad356ba1a"
+    },
+    {
+      "path": "src/features/dashboard/components/PeriodicTrendCard.jsx",
+      "sha256Before": "a6e4f3fdff6367c721c80a7cb2a51667ddbe24525b69ab142a1c4738dc01feae"
+    },
+    {
+      "path": "src/features/dashboard/components/DashboardFilterToolbar.jsx",
+      "sha256Before": "9a8e1b2f9184688f3317881600206e8e2b42c13804a48455584797def96cc2aa"
+    },
+    {
+      "path": "src/features/dashboard/components/PeriodicBarChart.jsx",
+      "sha256Before": "59746812e696d92499497fa01a81108e96be70315d6c6d9a87b9fe9a19d915be"
+    },
+    {
+      "path": "src/features/dashboard/components/UrgencyBreakdownCard.jsx",
+      "sha256Before": "e69b0b206151b4a0860fffcd4922c6827a3ac0c5ce1389c1d535c7183fe739ba"
+    },
+    {
+      "path": "src/features/dashboard/components/UrgencyDonutChart.jsx",
+      "sha256Before": "2d52979301f91f4ef6fa6cfcf3ed8acd4c66f1fb675e13cf236907547daa2369"
+    },
+    {
+      "path": "src/features/dashboard/components/WorkloadPanel.jsx",
+      "sha256Before": "fffbd4e0a8122309bfee7aed3812456c436b514a4803262abefa6d99dee74992"
+    },
+    {
+      "path": "src/features/dashboard/components/ImmediateTreatmentPanel.jsx",
+      "sha256Before": "4d16fdcf595ca559a36b8a93d5fe3429489e71f341a69467be0f71ca000e5226"
+    },
+    {
+      "path": "src/features/dashboard/components/SectionExpandButton.jsx",
+      "sha256Before": "c0e9ebbf2361f98bb35590744341deb11cf76c1fb4cf2e6e09e0c97caf8f9375"
+    }
+  ]
+}
