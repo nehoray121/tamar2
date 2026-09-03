@@ -23,7 +23,7 @@ export function useDashboardKpis({ metrics }) {
         return [
             { id: 'open', title: 'פניות פתוחות', subtitle: `${openedToday} נפתחו היום`, value: open, icon: 'chartBar', accent: 'amber' },
             { id: 'overdue', title: 'פניות באיחור', subtitle: 'פתוחות מעל 48 שעות', value: overdue, icon: 'clock', accent: 'rose' },
-            { id: 'urgent', title: 'דחופות פתוחות', subtitle: 'דחיפות גבוהה או קריטית', value: urgentOpen, icon: 'target', accent: 'rose' },
+            { id: 'urgent', title: 'דחופות פתוחות', subtitle: 'דחיפות גבוהה או בינונית', value: urgentOpen, icon: 'target', accent: 'rose' },
             { id: 'unassigned', title: 'ללא גורם מטפל', subtitle: 'פניות פתוחות ללא שיוך', value: unassigned, icon: 'user', accent: 'amber' },
             { id: 'averageTime', title: 'זמן טיפול ממוצע', subtitle: 'בשעות, לפניות שנסגרו', value: averageHandlingHours, icon: 'dashboard', accent: 'blue' },
             { id: 'recentlyHandled', title: 'טופלו לאחרונה', subtitle: 'ב־7 הימים האחרונים', value: recentlyHandled, icon: 'check', accent: 'emerald' },

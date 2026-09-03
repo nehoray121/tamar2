@@ -75,16 +75,70 @@ export const useRoomSettings = ({ autosave = false, debounceMs = 450 } = {}) => 
     }, [roomId, loadRevision]);
 
     useEffect(() => {
-    if (!roomId) return undefined;
-    return subscribeRoomSettingsRealtime({
-        roomId,
-        onInvalidate: () => {
-            if (!dirtyRef.current) {
-                setLoadRevision((revision) => revision + 1);
+        if (!roomId || !loaded) return undefined;
+
+        let active = true;
+        let refreshSequence = 0;
+        let refreshController = null;
+
+        const refreshFromServer = async () => {
+            if (dirtyRef.current) return;
+
+            const sequence = ++refreshSequence;
+            refreshController?.abort();
+            refreshController = new AbortController();
+
+            try {
+                const result = await settingsRepository.load(roomId, {
+                    signal: refreshController.signal
+                });
+
+                if (
+                    !active
+                    || sequence !== refreshSequence
+                    || dirtyRef.current
+                ) {
+                    return;
+                }
+
+                setSettingsState(result.settings);
+                committedSettingsRef.current = result.settings;
+                versionRef.current = result.version;
+                queueRef.current?.setVersion(result.version);
+                setSaveStatus('saved');
+            } catch (error) {
+                if (error?.name === 'AbortError') return;
+                // Keep the last confirmed settings visible. Realtime refresh
+                // failures must never replace the whole page with a loader.
             }
-        }
-    });
-}, [roomId]);
+        };
+
+        const unsubscribe = subscribeRoomSettingsRealtime({
+            roomId,
+            onInvalidate: (payload) => {
+                if (dirtyRef.current) return;
+
+                const incomingVersion = Number(payload?.version);
+
+                if (
+                    Number.isFinite(incomingVersion)
+                    && incomingVersion > 0
+                    && incomingVersion <= versionRef.current
+                ) {
+                    return;
+                }
+
+                void refreshFromServer();
+            }
+        });
+
+        return () => {
+            active = false;
+            refreshSequence += 1;
+            refreshController?.abort();
+            unsubscribe?.();
+        };
+    }, [loaded, roomId]);
 
 useEffect(() => {
     if (!autosave || !loaded || !dirtyRef.current || !roomId) return undefined;

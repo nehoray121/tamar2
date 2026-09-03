@@ -1,29 +1,34 @@
 import React from 'react';
-import Icon from '../../../components/common/Icon.jsx';
+import Icon from '../../../components/common/TamarIcon.jsx';
 
-const DashboardHeader = ({ totalInquiries, onCreateInquiry, onExport }) => (
-    <header className="tamar-v22-dashboard-header flex shrink-0 items-start justify-between gap-5" aria-label={`לוח בקרה · ${totalInquiries} פניות`}>
-        <div className="tamar-v22-dashboard-heading text-right">
-            <h1>לוח בקרה</h1>
-            <p>מעקב, תעדוף וניהול הפניות שלך במקום אחד.</p>
+const DashboardHeader = ({
+    totalInquiries,
+    onEdit,
+    onCreateInquiry
+}) => (
+    <header className="tamar-claude-page-header" dir="rtl">
+        <div className="tamar-claude-page-header__text">
+            <h1>דשבורד</h1>
+            <p>{totalInquiries} פניות במערכת · מבט ניהולי כולל</p>
         </div>
 
-        <div className="tamar-v22-dashboard-actions flex shrink-0 items-center gap-2.5">
+        <div className="tamar-claude-page-header__actions">
+            <button
+                type="button"
+                onClick={onEdit}
+                className="tamar-claude-btn tamar-claude-btn--secondary"
+            >
+                <Icon name="edit" className="h-3.5 w-3.5" />
+                עריכת מדדים
+            </button>
+
             <button
                 type="button"
                 onClick={onCreateInquiry}
-                className="tamar-v22-header-button tamar-v22-header-button--primary inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+                className="tamar-claude-btn tamar-claude-btn--primary"
             >
-                <Icon name="plus" className="h-4 w-4" />
-                <span>פנייה חדשה</span>
-            </button>
-            <button
-                type="button"
-                onClick={onExport}
-                className="tamar-v22-header-button tamar-v22-header-button--secondary inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
-            >
-                <Icon name="arrowDownStraight" className="h-4 w-4" />
-                <span>ייצוא לאקסל</span>
+                <Icon name="plus" className="h-3.5 w-3.5" />
+                פנייה חדשה
             </button>
         </div>
     </header>

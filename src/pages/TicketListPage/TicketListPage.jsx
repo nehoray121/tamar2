@@ -11,6 +11,10 @@ import { useInquiryOrganization } from '../../features/tickets/hooks/useInquiryO
 import { resolveBoardTypeFromView } from '../../features/tickets/boards/domain/boardTypes.js';
 import { INQUIRY_RUNTIME_STATE } from '../../features/tickets/boards/domain/inquiryRuntimeState.js';
 import { useRoomSettings } from '../../features/settings/hooks/useRoomSettings.js';
+import {
+    clearDashboardListTarget,
+    readDashboardListTarget
+} from '../../features/dashboard/utils/dashboardDrilldown.js';
 
 const toolbarButton = 'inquiry-control flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 text-[12px] font-black shadow-[0_4px_12px_rgba(37,99,235,0.08)] transition';
 const dropdownMenu = 'absolute top-[calc(100%+8px)] z-[140] min-w-[180px] overflow-hidden rounded-xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-1.5 shadow-[0_20px_48px_rgba(2,6,23,0.42)]';
@@ -56,10 +60,17 @@ const RuntimeStatePanel = ({ state, onAction }) => {
 };
 
 const TicketListPage = ({ title, description, showToggle = false, viewType = 'default' }) => {
-    const [toggleState, setToggleState] = useState('received');
+    const [dashboardListTarget] = useState(
+        () => readDashboardListTarget(viewType)
+    );
+    const [toggleState, setToggleState] = useState(
+        () => dashboardListTarget?.toggleState || 'received'
+    );
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [closingTicket, setClosingTicket] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(
+        () => dashboardListTarget?.search || ''
+    );
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
     const [pinDropdownOpen, setPinDropdownOpen] = useState(false);
@@ -106,6 +117,26 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
     const canAssignCategories = organization.capabilities.canChangeCategory;
     const canPin = organization.capabilities.canChangePin;
     const showCategoryNavigation = Boolean(organization.boardType);
+
+    useEffect(() => {
+        const target = dashboardListTarget;
+        if (!target || target.viewType !== viewType) return;
+
+        setSearchQuery(target.search || '');
+        setSortBy('מספר פנייה');
+        setPriorityFilter('בחר דחיפות');
+        setPinMode('ALL');
+        setCurrentPage(1);
+        setSelectedTicket(null);
+        setClosingTicket(null);
+        closeAllDropdowns();
+
+        if (viewType === 'external') {
+            setToggleState(target.toggleState || 'received');
+        }
+
+        clearDashboardListTarget(target.requestId);
+    }, [dashboardListTarget, viewType]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -232,7 +263,7 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                         />
                     )}
                     <div className="relative shrink-0 overflow-visible">
-                        <button onClick={() => { closeAllDropdowns(); setSortDropdownOpen(!sortDropdownOpen); }} className={toolbarButton}>
+                        <button type="button" onClick={() => { closeAllDropdowns(); setSortDropdownOpen(!sortDropdownOpen); }} className={toolbarButton}>
                             <Icon
                                 name="arrowDownUp"
                                 className="h-3.5 w-3.5 shrink-0 text-[var(--color-primary)]"
@@ -243,14 +274,14 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                         {sortDropdownOpen && (
                             <div className={`${dropdownMenu} right-0 w-[190px]`}>
                                 {sortOptions.map((option) => (
-                                    <button key={option} onClick={() => { setSortBy(option); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{option}</button>
+                                    <button type="button" key={option} onClick={() => { setSortBy(option); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{option}</button>
                                 ))}
                             </div>
                         )}
                     </div>
                     {!externalBoard && (
                         <div className="relative shrink-0 overflow-visible">
-                            <button onClick={() => { closeAllDropdowns(); setPriorityDropdownOpen(!priorityDropdownOpen); }} className={toolbarButton}>
+                            <button type="button" onClick={() => { closeAllDropdowns(); setPriorityDropdownOpen(!priorityDropdownOpen); }} className={toolbarButton}>
                                 <Icon name="filter" className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                                 {priorityFilter}
                                 <Icon name="chevronDown" className="h-3 w-3 text-[var(--color-primary)]" />
@@ -258,7 +289,7 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                             {priorityDropdownOpen && (
                                 <div className={`${dropdownMenu} right-0 w-[190px]`}>
                                     {priorityOptions.map((option) => (
-                                        <button key={option} onClick={() => { setPriorityFilter(option); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{option}</button>
+                                        <button type="button" key={option} onClick={() => { setPriorityFilter(option); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{option}</button>
                                     ))}
                                 </div>
                             )}
@@ -266,7 +297,7 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                     )}
                     {showPinFilter && (
                     <div className="relative shrink-0 overflow-visible">
-                        <button onClick={() => { closeAllDropdowns(); setPinDropdownOpen(!pinDropdownOpen); }} className={toolbarButton}>
+                        <button type="button" onClick={() => { closeAllDropdowns(); setPinDropdownOpen(!pinDropdownOpen); }} className={toolbarButton}>
                             <Icon name="pin" className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                             {pinLabels[pinMode]}
                             <Icon name="chevronDown" className="h-3 w-3 text-[var(--color-primary)]" />
@@ -274,7 +305,7 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                         {pinDropdownOpen && (
                             <div className={`${dropdownMenu} right-0 w-[170px]`}>
                                 {Object.entries(pinLabels).map(([value, label]) => (
-                                    <button key={value} onClick={() => { setPinMode(value); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{label}</button>
+                                    <button type="button" key={value} onClick={() => { setPinMode(value); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{label}</button>
                                 ))}
                             </div>
                         )}
@@ -352,9 +383,9 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
             </div>
 
             <div className={`mt-3 shrink-0 items-center justify-center gap-3 border-t border-[var(--color-border-strong)]/70 pt-3 dark:border-none ${organization.filtersAvailable ? 'flex' : 'hidden'}`}>
-                <button disabled={currentPage <= 1 || organization.loading} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} className="inquiry-control rounded-lg px-4 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)] disabled:cursor-not-allowed disabled:opacity-50">&lt; קודם</button>
+                <button type="button" disabled={currentPage <= 1 || organization.loading} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} className="inquiry-control rounded-lg px-4 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)] disabled:cursor-not-allowed disabled:opacity-50">&lt; קודם</button>
                 <div className="inquiry-control inquiry-control--active rounded-lg px-8 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)]">עמוד {currentPage} מתוך {totalPages}</div>
-                <button disabled={currentPage >= totalPages || organization.loading} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} className="inquiry-control rounded-lg px-4 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)] disabled:cursor-not-allowed disabled:opacity-50">הבא &gt;</button>
+                <button type="button" disabled={currentPage >= totalPages || organization.loading} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} className="inquiry-control rounded-lg px-4 py-1.5 text-xs font-bold shadow-[0_3px_10px_rgba(37,99,235,0.08)] disabled:cursor-not-allowed disabled:opacity-50">הבא &gt;</button>
             </div>
 
             {selectedTicket && (

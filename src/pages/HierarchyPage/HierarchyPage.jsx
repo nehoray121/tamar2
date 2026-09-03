@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/common/Icon.jsx';
+import ThemeControl from '../../features/theme/ThemeControl.jsx';
 import { Badge } from '../../components/ui/index.js';
 import { useRoomHierarchy } from '../../features/rooms/hooks/useRoomHierarchy.js';
 import { buildHierarchyBreadcrumb } from '../../features/rooms/services/hierarchyBreadcrumbModel.js';
@@ -63,7 +64,7 @@ const EntityCard = ({ item, level, selected, onSelect, onOpen, parentName, rooms
             data-testid="organization-entity-card"
             data-entity-id={item.id}
             data-entity-level={level}
-            className={`group relative flex min-h-[204px] flex-col overflow-hidden rounded-2xl border bg-[var(--color-surface-raised)] p-4 shadow-[0_8px_22px_rgba(15,23,42,0.06)] transition hover:border-[var(--color-primary)] hover:shadow-[0_12px_28px_rgba(37,99,235,0.10)] dark:shadow-none ${selected ? 'border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary-soft)_34%,var(--color-surface-raised))] ring-1 ring-[var(--color-primary)]' : 'border-[var(--color-border-strong)]'}`}
+            className={`tamar-hierarchy-entity-v3 group relative flex min-h-[204px] flex-col overflow-hidden rounded-2xl border bg-[var(--color-surface-raised)] p-4 shadow-[0_8px_22px_rgba(15,23,42,0.06)] transition hover:border-[var(--color-primary)] hover:shadow-[0_12px_28px_rgba(37,99,235,0.10)] dark:shadow-none ${selected ? 'border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary-soft)_34%,var(--color-surface-raised))] ring-1 ring-[var(--color-primary)]' : 'border-[var(--color-border-strong)]'}`}
             onClick={onSelect}
         >
             <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[inherit] bg-[color-mix(in_srgb,var(--color-primary-soft)_28%,transparent)] transition-opacity duration-150 ${selected ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}`} />
@@ -110,7 +111,7 @@ const GuidancePanel = ({ selectedItem, level, selectedEnvironment, selectedSubEn
     }).map((segment) => segment.name).join(' / ');
 
     return (
-        <aside className="hierarchy-layout__sidebar flex min-h-0 flex-col rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.07)] dark:shadow-none">
+        <aside className="tamar-hierarchy-guidance-v3 hierarchy-layout__sidebar flex min-h-0 flex-col rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4">
             <div className="flex items-start justify-between gap-4 border-b border-[var(--color-border)] pb-4">
                 <div className="min-w-0">
                     <p className="text-[11px] font-black text-[var(--color-text-muted)]">פרטי בחירה</p>
@@ -145,14 +146,20 @@ const GuidancePanel = ({ selectedItem, level, selectedEnvironment, selectedSubEn
                     : 'בתת־סביבה ניתן לפתוח חדרים, לעקוב אחר פעילות ולשמור על מבנה היררכי נקי.'}
             </div>
 
-            <div className="mt-auto flex flex-wrap gap-2 pt-5">
+            <div className="tamar-hierarchy-footer-actions mt-auto flex flex-wrap gap-2 pt-5">
                 {isRoom && <ActionButton onClick={onBack}><Icon name="arrowRight" className="h-3.5 w-3.5" /> חזרה</ActionButton>}
                 {isRoom ? (
                     <ActionButton onClick={onOpenUserManagement}><Icon name="users" className="h-3.5 w-3.5" /> משתמשים</ActionButton>
                 ) : (
                     <ActionButton onClick={onOpenEnvModal}><Icon name="arrowDownUp" className="h-3.5 w-3.5" /> החלף סביבה</ActionButton>
                 )}
-            </div>
+            
+                <div
+                    className="tamar-hierarchy-inline-theme"
+                    aria-label="מצב תצוגה"
+                >
+                    <ThemeControl />
+                </div></div>
         </aside>
     );
 };
@@ -276,20 +283,55 @@ const HierarchyPage = ({ onOpenEnvModal, onOpenUserManagement, onRoomSelect }) =
     }
 
     return (
-        <div className="inquiry-page-surface flex h-full min-h-0 flex-col overflow-hidden" dir="rtl">
-            <header className="relative flex min-h-[104px] shrink-0 items-center justify-center rounded-b-[26px] border-b border-[var(--color-border-strong)] bg-[#172f56] px-5 pb-6 pt-4 text-center shadow-[0_10px_22px_rgba(15,23,42,0.15)] dark:bg-[#172b4d]">
-                <h1 className="relative z-10 max-w-[920px] px-16 text-[24px] font-black leading-[1.28] tracking-tight text-blue-50">ברוכים הבאים לתפעול מערכות רשתיות</h1>
-                <div className="pointer-events-none absolute bottom-0 left-1/2 z-20 -translate-x-1/2 translate-y-1/2 rounded-xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-1 shadow-sm">
-                    <div className="rounded-lg bg-[var(--color-primary-soft)] p-1.5 text-[var(--color-primary)]">
-                        <Icon name="target" className="h-4 w-4" />
-                    </div>
-                </div>
-            </header>
+        <div className="tamar-hierarchy-page-v3 inquiry-page-surface flex h-full min-h-0 flex-col overflow-hidden" dir="rtl">
+            <div className="tamar-hierarchy-brandbar-v4" aria-label="תמ״ר">
+    <div className="tamar-hierarchy-brandbar-v4__inner">
+        <span className="tamar-hierarchy-brandbar-v4__logo">תמ״ר</span>
+    </div>
+</div>
+<header className="tamar-hierarchy-header-v3 flex shrink-0 items-center justify-between gap-4 px-6 pb-3 pt-5">
+    <div className="min-w-0 text-right">
+        <h1 className="text-[25px] font-black leading-8 tracking-tight text-[var(--color-text-primary)]">
+            {level === 'sub_envs'
+                ? 'בחירת תת־סביבה'
+                : 'בחירת חדר'}
+        </h1>
 
-            <main className="min-h-0 flex-1 px-5 pb-5 pt-3">
+        <p className="mt-1 text-[13px] font-semibold text-[var(--color-text-secondary)]">
+            {level === 'sub_envs'
+                ? `בחרו תת־סביבה מתוך ${selectedEnvironment?.name || 'הסביבה הנבחרת'}`
+                : `בחרו חדר מתוך ${selectedSubEnvironment?.name || 'תת־הסביבה הנבחרת'}`}
+        </p>
+    </div>
+
+    <div className="tamar-hierarchy-context-v3 flex shrink-0 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+            <Icon
+                name={level === 'sub_envs' ? 'layers' : 'dashboard'}
+                className="h-4 w-4"
+            />
+        </span>
+
+        <div className="text-right">
+            <div className="text-[10px] font-bold text-[var(--color-text-muted)]">
+                {level === 'sub_envs'
+                    ? 'סביבה נוכחית'
+                    : 'תת־סביבה נוכחית'}
+            </div>
+
+            <div className="max-w-[220px] truncate text-[12px] font-black text-[var(--color-text-primary)]">
+                {level === 'sub_envs'
+                    ? selectedEnvironment?.name
+                    : selectedSubEnvironment?.name}
+            </div>
+        </div>
+    </div>
+</header>
+
+            <main className="tamar-hierarchy-main-v3 min-h-0 flex-1 px-5 pb-5 pt-2">
                 <div className="hierarchy-layout">
                     <section className="hierarchy-layout__content flex min-h-0 flex-col overflow-hidden">
-                        <div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
+                        <div className="tamar-hierarchy-toolbar-v3 mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2.5 rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-2.5">
                             <nav
                                 data-testid="organization-breadcrumb"
                                 data-breadcrumb-direction="rtl-row"
@@ -297,8 +339,26 @@ const HierarchyPage = ({ onOpenEnvModal, onOpenUserManagement, onRoomSelect }) =
                                 className="inquiry-control flex min-w-0 flex-row items-center gap-1 rounded-xl px-3"
                                 aria-label="נתיב היררכיה"
                             >
-                                {breadcrumb.map((segment, index) => {
-                                    const active = index === breadcrumb.length - 1;
+                                {(
+                                    /* currentEnvironmentBreadcrumbItemsV10:
+                                       current selected environment is always the FIRST breadcrumb item.
+                                       Reuse the existing environment segment when present so its click/navigation
+                                       behavior stays intact; only synthesize a display segment if the helper omitted it. */
+                                    selectedEnvironment
+                                        ? [
+                                            (
+                                                breadcrumb.find((candidate) => candidate.level === 'environment')
+                                                || {
+                                                    key: `environment-${selectedEnvironment.id || selectedEnvironment._id || selectedEnvironment.name}`,
+                                                    level: 'environment',
+                                                    name: selectedEnvironment.name
+                                                }
+                                            ),
+                                            ...breadcrumb.filter((candidate) => candidate.level !== 'environment')
+                                        ]
+                                        : breadcrumb
+                                ).map((segment, index, displayBreadcrumb) => {
+                                    const active = index === displayBreadcrumb.length - 1;
                                     return (
                                         <React.Fragment key={segment.key}>
                                             {index > 0 && <span aria-hidden="true" dir="ltr" className="text-[var(--color-text-muted)]">/</span>}
@@ -340,12 +400,35 @@ const HierarchyPage = ({ onOpenEnvModal, onOpenUserManagement, onRoomSelect }) =
                             </div>
                         )}
 
-                        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-                            <div className="mt-1 grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                        <div className="hierarchy-content-panel">
+                            {filteredCollection.length > 0 ? (
+                                <div className="tamar-hierarchy-cards-v3 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
                                 {filteredCollection.map((item) => (
                                     <EntityCard key={item.id} item={item} level={level} rooms={roomsList} selected={selectedItem?.id === item.id} parentName={selectedSubEnvironment?.name} onSelect={() => setSelectedId(item.id)} onOpen={() => openItem(item)} />
                                 ))}
                             </div>
+                            ) : (
+                                <div className="hierarchy-content-empty">
+                                    <span className="hierarchy-content-empty__icon" aria-hidden="true">
+                                        <Icon
+                                            name={level === 'sub_envs' ? 'layers' : 'dashboard'}
+                                            className="h-5 w-5"
+                                        />
+                                    </span>
+                                    <div>
+                                        <p className="hierarchy-content-empty__title">
+                                            {level === 'sub_envs'
+                                                ? 'אין תת־סביבות להצגה'
+                                                : 'אין חדרים להצגה'}
+                                        </p>
+                                        <p className="hierarchy-content-empty__text">
+                                            {query
+                                                ? 'לא נמצאו תוצאות לחיפוש הנוכחי.'
+                                                : 'אפשר ליצור פריט חדש באמצעות כפתור היצירה למעלה.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </section>
 

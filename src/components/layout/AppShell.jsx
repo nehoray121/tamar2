@@ -27,16 +27,16 @@ const navItemsBase = [
         label: 'מרכז שליטה',
         superAdminOnly: true
     },
-    { id: 'hierarchy', icon: 'dashboard', label: 'בחירת חדרים' },
-    { id: 'dashboard', icon: 'trendUp', label: 'דשבורד' },
+    { id: 'hierarchy', icon: 'pie', label: 'בחירת חדרים' },
+    { id: 'dashboard', icon: 'barChart', label: 'דשבורד' },
     { id: 'new_complaint', icon: 'filePlus', label: 'פנייה חדשה' },
-    { id: 'my_tasks', icon: 'user', label: 'המשימות שלי' },
-    { id: 'open_complaints', icon: 'globe', label: 'פניות פתוחות' },
-    { id: 'history', icon: 'history', label: 'היסטוריית פניות' },
-    { id: 'external', icon: 'link', label: 'פניות חיצוניות' },
+    { id: 'my_tasks', icon: 'checkCircle', label: 'המשימות שלי' },
+    { id: 'open_complaints', icon: 'inbox', label: 'פניות פתוחות' },
+    { id: 'history', icon: 'clock', label: 'היסטוריית פניות' },
+    { id: 'external', icon: 'users', label: 'פניות חיצוניות' },
     {
         id: 'settings',
-        icon: 'settings',
+        icon: 'edit',
         label: 'הגדרות מערכת',
         managerOnly: true
     }
@@ -281,13 +281,12 @@ function AppShell() {
         'access_requests'
     ].includes(currentView);
     const isSuperAdminView = currentView === 'super_admin';
-    const isV22DashboardView = showSidebar && currentView === 'dashboard';
     const contextLoading = hierarchyStatus === 'loading';
     const LocalSessionResetButton = localUi?.LocalSessionResetButton;
 
     return (
         <div
-            className={`tamar-v22-app-viewport inquiry-page-surface flex h-screen w-full overflow-hidden font-sans ${isV22DashboardView ? 'tamar-v22-app-viewport--dashboard' : ''}`}
+            className={`tamar-v22-app-viewport inquiry-page-surface flex h-screen w-full overflow-hidden font-sans`}
             dir="rtl"
         >
             {showEnvModal && (
@@ -315,13 +314,13 @@ function AppShell() {
                 />
             )}
 
-            {!showSidebar && (
+            {!showSidebar && currentView !== 'hierarchy' && (
                 <div className="app-shell-theme-control">
                     <ThemeControl />
                 </div>
             )}
 
-            <main className={`tamar-v22-app-main flex-1 flex h-full min-w-0 flex-col overflow-hidden bg-transparent relative ${showSidebar ? 'tamar-v22-shell-main' : ''} ${isV22DashboardView ? 'tamar-v22-app-main--dashboard' : ''}`}>
+            <main className={`tamar-v22-app-main flex-1 flex h-full min-w-0 flex-col overflow-hidden bg-transparent relative ${showSidebar ? 'tamar-v22-shell-main' : ''}`}>
                 <AppRoutes
                     currentView={currentView}
                     isSuperAdmin={isSuperAdmin}

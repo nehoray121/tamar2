@@ -159,7 +159,7 @@ const InquiryFormCanvas = ({
                             {renderSection(entry, true)}
 
                             {renderBetweenSections && (
-                                <div className="flex min-h-8 items-center justify-center border-t border-[var(--color-border)] bg-[var(--color-surface-muted)]/30 px-2 py-1">
+                                <div className="tamar-between-groups-v4 flex min-h-8 items-center justify-center border-t border-[var(--color-border)] bg-[var(--color-surface-muted)]/30 px-2 py-1">
                                     {renderBetweenSections({
                                         section: entry.section,
                                         sectionIndex: entry.sectionIndex

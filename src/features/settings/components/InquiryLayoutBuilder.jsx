@@ -99,7 +99,7 @@ const LayoutFieldEditor = ({
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => onDrop(event, section.id, item.itemIndex)}
     >
-        <div className="flex min-h-8 items-center justify-between gap-1.5 px-2 py-0.5">
+        <div className="flex min-h-9 items-center justify-between gap-1.5 px-2 py-0.5">
             <span className="min-w-0 flex-1 truncate text-right text-[12px] font-black text-[var(--color-text-primary)]" dir="auto">{field.name}</span>
             <div className="flex shrink-0 items-center gap-1">
                 <button
@@ -144,7 +144,7 @@ const TableLayoutEditor = ({ fields, tableFields, setSettings }) => {
     const [draggedIndex, setDraggedIndex] = useState(null);
 
     const update = (next) => setSettings((current) => ({ ...current, tableFields: sanitizeIds(next, fields).slice(0, 6) }));
-    
+
     const move = (index, delta) => {
         const target = index + delta;
         if (target < 0 || target >= normalized.length) return;
@@ -164,7 +164,7 @@ const TableLayoutEditor = ({ fields, tableFields, setSettings }) => {
     };
 
     return (
-        <section className="mx-auto w-full max-w-[950px] space-y-6 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-6 shadow-sm">
+        <section className="mx-auto w-full max-w-[1000px] space-y-6 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] p-6 shadow-sm">
             <header className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
                 <div>
                     <h3 className="text-[16px] font-black text-[var(--color-text-primary)]">שדות בשורת פנייה</h3>
@@ -200,7 +200,7 @@ const TableLayoutEditor = ({ fields, tableFields, setSettings }) => {
                     const field = byId.get(id);
                     if (!field) return null;
                     return (
-                        <div 
+                        <div
                             key={id}
                             draggable
                             onDragStart={() => setDraggedIndex(index)}
@@ -320,7 +320,7 @@ const InquiryLayoutBuilder = ({
 
     const addSectionAfter = (index) => updateSections((current) => {
         const next = [...current];
-        next.splice(index + 1, 0, { id: createId('section'), title: 'מקטע חדש', fields: [] });
+        next.splice(index + 1, 0, { id: createId('section'), title: 'קבוצת שדות חדשה', fields: [] });
         return next;
     });
 
@@ -345,7 +345,7 @@ const InquiryLayoutBuilder = ({
             : 'השינויים נשמרו באופן אוטומטי';
 
     return (
-        <div className="space-y-2 pb-2">
+        <div className="tamar-inquiry-layout-compact-v4 space-y-2 pb-2">
             <section className="inquiry-panel mx-auto w-full max-w-[1240px] rounded-xl px-3 py-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -403,7 +403,7 @@ const InquiryLayoutBuilder = ({
                                 let source = draggedField;
                                 try {
                                     source = JSON.parse(event.dataTransfer.getData('application/x-tamar-layout-field')) || source;
-                                } catch {}
+                                } catch { }
                                 if (source) moveField(source, targetSectionId, targetIndex);
                                 setDraggedField(null);
                             }}
@@ -435,7 +435,7 @@ const InquiryLayoutBuilder = ({
                                         });
                                     }}
                                     className="flex h-6 w-6 cursor-grab items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
-                                    aria-label={`גרירת המקטע ${section.title}`}
+                                    aria-label={`גרירת קבוצת השדות ${section.title}`}
                                 >
                                     <Icon name="grip" className="h-4 w-4" />
                                 </button>
@@ -443,13 +443,13 @@ const InquiryLayoutBuilder = ({
                                     value={section.title}
                                     onChange={(event) => updateSections((current) => current.map((item) => item.id === section.id ? { ...item, title: event.target.value } : item))}
                                     className="h-7 min-w-0 flex-1 bg-transparent text-right text-[13px] font-black text-[var(--color-text-primary)] outline-none focus:border-b focus:border-blue-500"
-                                    aria-label="שם מקטע"
+                                    aria-label="שם קבוצת שדות"
                                 />
                                 <span className="rounded-md bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-[9px] font-black text-[var(--color-text-muted)]">{items.length} שדות</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <button type="button" onClick={() => setCollapsedSections((current) => { const next = new Set(current); if (next.has(section.id)) next.delete(section.id); else next.add(section.id); return next; })} className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)]" title="כיווץ או הרחבה"><Icon name="chevronDown" className={join('h-3.5 w-3.5 transition', collapsedSections.has(section.id) && 'rotate-180')} /></button>
-                                <button type="button" onClick={() => updateSections((current) => current.filter((item) => item.id !== section.id))} className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-red-500/10 hover:text-red-400" title="מחיקת מקטע"><Icon name="trash" className="h-3.5 w-3.5" /></button>
+                                <button type="button" onClick={() => updateSections((current) => current.filter((item) => item.id !== section.id))} className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-red-500/10 hover:text-red-400" title="מחיקת קבוצת שדות"><Icon name="trash" className="h-3.5 w-3.5" /></button>
                             </div>
                         </header>
                     ) : undefined}
@@ -476,15 +476,15 @@ const InquiryLayoutBuilder = ({
                                         }}
                                         className="h-8 w-full rounded-lg border border-dashed border-[var(--color-border-strong)] bg-transparent px-3 text-[11px] font-bold text-[var(--color-primary)] outline-none"
                                     >
-                                        <option value="">הוסף שדה קיים למקטע</option>
+                                        <option value="">הוסף שדה לקבוצה</option>
                                         {available.map((field) => <option key={field.id} value={field.id}>{field.name}</option>)}
                                     </select>
-                                ) : <p className="text-center text-[10px] font-bold text-[var(--color-text-muted)]">כל השדות כבר משויכים לתצורה.</p>}
+                                ) : <p className="text-center text-[10px] font-bold text-[var(--color-text-muted)]">אין שדות נוספים להוספה</p>}
                             </div>
                         );
                     } : undefined}
                     renderBetweenSections={viewMode === 'edit' ? ({ sectionIndex }) => (
-                        <button type="button" onClick={() => addSectionAfter(sectionIndex)} className="mx-auto flex h-8 items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 text-[11px] font-bold text-[var(--color-text-secondary)] transition hover:border-blue-500 hover:text-blue-400"><Icon name="plus" className="h-3.5 w-3.5" />הוסף מקטע כאן</button>
+                        <button type="button" onClick={() => addSectionAfter(sectionIndex)} className="mx-auto flex h-8 items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 text-[11px] font-bold text-[var(--color-text-secondary)] transition hover:border-blue-500 hover:text-blue-400"><Icon name="plus" className="h-3.5 w-3.5" />הוסף קבוצת שדות</button>
                     ) : undefined}
                 />
             )}

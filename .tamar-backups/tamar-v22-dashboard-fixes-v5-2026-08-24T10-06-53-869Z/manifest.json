@@ -1,0 +1,37 @@
+{
+  "package": "tamar-v22-dashboard-fixes-v5",
+  "root": "C:\\Users\\nehor\\Desktop\\tamar",
+  "createdAt": "2026-08-24T10:06:53.884Z",
+  "files": [
+    {
+      "path": "src/styles.css",
+      "backupPath": "C:\\Users\\nehor\\Desktop\\tamar\\.tamar-backups\\tamar-v22-dashboard-fixes-v5-2026-08-24T10-06-53-869Z\\src\\styles.css",
+      "beforeSha256": "22ce1dc53bec76f3999d4d5274822164a53e7c5c908680cddede45cb7b3c3080",
+      "afterSha256": "9a1d0867cbc414c7ed9cce3fba119ce0d1e893aac7890e5fbd7c895c6648a9ed"
+    },
+    {
+      "path": "src/pages/DashboardPage/DashboardPage.jsx",
+      "backupPath": "C:\\Users\\nehor\\Desktop\\tamar\\.tamar-backups\\tamar-v22-dashboard-fixes-v5-2026-08-24T10-06-53-869Z\\src\\pages\\DashboardPage\\DashboardPage.jsx",
+      "beforeSha256": "eedffba41074d7e0afdc3b9b65098afb5143d52e91440a090973bda212eea93f",
+      "afterSha256": "fe14f4cb39ae9ae7127265943217827aa127f6cf05f30ef988ca655b295830e6"
+    },
+    {
+      "path": "src/features/dashboard/components/WorkloadPanel.jsx",
+      "backupPath": "C:\\Users\\nehor\\Desktop\\tamar\\.tamar-backups\\tamar-v22-dashboard-fixes-v5-2026-08-24T10-06-53-869Z\\src\\features\\dashboard\\components\\WorkloadPanel.jsx",
+      "beforeSha256": "79bc12afe53848fb80733f58367cb690447a9a46c0448e3e443095425f8b3133",
+      "afterSha256": "9b2cec0721633b7c16a4df4d677b2a61ab49c002e9f5e50b63025115e332e08d"
+    },
+    {
+      "path": "src/features/dashboard/components/UrgencyBreakdownCard.jsx",
+      "backupPath": "C:\\Users\\nehor\\Desktop\\tamar\\.tamar-backups\\tamar-v22-dashboard-fixes-v5-2026-08-24T10-06-53-869Z\\src\\features\\dashboard\\components\\UrgencyBreakdownCard.jsx",
+      "beforeSha256": "fa5b1d8daf47a6c31df172041645732ab797faa57315685606e87b3bb43d66e0",
+      "afterSha256": "6c78904571fb72efc2fd631aef5347902ee86e7d1e5c04030075286eac92726f"
+    },
+    {
+      "path": "src/features/dashboard/components/UrgencyDonutChart.jsx",
+      "backupPath": "C:\\Users\\nehor\\Desktop\\tamar\\.tamar-backups\\tamar-v22-dashboard-fixes-v5-2026-08-24T10-06-53-869Z\\src\\features\\dashboard\\components\\UrgencyDonutChart.jsx",
+      "beforeSha256": "74dc582507a4a35a0c8f57841332cf46cb52448986edc01903fbd8dc9b0cc984",
+      "afterSha256": "302fa608da2e048f5b36acb4e7b0940f096eb2c065127e2bf4cd0add0259f95b"
+    }
+  ]
+}

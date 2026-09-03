@@ -1,5 +1,5 @@
 import React from 'react';
-import Icon from '../../../components/common/Icon.jsx';
+import Icon from '../../../components/common/TamarIcon.jsx';
 import { exportDashboardCsv } from '../utils/dashboard.utils.js';
 import { DashboardCard } from './DashboardPrimitives.jsx';
 import DashboardFilterToolbar from './DashboardFilterToolbar.jsx';
@@ -17,52 +17,60 @@ const PeriodicTrendCard = ({
     handleBarClick,
     toggleExpandedSection
 }) => {
-    const isBarExpanded = expandedSection === 'barChart';
+    const expanded = expandedSection === 'barChart';
 
     return (
-        <DashboardCard className={`tamar-v22-trend-card dashboard-card-motion flex h-full min-h-0 flex-col ${isBarExpanded ? 'dashboard-expanded-card' : ''}`}>
-            <div className={`tamar-v22-card-header shrink-0 ${isBarExpanded ? 'px-5 py-4' : 'px-4 py-3'}`}>
-                <div className="flex items-start justify-between gap-3" dir="rtl">
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                            <span className="tamar-v22-card-icon-chip">
-                                <Icon name="chartBar" className="h-4 w-4" />
-                            </span>
-                            <h2 className="tamar-v22-card-title">פניות לפי תקופה</h2>
-                        </div>
-                        <p className="tamar-v22-card-subtitle">מגמת פניות לפי התקופה והסינון הנוכחי</p>
-                    </div>
+        <DashboardCard
+            className={`tamar-claude-dashboard-card ${
+                expanded ? 'tamar-claude-dashboard-card--expanded' : ''
+            }`}
+            dir="rtl"
+        >
+            <div className="tamar-claude-card-header">
+                <div className="tamar-claude-card-header__main">
+                    <span className="tamar-claude-icon-chip">
+                        <Icon name="chartBar" className="h-[15px] w-[15px]" />
+                    </span>
 
-                    <div className="flex shrink-0 items-center gap-2">
-                        {isBarExpanded && (
-                            <span className="tamar-v22-count-chip">
-                                סה״כ מוצגות: <strong>{filteredBarData.length}</strong>
-                            </span>
-                        )}
-                        <SectionExpandButton
-                            expanded={isBarExpanded}
-                            onClick={() => toggleExpandedSection('barChart')}
-                            title={isBarExpanded ? 'מזער פניות לפי תקופה' : 'הרחב פניות לפי תקופה'}
-                        />
+                    <div>
+                        <h2 className="tamar-claude-card-title">
+                            פניות לפי תקופה
+                        </h2>
+                        <p className="tamar-claude-card-subtitle">
+                            מגמת פניות לפי התקופה והסינון הנוכחי
+                        </p>
                     </div>
                 </div>
 
+                <div className="tamar-claude-card-header__actions">
+                    <span className="tamar-claude-count-chip">
+                        {filteredBarData.length} פניות
+                    </span>
+                    <SectionExpandButton
+                        expanded={expanded}
+                        onClick={() => toggleExpandedSection('barChart')}
+                        title={expanded ? 'מזער' : 'הרחב'}
+                    />
+                </div>
+            </div>
+
+            {expanded && (
                 <DashboardFilterToolbar
-                    isExpanded={isBarExpanded}
+                    isExpanded
                     filters={filters}
                     setFilters={setFilters}
                     categoryOptions={categoryOptions}
                     sortOptions={sortOptions}
                     onExport={() => exportDashboardCsv(groupedBarData)}
                 />
-            </div>
+            )}
 
-            <div className={`${isBarExpanded ? 'min-h-[220px]' : 'min-h-[150px]'} flex-1 overflow-hidden`}>
+            <div className="tamar-claude-chart-shell">
                 <PeriodicBarChart
                     data={groupedBarData}
                     onBarClick={handleBarClick}
-                    barsPerPage={isBarExpanded ? 12 : 6}
-                    isExpanded={isBarExpanded}
+                    barsPerPage={12}
+                    isExpanded={expanded}
                     resetKey={`${filters.category}|${filters.grouping}|${filters.dateFrom}|${filters.dateTo}`}
                 />
             </div>

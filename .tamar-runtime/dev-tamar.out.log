@@ -1,0 +1,17 @@
+
+> tamar-react-app@1.0.0 dev:tamar
+> node scripts/dev-tamar.cjs
+
+{"event":"local-auth.seed.completed","database":"tamar_dev","counts":{"systems":1,"environments":1,"subEnvironments":1,"rooms":3,"users":6,"memberships":7}}
+{"event":"local-auth.ready","host":"127.0.0.1","port":4100,"issuer":"http://127.0.0.1:4100/"}
+{"timestamp":"2026-08-31T07:35:53.690Z","level":"info","message":"server.starting","environment":"development","database":"tamar_dev"}
+{"timestamp":"2026-08-31T07:35:53.743Z","level":"info","message":"mongodb.connected"}
+{"timestamp":"2026-08-31T07:35:53.753Z","level":"info","message":"mongodb.ready","database":"tamar_dev"}
+{"timestamp":"2026-08-31T07:35:53.781Z","level":"info","message":"server.listening","port":4000,"environment":"development"}
+{"timestamp":"2026-08-31T07:35:53.877Z","level":"info","message":"http.request","requestId":"83e54788-0826-43ca-9ac9-f35856481ba7","method":"GET","path":"/","statusCode":200,"durationMs":6.71}
+
+  [32m[1mVITE[22m v6.4.3[39m  [2mready in [0m[1m861[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+{"event":"dev-tamar.ready","frontend":"http://127.0.0.1:5173","backend":"http://127.0.0.1:4000","localIdentityProvider":"http://127.0.0.1:4100","database":"tamar_dev"}

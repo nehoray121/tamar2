@@ -1,5 +1,5 @@
 import React from 'react';
-import Icon from '../common/Icon.jsx';
+import Icon from '../common/TamarIcon.jsx';
 import ThemeControl from '../../features/theme/ThemeControl.jsx';
 
 const SidebarNavItem = ({
@@ -24,8 +24,18 @@ const SidebarNavItem = ({
             <span className="truncate">{label}</span>
         </span>
         {badge !== undefined && badge !== null && (
-            <span className="tamar-v22-sidebar-badge inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold">
-                {badge}
+            <span
+                className="tamar-v22-sidebar-notification"
+                aria-label={`פניות שהתקבלו: ${badge}`}
+                title={`פניות שהתקבלו: ${badge}`}
+            >
+                <Icon
+                    name="bell"
+                    className="tamar-v22-sidebar-notification__bell"
+                />
+                <span className="tamar-v22-sidebar-notification__count">
+                    {badge}
+                </span>
             </span>
         )}
     </button>
@@ -104,7 +114,6 @@ const SidebarFooter = ({ currentUser }) => {
 
 const SuperAdminSidebarContent = ({ onReturnToEnvironment }) => (
     <nav className="tamar-v22-sidebar-nav flex-1 min-h-0">
-        <div className="tamar-v22-sidebar-section-label">ראשי</div>
         <button
             type="button"
             onClick={onReturnToEnvironment}
@@ -117,6 +126,25 @@ const SuperAdminSidebarContent = ({ onReturnToEnvironment }) => (
     </nav>
 );
 
+const SidebarBackAction = ({ onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className="tamar-sidebar-back-action-v3"
+        aria-label="חזרה לבחירת חדרים"
+        title="חזרה לבחירת חדרים"
+    >
+        <Icon
+            name="arrowRight"
+            className="h-4 w-4 shrink-0"
+        />
+
+        <span className="truncate">
+            חזרה לחדרים
+        </span>
+    </button>
+);
+
 const Sidebar = ({
     currentView,
     navItems,
@@ -125,37 +153,58 @@ const Sidebar = ({
     onReturnToEnvironment,
     currentUser
 }) => {
-    const primaryItems = navItems.filter((item) => item.id !== 'settings');
-    const generalItems = navItems.filter((item) => item.id === 'settings');
+    const standardNavItems = Array.isArray(navItems)
+        ? navItems.filter((item) => item.id !== 'hierarchy')
+        : [];
 
     return (
-        <aside className="tamar-v22-sidebar fixed inset-y-0 right-0 z-30 flex h-screen flex-col text-[var(--color-text-primary)]">
+        <aside className="tamar-v22-sidebar tamar-reference-sidebar fixed inset-y-0 right-0 z-30 flex h-screen w-64 flex-col border-l border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-primary)] shadow-[-8px_0_30px_rgba(0,0,0,0.025)]">
+
             <SidebarBrand
-                onNavigate={variant === 'superAdmin' ? undefined : onNavigate}
+                onNavigate={
+                    variant === 'superAdmin'
+                        ? undefined
+                        : onNavigate
+                }
             />
 
             {variant === 'superAdmin' ? (
                 <SuperAdminSidebarContent
-                    onReturnToEnvironment={onReturnToEnvironment}
+                    onReturnToEnvironment={
+                        onReturnToEnvironment
+                    }
                 />
             ) : (
-                <nav className="tamar-v22-sidebar-nav flex-1 min-h-0 overflow-hidden">
-                    <SidebarSection
-                        label="ראשי"
-                        items={primaryItems}
-                        currentView={currentView}
-                        onNavigate={onNavigate}
+                <nav className="tamar-sidebar-default-nav-v3 tamar-v22-sidebar-nav tamar-reference-sidebar-nav flex min-h-0 flex-1 flex-col px-4 py-3">
+
+                    <SidebarBackAction
+                        onClick={() => onNavigate('hierarchy')}
                     />
-                    <SidebarSection
-                        label="כללי"
-                        items={generalItems}
-                        currentView={currentView}
-                        onNavigate={onNavigate}
-                    />
+
+                    <div className="tamar-sidebar-nav-items-v3">
+                        {standardNavItems.map((item) => (
+                            <SidebarNavItem
+                                key={item.id}
+                                icon={item.icon}
+                                label={item.label}
+                                badge={item.badge}
+                                isActive={
+                                    currentView === item.id
+                                }
+                                onClick={() =>
+                                    onNavigate(item.id)
+                                }
+                            />
+                        ))}
+                    </div>
+
                 </nav>
             )}
 
-            <SidebarFooter currentUser={currentUser} />
+            <SidebarFooter
+                currentUser={currentUser}
+            />
+
         </aside>
     );
 };

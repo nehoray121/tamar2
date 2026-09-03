@@ -227,3 +227,37 @@ test('settings hook persists through the real repository with revision-aware que
     assert.match(hook, /queueRef\.current\?\.markRevision/u);
     assert.match(hook, /queueRef\.current\?\.enqueue\(snapshot, revision\)/u);
 });
+
+test('settings realtime refresh keeps the current page mounted and syncs silently', async () => {
+    const hook = await readFile(
+        projectFile('features/settings/hooks/useRoomSettings.js'),
+        'utf8'
+    );
+    const realtimeStart = hook.indexOf('subscribeRoomSettingsRealtime({');
+    const realtimeEnd = hook.indexOf('}, [loaded, roomId]);', realtimeStart);
+    assert.ok(realtimeStart >= 0);
+    assert.ok(realtimeEnd > realtimeStart);
+
+    const realtimeBlock = hook.slice(realtimeStart, realtimeEnd);
+    assert.match(hook, /const refreshFromServer = async \(\) =>/u);
+    assert.match(hook, /settingsRepository\.load\(roomId/u);
+    assert.match(hook, /queueRef\.current\?\.setVersion\(result\.version\)/u);
+    assert.match(realtimeBlock, /onInvalidate: \(payload\) =>/u);
+    assert.match(realtimeBlock, /incomingVersion <= versionRef\.current/u);
+    assert.match(realtimeBlock, /void refreshFromServer\(\)/u);
+    assert.doesNotMatch(realtimeBlock, /setLoaded\(false\)/u);
+    assert.doesNotMatch(realtimeBlock, /setLoadRevision/u);
+});
+
+test('shared Button is non-submit by default while explicit submit remains possible', async () => {
+    const controls = await readFile(
+        projectFile('components/ui/FormControls.jsx'),
+        'utf8'
+    );
+    assert.match(
+        controls,
+        /const Button = \(\{ children, variant = 'primary', className = '', type = 'button', \.\.\.props \}\)/u
+    );
+    assert.match(controls, /<button type=\{type\}/u);
+});
+

@@ -30,7 +30,7 @@ const EnvironmentSelectionModal = ({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 glass-modal animate-fade-in" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="environment-selection-title">
             <div className="flex max-h-[82vh] w-full max-w-[920px] flex-col overflow-hidden rounded-[20px] border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] shadow-2xl">
                 <header className="relative shrink-0 px-5 pb-3 pt-5 text-center">
-                    <button onClick={onClose} className="inquiry-control absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full p-0 inquiry-muted-text" aria-label="סגור">
+                    <button type="button" onClick={onClose} className="inquiry-control absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full p-0 inquiry-muted-text" aria-label="סגור">
                         <Icon name="close" className="h-4 w-4" />
                     </button>
                     <div className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)]">

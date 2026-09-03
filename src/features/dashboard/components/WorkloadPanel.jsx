@@ -1,62 +1,105 @@
 import React from 'react';
+import Icon from '../../../components/common/TamarIcon.jsx';
 import { DashboardCard } from './DashboardPrimitives.jsx';
 import SectionExpandButton from './SectionExpandButton.jsx';
 
-const WorkloadPanel = ({ rows, expanded, onToggle }) => {
-    const visibleRows = expanded ? rows : rows.slice(0, 4);
-    const maxTotal = Math.max(...rows.map((row) => row.total), 1);
+const WorkloadPanel = ({
+    rows = [],
+    expanded,
+    onToggle,
+    onTitleClick
+}) => {
+    const visible = rows;
+    const maxTotal = Math.max(...rows.map((row) => Number(row.total || 0)), 1);
 
     return (
-        <DashboardCard className={`tamar-v22-workload-card dashboard-card-motion flex h-full min-h-0 flex-col ${expanded ? 'dashboard-expanded-card' : ''}`} dir="rtl">
-            <div className="tamar-v22-card-header flex shrink-0 items-start justify-between gap-3 px-4 py-3">
-                <div>
-                    <h2 className="tamar-v22-card-title">עומס עבודה בצוות</h2>
-                    <p className="tamar-v22-card-subtitle">חלוקת עומס לפי מטפל</p>
+        <DashboardCard
+            className={`tamar-claude-dashboard-card ${
+                expanded ? 'tamar-claude-dashboard-card--bottom-expanded' : ''
+            }`}
+            dir="rtl"
+        >
+            <div className="tamar-claude-card-header">
+                <div className="tamar-claude-card-header__main">
+                    <span className="tamar-claude-icon-chip">
+                        <Icon name="users" className="h-[15px] w-[15px]" />
+                    </span>
+                    <div>
+                        <button
+                            type="button"
+                            className="tamar-claude-card-title tamar-claude-card-title--clickable"
+                            onClick={onTitleClick}
+                            aria-label="פתח פירוט עומס נציגים"
+                        >
+                            עומס נציגים
+                        </button>
+                        <p className="tamar-claude-card-subtitle">
+                            לפי נציג בחדר
+                        </p>
+                    </div>
                 </div>
+
                 <SectionExpandButton
                     expanded={expanded}
                     onClick={onToggle}
-                    title={expanded ? 'מזער עומס עבודה בצוות' : 'הרחב עומס עבודה בצוות'}
+                    title={expanded ? 'מזער' : 'הרחב'}
                 />
             </div>
 
-            <div className={`tamar-v22-team-grid min-h-0 flex-1 ${expanded ? 'overflow-y-auto' : 'overflow-hidden'}`}>
-                {!visibleRows.length && (
-                    <div className="tamar-v22-empty-state col-span-full">אין נתוני עומס להצגה</div>
-                )}
+            <div
+                className={`tamar-claude-workload-list ${
+                    expanded ? 'tamar-claude-workload-list--expanded' : ''
+                } ${
+                    rows.length > 2 ? 'tamar-claude-workload-list--scroll' : ''
+                }`}
+            >
+                {visible.length === 0 ? (
+                    <div className="tamar-claude-empty">
+                        אין נציגים משויכים לחדר
+                    </div>
+                ) : (
+                    visible.map((row) => {
+                        const total = Number(row.total || 0);
+                        const urgent = Number(row.urgent || 0);
+                        const width = total > 0
+                            ? Math.max(8, Math.round((total / maxTotal) * 100))
+                            : 0;
+                        const initial = String(row.name || 'מ').trim().charAt(0) || 'מ';
 
-                {visibleRows.map((row) => {
-                    const totalWidth = row.total > 0
-                        ? Math.max(8, Math.round((row.total / maxTotal) * 100))
-                        : 0;
-                    const urgentPercent = row.total > 0
-                        ? Math.min(100, Math.max(0, Math.round((row.urgent / row.total) * 100)))
-                        : 0;
-                    const regularPercent = 100 - urgentPercent;
-                    const initial = String(row.name || 'מ').trim().charAt(0) || 'מ';
+                        return (
+                            <article
+                                key={row.name}
+                                className="tamar-claude-workload-row"
+                            >
+                                <span className="tamar-claude-avatar">{initial}</span>
 
-                    return (
-                        <article key={row.name} className="tamar-v22-team-tile">
-                            <div className="tamar-v22-team-avatar">{initial}</div>
-                            <div className="min-w-0 flex-1">
-                                <div className="tamar-v22-team-name truncate">{row.name}</div>
-                                <div className="tamar-v22-team-meta">
-                                    <span>{row.total} פניות</span>
-                                    {row.urgent > 0 && <span className="text-[var(--color-danger)]">{row.urgent} דחופות</span>}
-                                </div>
-                                <div className="tamar-v22-team-track">
-                                    <div className="tamar-v22-team-bar" style={{ width: `${totalWidth}%` }}>
-                                        <span className="bg-[var(--color-primary)]" style={{ width: `${regularPercent}%` }} />
-                                        <span className="bg-[var(--color-danger)]" style={{ width: `${urgentPercent}%` }} />
+                                <div className="tamar-claude-workload-row__body">
+                                    <div className="tamar-claude-workload-row__head">
+                                        <strong title={row.name}>{row.name}</strong>
+                                        <span
+                                            className={`tamar-claude-status ${
+                                                urgent > 0
+                                                    ? 'tamar-claude-status--warning'
+                                                    : 'tamar-claude-status--success'
+                                            }`}
+                                        >
+                                            {urgent > 0 ? 'עמוס' : 'תקין'}
+                                        </span>
+                                    </div>
+
+                                    <div className="tamar-claude-workload-row__meta">
+                                        <span>{total} פניות</span>
+                                        <span>{urgent} דחופות</span>
+                                    </div>
+
+                                    <div className="tamar-claude-progress">
+                                        <span style={{ width: `${width}%` }} />
                                     </div>
                                 </div>
-                            </div>
-                            <span className={`tamar-v22-team-status ${row.urgent > 0 ? 'tamar-v22-team-status--urgent' : 'tamar-v22-team-status--ok'}`}>
-                                {row.urgent > 0 ? 'דורש תשומת לב' : 'תקין'}
-                            </span>
-                        </article>
-                    );
-                })}
+                            </article>
+                        );
+                    })
+                )}
             </div>
         </DashboardCard>
     );

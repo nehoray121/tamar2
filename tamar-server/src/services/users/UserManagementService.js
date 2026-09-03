@@ -94,6 +94,37 @@ class UserManagementService {
             : { _id: null };
     }
 
+    actorManagementPolicy(access) {
+        const actorRoles = [
+            ...new Set(access.memberships.map((item) => item.role))
+        ];
+        const elevatedManager = (
+            access.global
+            || actorRoles.includes(ROLES.ENVIRONMENT_ADMIN)
+            || actorRoles.includes(ROLES.SYSTEM_ADMIN)
+        );
+
+        return {
+            actorRoles,
+            canCreateUsers: true,
+            canManageMemberships: true,
+            canEditUserProfile: elevatedManager,
+            canSetUserActive: elevatedManager,
+            roomManagerOnly: (
+                !access.global
+                && actorRoles.length > 0
+                && actorRoles.every((role) => role === ROLES.ROOM_MANAGER)
+            )
+        };
+    }
+
+    visibleMembershipQuery(access, userIds) {
+        return {
+            userId: { $in: userIds.map(objectId) },
+            ...this.membershipVisibility(access)
+        };
+    }
+
     async contextForMemberships(memberships) {
         const unique = (values) => [
             ...new Set(values.filter(Boolean).map(String))
@@ -190,16 +221,23 @@ class UserManagementService {
         };
     }
 
-    async loadUsersAndMemberships(userIds) {
+    async loadUsersAndMemberships(userIds, access) {
+        const membershipQuery = access
+            ? this.visibleMembershipQuery(access, userIds)
+            : {
+                userId: { $in: userIds },
+                isActive: true
+            };
+
         const [users, memberships] = await Promise.all([
             User.find({ _id: { $in: userIds } })
                 .select('+personalNumberLast4')
                 .lean()
                 .exec(),
-            OrganizationMembership.find({
-                userId: { $in: userIds },
-                isActive: true
-            }).sort({ createdAt: 1 }).lean().exec()
+            OrganizationMembership.find(membershipQuery)
+                .sort({ createdAt: 1 })
+                .lean()
+                .exec()
         ]);
 
         const context = await this.contextForMemberships(memberships);
@@ -260,10 +298,9 @@ class UserManagementService {
         ]);
 
         const ids = users.map((user) => user._id);
-        const memberships = await OrganizationMembership.find({
-            userId: { $in: ids },
-            isActive: true
-        }).sort({ createdAt: 1 }).lean().exec();
+        const memberships = await OrganizationMembership.find(
+            this.visibleMembershipQuery(access, ids)
+        ).sort({ createdAt: 1 }).lean().exec();
 
         const context = await this.contextForMemberships(memberships);
         const byUser = new Map();
@@ -303,9 +340,10 @@ class UserManagementService {
             });
         }
 
-        const [result] = await this.loadUsersAndMemberships([
-            objectId(targetUserId)
-        ]);
+        const [result] = await this.loadUsersAndMemberships(
+            [objectId(targetUserId)],
+            access
+        );
         if (!result) {
             throw new AppError({
                 statusCode: 404,
@@ -364,7 +402,17 @@ class UserManagementService {
     }
 
     async update(actorUserId, targetUserId, expectedVersion, updates) {
+        const access = await this.actorAccess(actorUserId);
         await this.get(actorUserId, targetUserId);
+
+        const policy = this.actorManagementPolicy(access);
+        if (!policy.canEditUserProfile) {
+            throw new AppError({
+                statusCode: 403,
+                code: 'USER_PROFILE_UPDATE_FORBIDDEN',
+                message: 'This manager may manage room memberships but may not edit the global user profile'
+            });
+        }
 
         if (updates.isActive === false) {
             const protectedMembership = await OrganizationMembership.exists({
@@ -454,9 +502,20 @@ class UserManagementService {
             reason
         });
 
-        return this.publishPermissions(
-            await this.get(actorUserId, targetUserId)
-        );
+        try {
+            return this.publishPermissions(
+                await this.get(actorUserId, targetUserId)
+            );
+        } catch (error) {
+            if (error?.code !== 'USER_NOT_FOUND') throw error;
+
+            return this.publishPermissions({
+                id: String(targetUserId),
+                removedMembershipId: String(membershipId),
+                removed: true,
+                noLongerVisible: true
+            });
+        }
     }
 
     async options(actorUserId) {
@@ -521,16 +580,32 @@ class UserManagementService {
             assignable = [ROLES.ROOM_USER];
         }
 
+        const mappedSystems = systems.map(mapEntity);
+        const mappedEnvironments = environments.map(mapEntity);
+        const mappedSubEnvironments = subEnvironments.map(mapEntity);
+        const mappedRooms = rooms.map(mapEntity);
+        const policy = this.actorManagementPolicy(access);
+
         return {
             roles: assignable.map((role) => ({
                 key: role,
                 label: ROLE_LABELS[role],
                 scopeType: ROLE_SCOPE_TYPES[role]
             })),
-            systems: systems.map(mapEntity),
-            environments: environments.map(mapEntity),
-            subEnvironments: subEnvironments.map(mapEntity),
-            rooms: rooms.map(mapEntity)
+            systems: mappedSystems,
+            environments: mappedEnvironments,
+            subEnvironments: mappedSubEnvironments,
+            rooms: mappedRooms,
+            permissions: {
+                ...policy,
+                fieldLocks: {
+                    role: assignable.length <= 1,
+                    system: mappedSystems.length <= 1,
+                    environment: mappedEnvironments.length <= 1,
+                    subEnvironment: mappedSubEnvironments.length <= 1,
+                    room: mappedRooms.length <= 1
+                }
+            }
         };
     }
 }
