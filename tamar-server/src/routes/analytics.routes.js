@@ -1,7 +1,17 @@
 const { Router } = require('express');
 const asyncHandler = require('../utils/asyncHandler.js');
 const AppError = require('../errors/AppError.js');
-const { assertExactKeys, optionalObjectId } = require('../validation/strictValidation.js');
+const { assertExactKeys, optionalObjectId, requireString } = require('../validation/strictValidation.js');
+
+// tamar-dashboard-group-field-query:v1
+const parseGroupField = (value) => {
+    if (value === undefined) return undefined;
+    const field = requireString(value, 'groupField', { maxLength: 128 });
+    if (!/^[A-Za-z0-9_-]+$/u.test(field)) {
+        throw new AppError({ statusCode: 400, code: 'VALIDATION_ERROR', message: 'groupField is invalid' });
+    }
+    return field;
+};
 
 const parseDate = (value, field, endOfDay = false) => {
     if (!value) return undefined;
@@ -14,7 +24,7 @@ const parseDate = (value, field, endOfDay = false) => {
 };
 
 const parseQuery = (query) => {
-    assertExactKeys(query, ['systemId', 'environmentId', 'subEnvironmentId', 'roomId', 'assigneeId', 'dateFrom', 'dateTo', 'grouping'], 'query');
+    assertExactKeys(query, ['systemId', 'environmentId', 'subEnvironmentId', 'roomId', 'assigneeId', 'groupField', 'dateFrom', 'dateTo', 'grouping'], 'query');
     const grouping = query.grouping || 'monthly';
     if (!['daily', 'weekly', 'monthly'].includes(grouping)) {
         throw new AppError({ statusCode: 400, code: 'VALIDATION_ERROR', message: 'grouping is invalid' });
@@ -25,6 +35,7 @@ const parseQuery = (query) => {
         subEnvironmentId: optionalObjectId(query.subEnvironmentId, 'subEnvironmentId'),
         roomId: optionalObjectId(query.roomId, 'roomId'),
         assigneeId: optionalObjectId(query.assigneeId, 'assigneeId'),
+        groupField: parseGroupField(query.groupField),
         dateFrom: parseDate(query.dateFrom, 'dateFrom'),
         dateTo: parseDate(query.dateTo, 'dateTo', true),
         grouping

@@ -1,0 +1,491 @@
+{
+  "generatedAt": "2026-08-10T07:57:07.897Z",
+  "root": "C:\\Users\\nehor\\Desktop\\tamar",
+  "backupRoot": "C:\\Users\\nehor\\Desktop\\tamar\\.tamar2-backups\\phase11-v2-2026-08-10T07-57-06-495Z",
+  "changed": [
+    {
+      "path": "tamar-server/src/domain/access/constants.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "95995bd8f17a6fd6b8b91a04d1d7fbfc8fefe66c2dce5672d480f4d6b767f93d",
+      "afterSha256": "83908ee33534f98cddf31a55c663c69964d7193aae3bf6e8f467f8448763d8c7"
+    },
+    {
+      "path": "tamar-server/src/domain/access/validators.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "11e29ac88978c671f6cbd0b383448db38318be86bc1e7867bd136acdd60c6701",
+      "afterSha256": "8a01a13fbe17257327b5f50bea5ad76adafe86ac59726579a6f3663b9c7bceb7"
+    },
+    {
+      "path": "tamar-server/src/services/authorization/ScopeResolver.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "0849705a54f8399f2e9cf213f09f6ebfa8fbbae468cc003911c6177c701896f2",
+      "afterSha256": "a5294750a2826539d75f060345284c9dd2ab29c7a1c6ad76f4428ed1f78bd3c2"
+    },
+    {
+      "path": "tamar-server/src/repositories/RoomRepository.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "32f36c5b825b08258c7b5287d2b4317a8115c787ee7989056af986ad5fbcd346",
+      "afterSha256": "0676fd67cdbe8da7f86e36b06989c77199dfffd7e393630a736d794e7d55c6e6"
+    },
+    {
+      "path": "tamar-server/src/repositories/SubEnvironmentRepository.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "fe9895ef8e9418a156cbb984e6a5f968a764b80e7fea7bddab55a1c039b61094",
+      "afterSha256": "03fb99815f6a9fd6ce51dec8f687cbdf3a8d0ab67e5a6bfd4bec58c1368db54d"
+    },
+    {
+      "path": "tamar-server/src/services/organization/MongoHierarchyAdapter.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "7f2769f7d197530f48ea3a2e9b020b6537265ba80bc79c9b40235c62b4996472",
+      "afterSha256": "1ebdd73a6a6a1c44b20190f4050f60bc9ae4a419140deeff1fcc3b34f4f6d334"
+    },
+    {
+      "path": "tamar-server/src/services/authorization/HierarchyIntegrityService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "cc1d5ab0817b0a82344fe747f1954aa5aff2953bfc877121681f513689042d67",
+      "afterSha256": "a2194198e1926482b4a55e9c0c5f5d496281c09012dc826c6147e0c0e54007d4"
+    },
+    {
+      "path": "tamar-server/src/services/authorization/AuthorizationService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "63925514d6c15626640ecb44c396699d1c02fdfc22aea9e6fbc8fda6ff9eb1e2",
+      "afterSha256": "e832f119f1690af6a719af07a3f1771406abd1151fa11544f719a1dc99d018b3"
+    },
+    {
+      "path": "tamar-server/src/services/accessRequests/AccessRequestApprovalPolicy.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "f86f49eff724613fb99976f6fce8a46e7eb1b9d409e4f4fc4795f536cefc857c",
+      "afterSha256": "66f77b827d72f5330a2ca161e30fa1502c7d2c409b57cba0229d599fb764a592"
+    },
+    {
+      "path": "tamar-server/src/auth/AuthenticatedIdentityService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "84223a4f7480873beb373aa1aafa9aeab62eb7f38314e09f5b6c6ddfddafdf50",
+      "afterSha256": "a7bcc3b42c3851a8f07ebad0e08bea90d7be0dc2919bb7210f581779b1d770fa"
+    },
+    {
+      "path": "tamar-server/src/services/users/UserManagementService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "84d2657c0d74980e32d4e5d53c33e958eb01935f168525f2ccfd5f2a597cf58c",
+      "afterSha256": "f1fa273a01522d5d40b40e4a433bb2fdabdc20d7d20614c314327f32440500ab"
+    },
+    {
+      "path": "tamar-server/src/services/organization/OrganizationManagementService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "578d5295a86d0b0dbd2b2f243dfcd0ae07e837472931cfffe0b35973342a529c",
+      "afterSha256": "cf7fb33ee2701842c9d11e57b6b31f288e01094634851620eb0a2cd92b9def97"
+    },
+    {
+      "path": "tamar-server/src/services/authorization/OrganizationHierarchyAuthorizationService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "472fb6d2c59755e5e42a6b1c9030f6957b85bad25e7ce64bf0e73b20b1b3d24f",
+      "afterSha256": "4f200f4795f95bf787167cfc646d082e23d00e33a7f6276a5268b1367322149f"
+    },
+    {
+      "path": "tamar-server/src/services/settings/defaultRoomSettings.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "6b006824cb7b2a4a5d21ce0c62cae2686037803b53cf165e819aad9e069da66d"
+    },
+    {
+      "path": "tamar-server/src/services/organization/OrganizationRealtimePublisher.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "0741c42cc3ef8f08749ce627bafb0d45859635816193d5f20d01e72a483b61be"
+    },
+    {
+      "path": "tamar-server/src/services/organization/OrganizationHierarchyMutationService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "9570b999980e15df195f4a14e9daa2f53bce22574e9f378285018f18c7d8c4a8",
+      "afterSha256": "eb65e5d760c9570fa3b4d70380e05c986487eaad96236a5af0ede679b0f8c29c"
+    },
+    {
+      "path": "tamar-server/src/routes/organizationHierarchy.routes.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "31cf4a9a6ed07509d6ae1cf565c5d0ca5f995e8def766de0ff45d2fa0b243416",
+      "afterSha256": "0c3f9371422d68ee5b1db27f17064eeb61e9bfa3e75e4e9f7475f8eee2399318"
+    },
+    {
+      "path": "tamar-server/src/services/settings/SettingsService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "1e69ad6384b8dec07e1a499ca0178e9050159932b99aeef18493919b1f57ee2b",
+      "afterSha256": "4c2327c2e864a32547e1be0887e7b7368ed5328f4d93319a4c46bfe9124d4d2d"
+    },
+    {
+      "path": "tamar-server/src/services/realtime/AccessFlowRealtimePublisher.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "b49d06c829a917aab9fc55b2619580506593549ecb898d7ec6053b82fad8e7f2",
+      "afterSha256": "bdadd3679e9ef1fb0eb3ea67aef3242539e9dd56494823d05017621c611431a7"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/services/TicketAuthorizationService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "7131d72929285cfcbea811f1250cd9ef23f800dc11ee8c14848f8b965f219f1e",
+      "afterSha256": "0dcdf7435a8136ca7554213b493f5169e34a78bf8d2958d84dee5e6b9c184c63"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/services/TicketCapabilityService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "e8757bd0a88d4f5291c12b0a261cbaa4b4a1448201dfb0d035bab3d66b557579",
+      "afterSha256": "43782eb64c832eff843eb90aaed4bf560818a82c73d8b0eefa20810da780c7c0"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/repositories/TicketHistoryRepository.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "4bc0d75d696fd2a14ce99e64fcc79bc657039e934e4f21c3fd5165069640db43",
+      "afterSha256": "8e3a9da64ab0aea7f86f31d44d67c82074ab062ab0822accf65fab3ee9f237ba"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/services/ticketDto.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "0eeb8334aa90ad6edeafc3cb92771b4b7e005311d99bea0038e4a147aaf35065",
+      "afterSha256": "b47a7e52183b6f6331d8cccc3cec19e58cf505edcb31914299e1dacd310126f0"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/boards/services/TicketBoardAuthorizationService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "2eb75fe075e4e4009258542cf18dce46b74236a90356f335eba09219532808d6",
+      "afterSha256": "c0820aed01fe576e7a307588be1b73e3298b83c222de98803df80cbcf30b7480"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/boards/services/TicketBoardCategoryService.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "2e6e411a577c0cf1baf98161bbc4c8c715a74bef451163eea058498cc740cff9",
+      "afterSha256": "1b17c70c24820a2904f431f6c1c8225f0ac8bef1dfdd9d57f05017079238830a"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/boards/domain/board.dto.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "e817850ae6eb30a3f10625f5a7f7ce64541e111191ee3c555529fe599f246733",
+      "afterSha256": "28f226712832499e4d16d0c3af5b422fc992f0552bb3280e13387d8bdf392626"
+    },
+    {
+      "path": "tamar-server/src/socket/initializeSocket.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "7ba1931806b14075fd69f717f10d7691bc2e6fc25d2ead1296cb9b3c54186a85",
+      "afterSha256": "b89c32176998df4fe145f63736e055118f94e5fc78cb268a520252c0d3672a41"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/services/TicketRealtimePublisher.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "af5e727216dc7910f769f241cf5f9a8644db8f487879eee17059fe000eb59984",
+      "afterSha256": "444b53d8f38b8a299bd1bac16f5ec8524785660750d3488e082e263be5bf4bc4"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/transfers/services/TicketTransferRealtimePublisher.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "dadfbe15275175617a6c9e62edf43142bdaff35907c85868b3c61342d42fedd9",
+      "afterSha256": "1078b92a8c63d9007de7d3d44d73911e1e6a10bfadf75498f374729a44504f97"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/boards/services/TicketBoardRealtimePublisher.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "9750c4b39b0947d5ce9df9196dd0516b9d825d9ac19d4bdae63b16521a428775",
+      "afterSha256": "bf5f7284c919dac424c65f8fc3fce7cd9a291ddb2f75c48b505bbf2b657aec4b"
+    },
+    {
+      "path": "src/features/tickets/boards/realtime/boardSocket.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "77a754b32c8fe80cbf4506634767bbfe039c8fa50353f26a3da46307dd4bb7bc",
+      "afterSha256": "df8142fa7fa9fb7adada13ef4af7c14442ae1ed74c1731b09b77fc783ebfe4c6"
+    },
+    {
+      "path": "src/features/users/constants/userRoles.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "b110a2e4f11ea8a3ffac8ba71a717d296de6d4bff8ffca6b51649003045b9268",
+      "afterSha256": "f1c51677cbca0ba82f7fba31d0be7595ea92a0c9ab2dcbe0955cc56158fd0af6"
+    },
+    {
+      "path": "src/features/rooms/services/organizationHierarchyApi.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "63a8eb9b7e263e0e6a782fbf54d6957c8cde2776ea2400dca80dde42ca25f701",
+      "afterSha256": "b52f9a98bd197e5ff49c8d511cbf0f037725bc4f6cd436634e0af63d0f8db0a5"
+    },
+    {
+      "path": "src/features/rooms/services/hierarchyCreationCapabilities.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "17cdfecd7de7c1aef6bd558b6bd6164859c48abe9ab7e4ae2002fcd57d505c5c",
+      "afterSha256": "a531a10297d637c58585769ad4c5abd8208a39b1179ee807b5f72995507adcdd"
+    },
+    {
+      "path": "src/features/tickets/hooks/useExternalReceivedBadge.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "687df990db5944f10d96dc38029a45d127d0776e79fbf65daa9438ba6db3648f"
+    },
+    {
+      "path": "src/features/tickets/api/ticketsApi.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "f768a46525f64deb97ad63f7e75f2c65c2b98c6cef0b40ed575d521ab3722ff0",
+      "afterSha256": "a9ff4f8d7c1e8a45a9aa40ad26db6fe5af441507c2402789a1071613880b8b53"
+    },
+    {
+      "path": "src/features/tickets/boards/domain/boardItemAdapter.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "fbfdb306c4ba7b2d6624b857cf9db512148184f0efced137c9d3b7dcd3de341e",
+      "afterSha256": "df989a1bc0ac8f20e55ac72219486e4f4b88143d47025663210b247936889de1"
+    },
+    {
+      "path": "src/features/tickets/config/ticketCapabilities.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "f6a6ea3d05bbad1da6dc4169df4706fd5638be5aad30b2a01ed8c5d00304c5b7",
+      "afterSha256": "1d6e2613ee9a4dee9f46df004140da34a0bda0672276369a9bdaf05501ee74ec"
+    },
+    {
+      "path": "src/components/layout/AppShell.jsx",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "4215da74fd1f29d51ef37bf14ccdbc59ada63bb4d1379d73976d108fe9a03c26",
+      "afterSha256": "db3ca0d52b8c61fd63a470122e14208252d94b6c368ef73991395f701c6da78f"
+    },
+    {
+      "path": "src/app/AppRoutes.jsx",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "a93ba7f10a35c6aa649c3027b3f2593a7879d1cbce51feb4d6c734058223d152",
+      "afterSha256": "dec7c80c14310b65d6fac1decaec9f287eba2aa731adc2c4389152848afa8008"
+    },
+    {
+      "path": "src/pages/HierarchyPage/CreateItemModal.jsx",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "2cca5b286d2c885c392ebd1594291e6ce45f26e6c2e482c924e8630fad32ff75",
+      "afterSha256": "962736cce3eaf79f763ed7674cee66af001df415150d982490355ff3bad2de35"
+    },
+    {
+      "path": "src/features/tickets/domain/ticketListAdapter.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "f03167e7f7ad4da6965adac9bc8d5cadcf09b4395b7791bff200e33f20f21257",
+      "afterSha256": "69f65f7c0c54c49b76cc9419eca96f387dfe0c5d419f574383ca42e05a28caee"
+    },
+    {
+      "path": "tamar-server/src/services/createServiceContainer.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "1f6b36dce0402c8f38c0b29d0481ed2a95cc50923d294467477921898c57cc74",
+      "afterSha256": "e35bae4ac9c7ba4ec0447f97d0fd696a7fe8bfa0e6898d78203768340571c2c4"
+    },
+    {
+      "path": "tamar-server/tests/phase11-role-permissions.unit.test.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "e2dc3860a697046ab6fdca1ae7b4a075bb1bc56247f009b0360ef3b9e3c460a8"
+    },
+    {
+      "path": "src/features/integration/__tests__/phase11PermissionsArchitecture.test.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "586637b3c3fe0a2aecad9f66f0c12681541b442bda180735d886a64137737b85"
+    },
+    {
+      "path": "playwright.phase11.config.cjs",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "99d77fef07910cfb531a1a0d803642dc94466ef8d32b87cccf1336690ebb34aa"
+    },
+    {
+      "path": "e2e/phase11/phase11.spec.cjs",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "3c8fc3291bfef1709f5287c96f1baaa41d3a5b88df81488e3bc888a36e00aa71"
+    },
+    {
+      "path": "src/components/layout/Sidebar.jsx",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": "8f28d0e9539088d13f66c02edbfd9a6d0f28d1d4dfe82a404795008c05cd8641",
+      "afterSha256": "9c72322fb520f798f07f4b14e7f57ba76302267c08dc264abe67d70ad6598798"
+    },
+    {
+      "path": "tamar-server/tests/phase11-socket.unit.test.js",
+      "reason": "phase11-authoritative-file",
+      "beforeSha256": null,
+      "afterSha256": "dae79edfbaeb8d357d56812f02576aff1dcb47926277f9cc4789cc64f63ef077"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/boards/services/TicketBoardQueryService.js",
+      "reason": "phase11-replacements:token-equivalent+token-equivalent",
+      "beforeSha256": "a75e9198f7c58d30ca8e833188782f34e92103243ead96e61e48f771ce5e29e4",
+      "afterSha256": "c7fab773d9e3a641500dddf9f416dccc91435cf8a91a3db2fbd5936d1830eed3"
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/transfers/services/TicketTransferService.js",
+      "reason": "phase11-replacements:token-equivalent",
+      "beforeSha256": "ff0dedd1779bb5a037e12f38b9d34b31e2df83db64238bba78007530da3ce51a",
+      "afterSha256": "97fccb7a4116fb4f9a7748c9f5d31808529ae35501a8413da0848b79bff3cbd7"
+    },
+    {
+      "path": "src/pages/TicketListPage/TicketModal.jsx",
+      "reason": "phase11-replacements:token-equivalent+token-equivalent+token-equivalent+token-equivalent+token-equivalent+token-equivalent+token-equivalent+exact+exact+exact+exact",
+      "beforeSha256": "b1d9fd4b57c0bcd1d729759867009df68a17971247d12836c2a08a81c0c25dbd",
+      "afterSha256": "5602fbcfdec48dd1405d9f7a453a06e04b68c327a020e84f0c253b3ba55e7b5b"
+    },
+    {
+      "path": "src/features/tickets/components/InquiryListRow.jsx",
+      "reason": "phase11-replacements:exact+exact+exact+token-equivalent+token-equivalent",
+      "beforeSha256": "8106af420f1e0e5ed769a6256af858c5ef3a52905c68dc1efbce37f8aa307dd3",
+      "afterSha256": "fde2b51e8db14b26c1c11124b9f7d391a0ee02401be53220a9a1eb976d1c564b"
+    },
+    {
+      "path": "src/features/tickets/hooks/useInquiryOrganization.js",
+      "reason": "phase11-replacements:exact",
+      "beforeSha256": "c5f45660df315ca57ea8dd31f73df37eb450beaaff9f02db6e19f241d3e0f14b",
+      "afterSha256": "53bca9ec1e2d79e48cc99ffeeae3760215f85b63175c872d732fcb0f663c30f5"
+    },
+    {
+      "path": "src/pages/UserManagementPage/UserManagementPage.jsx",
+      "reason": "phase11-replacements:exact+token-equivalent+token-equivalent+exact",
+      "beforeSha256": "15bd58bb3251353184816023d53c6a16eca9adc43ab84131327e0154e5c284ab",
+      "afterSha256": "f8f88a4729db77b03ae7f961410321b5e8d955a538b54b20c454424cb7f02156"
+    },
+    {
+      "path": "src/features/superAdmin/components/OrganizationTab.jsx",
+      "reason": "phase11-replacements:token-equivalent+token-equivalent+exact+token-equivalent+token-equivalent",
+      "beforeSha256": "21e73a44714674a4f352cacfd11124260bd3d1afa91edd4c22e2e93adba0e52e",
+      "afterSha256": "4f1d533beb6f13c92a5c17642e78a3801dfda62eade3f2c6608a330b863b398c"
+    },
+    {
+      "path": "tamar-server/src/services/analytics/AnalyticsService.js",
+      "reason": "phase11-replacements:exact+exact+exact+exact+exact",
+      "beforeSha256": "d031df22b197bb15ce69094b00e5d8713c2f0e96a617296055c70dd470d609c3",
+      "afterSha256": "488c4c0332704f492d35bf9424aca3f168d834e0da89315e1ff1c8e989b1409f"
+    },
+    {
+      "path": "src/pages/SuperAdminPage/SuperAdminPage.jsx",
+      "reason": "phase11-replacements:exact+exact+exact",
+      "beforeSha256": "cff05787592efb89228b3f9558fe2211c597f5cfa561e34c3396edcd64ff23bb",
+      "afterSha256": "2d75cf91a37e57755ced656eee15463620b1ba3afd858b7d2f8fd6615187f79a"
+    },
+    {
+      "path": "src/features/settings/hooks/useRoomSettings.js",
+      "reason": "phase11-replacements:exact+token-equivalent",
+      "beforeSha256": "04df1394b683258fef3a54bff7f23411b08bd95c7e7a2a95135539439117b23d",
+      "afterSha256": "751174f566d3b01a263535d3b915d252f2d4e007a081ddf11fc261db992ff335"
+    },
+    {
+      "path": "src/pages/TicketListPage/TicketListPage.jsx",
+      "reason": "phase11-replacements:token-equivalent",
+      "beforeSha256": "1731307ab6d864d765ea8d912b1885447fd7ad0c422965cabe1d60bf7ff95689",
+      "afterSha256": "8a074e20cb41818eb0bd42daa18f9bac6323a5b8f9303e33baeabfeb06f752f6"
+    },
+    {
+      "path": "tamar-server/src/server.js",
+      "reason": "phase11-replacements:exact",
+      "beforeSha256": "05884538a3e7122f21e7450fd31e6dfab02fe5af6ecea2cc0a3359b4965cc381",
+      "afterSha256": "995953a30e68e73a3dad4f9529945e1e642985ff6c501a3b838a8fcbdaa66cfe"
+    },
+    {
+      "path": "tamar-server/scripts/run-tests.js",
+      "reason": "phase11-replacements:exact",
+      "beforeSha256": "6c4056078c2477324b374fee59df1155405abd4f55f31362de76aa649f15217a",
+      "afterSha256": "d75e25453f0debcfe8a90ba3ea31cc09a65d445874ce5b31909dcd2d0274e69a"
+    },
+    {
+      "path": "package.json",
+      "reason": "phase11-replacements:exact+exact",
+      "beforeSha256": "3e3a05a7a78fee48681ada0f15d01b0c34ce0df43f2b3a3d92cf892536e2f944",
+      "afterSha256": "fda193230dd1b39035c9182e582e28aebdc60a7bcfe05d533a7f7089d7ef969e"
+    },
+    {
+      "path": "src/features/users/hooks/useUserManagement.js",
+      "reason": "phase11-replacements:exact+token-equivalent",
+      "beforeSha256": "685b16cbfd3429a7560e10a4d3171b083b258bab4c496e1f763167c182370042",
+      "afterSha256": "38fa3f6bbbfa748f1370082696c89dccff5a4d0ff36f9f46b46115d420409046"
+    },
+    {
+      "path": "src/features/inquiries/hooks/useInquiryForm.js",
+      "reason": "phase11-replacements:token-equivalent",
+      "beforeSha256": "d09bb048762f815a179d4da9b81c27f6684318f327409d68a14e76dbefb1291c",
+      "afterSha256": "87165b9232730130d2eb9620dbe7dce50c82f891df2370dde87b18bb40f90f1f"
+    },
+    {
+      "path": "src/features/superAdmin/components/UsersPermissionsTab.jsx",
+      "reason": "phase11-replacements:exact+exact+exact",
+      "beforeSha256": "64f3f6f3df28422378d3ee1bf559eb9200b8cce56eb5567a03ac8534abbbcb0a",
+      "afterSha256": "be689afd044f910cb9dfec7389b0a3f7b173c1e83993e419f2bf6a4183161d75"
+    }
+  ],
+  "skipped": [],
+  "relaxed": [
+    {
+      "path": "tamar-server/src/modules/tickets/boards/services/TicketBoardQueryService.js",
+      "methods": [
+        "token-equivalent",
+        "token-equivalent"
+      ]
+    },
+    {
+      "path": "tamar-server/src/modules/tickets/transfers/services/TicketTransferService.js",
+      "methods": [
+        "token-equivalent"
+      ]
+    },
+    {
+      "path": "src/pages/TicketListPage/TicketModal.jsx",
+      "methods": [
+        "token-equivalent",
+        "token-equivalent",
+        "token-equivalent",
+        "token-equivalent",
+        "token-equivalent",
+        "token-equivalent",
+        "token-equivalent",
+        "exact",
+        "exact",
+        "exact",
+        "exact"
+      ]
+    },
+    {
+      "path": "src/features/tickets/components/InquiryListRow.jsx",
+      "methods": [
+        "exact",
+        "exact",
+        "exact",
+        "token-equivalent",
+        "token-equivalent"
+      ]
+    },
+    {
+      "path": "src/pages/UserManagementPage/UserManagementPage.jsx",
+      "methods": [
+        "exact",
+        "token-equivalent",
+        "token-equivalent",
+        "exact"
+      ]
+    },
+    {
+      "path": "src/features/superAdmin/components/OrganizationTab.jsx",
+      "methods": [
+        "token-equivalent",
+        "token-equivalent",
+        "exact",
+        "token-equivalent",
+        "token-equivalent"
+      ]
+    },
+    {
+      "path": "src/features/settings/hooks/useRoomSettings.js",
+      "methods": [
+        "exact",
+        "token-equivalent"
+      ]
+    },
+    {
+      "path": "src/pages/TicketListPage/TicketListPage.jsx",
+      "methods": [
+        "token-equivalent"
+      ]
+    },
+    {
+      "path": "src/features/users/hooks/useUserManagement.js",
+      "methods": [
+        "exact",
+        "token-equivalent"
+      ]
+    },
+    {
+      "path": "src/features/inquiries/hooks/useInquiryForm.js",
+      "methods": [
+        "token-equivalent"
+      ]
+    }
+  ],
+  "unresolved": []
+}

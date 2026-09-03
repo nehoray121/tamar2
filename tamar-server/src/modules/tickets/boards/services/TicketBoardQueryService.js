@@ -154,7 +154,8 @@ class TicketBoardQueryService {
     }
 
     async list(actorId, roomId, boardType, query) {
-        await this.authorizationService.authorize(actorId, roomId, boardType);
+    const context = await this.authorizationService.authorize(actorId, roomId, boardType);
+
         await this.validateCategoryFilter(roomId, boardType, query.categoryId);
         const ticketBoard = TICKET_BOARD_TYPES.includes(boardType);
         const pipeline = ticketBoard
@@ -176,7 +177,14 @@ class TicketBoardQueryService {
             pagination: pagination(query.page, query.limit, totalItems),
             appliedFilters: { ...query, search: query.search || undefined },
             sort: { sortBy: query.sortBy, sortDirection: query.sortDirection },
-            capabilities
+capabilities: {
+    ...capabilities,
+    canManageCategories: Boolean(
+        context.access.global
+        || context.access.managedRoomIds.includes(String(roomId))
+    )
+}
+
         };
     }
 }

@@ -1,0 +1,3999 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Assistant:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-page: #f4f5fa;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f8fbff;
+  --color-border: #e5e7eb;
+  --color-border-strong: #c9e1ff;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #eff6ff;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #10b981;
+  --color-focus: #60a5fa;
+  --shadow-card: 0 14px 34px rgba(37, 99, 235, 0.07);
+  --shadow-overlay: 0 24px 60px rgba(15, 23, 42, 0.2);
+  --chart-track: #eef4ff;
+  --chart-connector: #cbd5e1;
+  --chart-label: #334155;
+  --chart-label-secondary: #64748b;
+  --chart-grid: rgba(191, 219, 254, 0.8);
+  --chart-plot: linear-gradient(to bottom, #f8fbff, #f6f9ff, #eef5ff);
+}
+
+[data-theme="dark"] {
+  --color-page: #0b1120;
+  --color-surface: #111827;
+  --color-surface-raised: #172033;
+  --color-surface-muted: #1e293b;
+  --color-border: #26354d;
+  --color-border-strong: #355071;
+  --color-text-primary: #edf4ff;
+  --color-text-secondary: #c5d2e4;
+  --color-text-muted: #8ea0b8;
+  --color-primary: #69a2ff;
+  --color-primary-hover: #8bb8ff;
+  --color-primary-soft: rgba(59, 130, 246, 0.16);
+  --color-danger: #fb7185;
+  --color-warning: #fbbf24;
+  --color-success: #34d399;
+  --color-focus: #93c5fd;
+  --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  --shadow-overlay: 0 26px 70px rgba(0, 0, 0, 0.56);
+  --chart-track: #25344d;
+  --chart-connector: rgba(148, 163, 184, 0.72);
+  --chart-label: #f8fafc;
+  --chart-label-secondary: #cbd5e1;
+  --chart-grid: rgba(96, 165, 250, 0.16);
+  --chart-plot: linear-gradient(to bottom, #111827, #151f31, #0f172a);
+}
+
+/* חסימת גלילה כללית ברמת הדף */
+        body { font-family: 'Assistant', sans-serif; background-color: var(--color-page); color: var(--color-text-primary); margin: 0; overflow: hidden; height: 100vh; }
+        #root { height: 100%; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        
+        /* טאבים בסגנון התמונה החדשה */
+        .tab-active { border-bottom: 2px solid #1E4DB7; color: #1E4DB7; font-weight: 700; background-color: transparent; }
+        .tab-inactive { color: #6B7280; background-color: transparent; border-bottom: 2px solid transparent; }
+        .tab-inactive:hover { color: #374151; border-bottom: 2px solid #D1D5DB; }
+        
+        .glass-modal { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        
+        /* רקע גלים עדין למערכת */
+        .wave-bg {
+            background-color: var(--color-page);
+            background-image:
+                radial-gradient(ellipse 1000px 1000px at 50% 50%, rgba(255, 182, 193, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 800px 800px at 70% 30%, rgba(173, 216, 230, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 600px 600px at 30% 70%, rgba(216, 191, 216, 0.06) 0%, transparent 50%);
+        }
+        
+        /* אנימציה בעת גרירת שדה */
+        .dragging-item { opacity: 0.4; transform: scale(0.98); }
+
+.animate-fade-in { animation: dashboardFadeIn 180ms ease-out; }
+@keyframes dashboardFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.dashboard-bar-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-bar-columns,
+.dashboard-bar-columns .group {
+  overflow: visible;
+}
+
+.dashboard-bar-columns .group > div:first-child > span.absolute:not(.dashboard-bar-tooltip) {
+  display: none;
+}
+
+.donut-center {
+  pointer-events: none;
+  user-select: none;
+}
+
+.dashboard-motion {
+  transition:
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease,
+    max-height 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.dashboard-card-motion {
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease,
+    box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.dashboard-expanded-card {
+  animation: dashboardExpandIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-inline-details-panel {
+  transition:
+    max-height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-inline-details-body {
+  transition:
+    opacity 220ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dashboard-inline-details-body[data-expanded="false"] {
+  opacity: 0.96;
+  transform: translateY(-2px);
+}
+
+.dashboard-inline-details-body[data-expanded="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dashboard-legend-reveal > * {
+  animation: dashboardLegendIn 180ms ease-out both;
+}
+
+.dashboard-legend-reveal > *:nth-child(2) { animation-delay: 28ms; }
+.dashboard-legend-reveal > *:nth-child(3) { animation-delay: 56ms; }
+.dashboard-legend-reveal > *:nth-child(4) { animation-delay: 84ms; }
+.dashboard-legend-reveal > *:nth-child(5) { animation-delay: 112ms; }
+.dashboard-legend-reveal > *:nth-child(6) { animation-delay: 140ms; }
+
+@keyframes dashboardExpandIn {
+  from { opacity: 0.88; transform: scale(0.985) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes dashboardLegendIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-motion,
+  .dashboard-card-motion,
+  .dashboard-expanded-card,
+  .dashboard-inline-details-panel,
+  .dashboard-inline-details-body,
+  .dashboard-legend-reveal > * {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    transform: none !important;
+  }
+}
+
+.theme-control {
+  position: absolute;
+  left: 1.5rem;
+  top: 1.25rem;
+  z-index: 60;
+}
+
+.app-shell-theme-control {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 120;
+}
+
+.app-shell-theme-control .theme-control {
+  position: static;
+}
+
+.theme-control__buttons {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
+  box-shadow: var(--shadow-card);
+}
+
+.theme-control__toggle,
+.theme-control__menu-button,
+.theme-control__option {
+  color: var(--color-primary);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.theme-control__toggle {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-control__menu-button {
+  display: inline-flex;
+  height: 2rem;
+  width: 1.65rem;
+  align-items: center;
+  justify-content: center;
+  border-inline-start: 1px solid var(--color-border);
+}
+
+.theme-control__toggle:hover,
+.theme-control__menu-button:hover {
+  background: var(--color-primary-soft);
+}
+
+.theme-control__toggle:focus-visible,
+.theme-control__menu-button:focus-visible,
+.theme-control__option:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.theme-control__menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.5rem);
+  min-width: 12rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 1rem;
+  background: var(--color-surface-raised);
+  padding: 0.35rem;
+  box-shadow: var(--shadow-overlay);
+}
+
+.theme-control__option {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.theme-control__option:hover,
+.theme-control__option--selected {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+:root:not([data-theme="dark"]) body,
+:root:not([data-theme="dark"]) #root {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] #root {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] * {
+  scrollbar-color: #526882 transparent;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #526882;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #6f86a4;
+}
+
+[data-theme="dark"] .wave-bg {
+  background-color: var(--color-page);
+  background-image:
+    radial-gradient(ellipse 1000px 780px at 70% 12%, rgba(37, 99, 235, 0.14) 0%, transparent 56%),
+    radial-gradient(ellipse 820px 760px at 18% 72%, rgba(236, 72, 153, 0.08) 0%, transparent 52%),
+    radial-gradient(ellipse 700px 620px at 50% 50%, rgba(14, 165, 233, 0.07) 0%, transparent 58%);
+}
+
+[data-theme="dark"] .glass-modal {
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border-strong) !important;
+  color: var(--color-text-primary) !important;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--color-text-muted) !important;
+  opacity: 0.86;
+}
+
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] textarea:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] [disabled] {
+  opacity: 0.62;
+}
+
+[data-theme="dark"] :where(input, textarea, select, button):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] option {
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] :where(
+  [class*="shadow"],
+  [class*="shadow-["]
+) {
+  --tw-shadow-color: rgba(0, 0, 0, 0.42) !important;
+}
+
+[data-theme="dark"] .dashboard-card-motion,
+[data-theme="dark"] :where([class~="rounded-3xl"], [class~="rounded-[28px]"], [class~="rounded-[26px]"], [class~="rounded-[24px]"], [class~="rounded-2xl"]) {
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="dark"] .dashboard-chart-surface {
+  background: var(--chart-plot) !important;
+}
+
+[data-theme="dark"] .dashboard-chart-surface > .absolute {
+  background: rgba(15, 23, 42, 0.42) !important;
+  border-color: rgba(148, 163, 184, 0.08) !important;
+}
+
+[data-theme="dark"] .dashboard-chart-grid-line {
+  border-color: var(--chart-grid) !important;
+}
+
+[data-theme="dark"] .dashboard-bar-tooltip,
+[data-theme="dark"] .dashboard-bar-columns span.rounded-full {
+  background: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .donut-center {
+  background: rgba(23, 32, 51, 0.88) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .donut-halo {
+  background-image: linear-gradient(to bottom, rgba(59, 130, 246, 0.14), rgba(15, 23, 42, 0.18)) !important;
+}
+
+[data-theme="dark"] :where(.bg-red-500, .bg-rose-500) {
+  background-color: #f43f5e !important;
+}
+
+[data-theme="dark"] :where(.bg-orange-500, .bg-amber-500) {
+  background-color: #f59e0b !important;
+}
+
+[data-theme="dark"] :where(.bg-emerald-500, .bg-green-500, [class~="bg-[#22C55E]"]) {
+  background-color: #10b981 !important;
+}
+
+[data-theme="dark"] :where(.bg-blue-500, .bg-blue-600, .bg-blue-700, [class~="bg-[#1E4DB7]"]) {
+  background-color: #2563eb !important;
+}
+
+[data-theme="dark"] .tab-active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+[data-theme="dark"] .tab-inactive {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .tab-inactive:hover {
+  color: var(--color-text-secondary);
+  border-bottom-color: var(--color-border-strong);
+}
+
+[data-theme="dark"] a {
+  color: var(--color-primary);
+}
+
+.theme-add-card {
+  border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-surface-muted) 92%, var(--color-surface-raised));
+  color: var(--color-primary);
+}
+
+.theme-add-card:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 36%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 52%, var(--color-surface-raised));
+}
+
+.theme-add-card__icon {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+}
+
+.inquiry-page-surface {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+}
+
+.inquiry-panel {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+}
+
+.inquiry-soft-panel {
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-muted) 90%, var(--color-surface-raised));
+  color: var(--color-text-primary);
+}
+
+.inquiry-control {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+}
+
+.inquiry-control:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 44%, var(--color-surface-raised));
+  color: var(--color-primary);
+}
+
+.inquiry-control--active {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary-soft) 70%, var(--color-surface-raised));
+  color: var(--color-primary);
+}
+
+.inquiry-input-surface {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+
+.inquiry-input-surface::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.inquiry-icon-chip {
+  border: 1px solid var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-primary-soft) 72%, var(--color-surface-raised));
+  color: var(--color-primary);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.16);
+}
+
+.inquiry-row-surface {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.10);
+}
+
+.inquiry-row-surface:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 42%, var(--color-surface-raised));
+}
+
+.inquiry-row-selected {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-primary-soft) 64%, var(--color-surface-raised));
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.14);
+}
+
+.inquiry-menu-surface {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-overlay);
+}
+
+.inquiry-menu-item {
+  color: var(--color-text-secondary);
+}
+
+.inquiry-menu-item:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+}
+
+.inquiry-empty-state {
+  border-color: var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-surface-muted) 92%, var(--color-surface-raised));
+  color: var(--color-text-muted);
+}
+
+.inquiry-selection-bar {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 48%, var(--color-border-strong));
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-overlay);
+}
+
+.inquiry-backdrop {
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="dark"] .inquiry-backdrop {
+  background: rgba(2, 6, 23, 0.64);
+}
+
+.inquiry-overlay-panel {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-overlay);
+}
+
+.inquiry-primary-text { color: var(--color-text-primary); }
+.inquiry-secondary-text { color: var(--color-text-secondary); }
+.inquiry-muted-text { color: var(--color-text-muted); }
+
+.inquiry-tab-button {
+  border-color: transparent;
+}
+
+.inquiry-tab-button--active {
+  border-color: var(--color-border-strong);
+  border-bottom-color: var(--color-surface-raised);
+  background: var(--color-surface-raised);
+  color: var(--color-primary);
+  box-shadow: 0 -1px 10px rgba(37, 99, 235, 0.08);
+}
+
+.inquiry-tab-button--inactive {
+  background: color-mix(in srgb, var(--color-surface-muted) 88%, var(--color-surface-raised));
+  color: var(--color-text-muted);
+}
+
+.inquiry-tab-button--inactive:hover {
+  color: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  [data-theme="dark"] :where(.dashboard-card-motion, aside, section, article, button, input, textarea, select) {
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      box-shadow 160ms ease;
+  }
+}
+
+
+.hierarchy-layout {
+  display: grid;
+  direction: ltr;
+  gap: 1rem;
+  grid-template-areas:
+    "content"
+    "sidebar";
+  grid-template-columns: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.hierarchy-layout__content {
+  direction: rtl;
+  grid-area: content;
+}
+
+.hierarchy-layout__sidebar {
+  direction: rtl;
+  grid-area: sidebar;
+}
+
+@media (min-width: 1024px) {
+  .hierarchy-layout {
+    grid-template-areas: "content sidebar";
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 320px);
+  }
+}
+
+/* focused override: inline donut details animation */
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-inline-details-panel {
+    transition:
+      max-height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease,
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  .dashboard-inline-details-body {
+    transition:
+      opacity 220ms ease,
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
+.dashboard-inquiry-list-reveal {
+  will-change: max-height, opacity, transform;
+}
+
+/* focused override: inline inquiry list animation */
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-inquiry-list-reveal {
+    transition:
+      max-height 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease,
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-inquiry-list-reveal {
+    transition-duration: 0ms !important;
+    transform: none !important;
+  }
+}
+
+/* tamar-dashboard-dark-two-panel:v1 */
+/*
+ * Keep the dashboard drill-down search input transparent inside its themed pill.
+ * This intentionally has higher specificity than the global dark input rule.
+ */
+input.dashboard-inquiry-search-input,
+[data-theme="dark"] input.dashboard-inquiry-search-input {
+  min-width: 0;
+  appearance: none;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-text-primary) !important;
+  caret-color: var(--color-text-primary);
+  outline: 0 !important;
+}
+
+.dashboard-accent-badge {
+  --dashboard-badge-accent: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--dashboard-badge-accent) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--dashboard-badge-accent) 13%, var(--color-surface-raised));
+  color: var(--dashboard-badge-accent);
+  --tw-ring-color: transparent;
+}
+
+.dashboard-status-badge {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  --tw-ring-color: transparent;
+}
+
+.dashboard-status-badge--open {
+  border-color: color-mix(in srgb, var(--color-success) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 13%, var(--color-surface-raised));
+  color: var(--color-success);
+}
+
+.dashboard-status-badge--closed {
+  border-color: var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-surface-muted) 88%, var(--color-surface-raised));
+  color: var(--color-text-secondary);
+}
+
+/* tamar-dropdown-polish:v2 */
+/*
+ * One clean chevron for every single-select in Tamar.
+ * The dashboard category select keeps its own overlay chevron, so it is excluded
+ * from the global background arrow to prevent the old double-arrow bug.
+ */
+select:not([multiple]):not(.dashboard-select-input) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364758b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: left 8px center !important;
+  background-size: 14px 14px !important;
+  padding-left: 2rem !important;
+  border-radius: 14px;
+}
+
+select:not([multiple]):not(.dashboard-select-input)::-ms-expand {
+  display: none;
+}
+
+/* Slightly softer controls site-wide without forcing colors over theme tokens. */
+select:not([multiple]) {
+  min-height: 36px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+select:not([multiple]):focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #2563eb) 16%, transparent);
+}
+
+/* Dashboard select: exactly one arrow, positioned a little farther inside. */
+.dashboard-select-pill {
+  min-width: 0;
+  border-radius: 18px;
+}
+
+.dashboard-select-shell {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dashboard-select-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none !important;
+  padding-left: 2rem !important;
+  padding-right: 0.1rem;
+  border-radius: 14px;
+}
+
+.dashboard-select-input::-ms-expand {
+  display: none;
+}
+
+.dashboard-select-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.dashboard-select-arrow {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  pointer-events: none;
+}
+
+/* The browser/Windows owns the opened native option popup, but these improve
+   the option colors/spacing where the browser supports them. */
+select option {
+  padding: 8px 12px;
+  background: var(--color-surface-raised, #fff);
+  color: var(--color-text-primary, #0f172a);
+}
+
+/* keep graph filters stable in expanded mode */
+.dashboard-expanded-card .dashboard-chart-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.dashboard-expanded-card .dashboard-chart-filters-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 1400px) {
+  .dashboard-expanded-card .dashboard-chart-filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .dashboard-expanded-card .dashboard-chart-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-expanded-card .dashboard-chart-filters-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* tamar-sidebar-typography-system:v1 */
+:root {
+  --font-ui: 'Assistant', Arial, sans-serif;
+  --font-weight-ui: 500;
+  --font-weight-emphasis: 600;
+  --font-weight-strong: 700;
+  --tracking-ui: -0.01em;
+  --tracking-heading: -0.018em;
+}
+
+html, body, #root {
+  font-family: var(--font-ui) !important;
+}
+
+body {
+  font-weight: var(--font-weight-ui);
+  letter-spacing: var(--tracking-ui);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea, optgroup, option {
+  font-family: var(--font-ui) !important;
+  letter-spacing: inherit;
+}
+
+.font-black { font-weight: var(--font-weight-strong) !important; }
+.font-extrabold { font-weight: var(--font-weight-strong) !important; }
+.font-bold { font-weight: var(--font-weight-strong) !important; }
+.font-semibold { font-weight: var(--font-weight-emphasis) !important; }
+.font-medium { font-weight: var(--font-weight-ui) !important; }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-ui) !important;
+  font-weight: var(--font-weight-strong);
+  letter-spacing: var(--tracking-heading);
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-family: var(--font-ui);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+table, th, td, [role="dialog"], [role="menu"], [role="listbox"] {
+  font-family: var(--font-ui);
+}
+
+/* tamar-v22-dashboard-system:v5:start */
+:root {
+  --tamar-v22-sidebar-width: clamp(202px, 11.2vw, 220px);
+  --tamar-v22-frame-gap: clamp(16px, 1.55vw, 28px);
+  --tamar-v22-card-radius: 20px;
+  --tamar-v22-control-radius: 12px;
+  --tamar-v22-border: color-mix(in srgb, var(--color-border) 84%, transparent);
+  --tamar-v22-shadow: 0 1px 2px rgba(16, 24, 40, .025), 0 16px 34px -24px rgba(16, 24, 40, .18);
+  --tamar-v22-shadow-hover: 0 2px 4px rgba(16, 24, 40, .03), 0 20px 42px -24px rgba(16, 24, 40, .21);
+  --tamar-v22-frame-shadow: 0 34px 90px -36px rgba(16, 24, 40, .28);
+}
+
+[data-theme="dark"], html.dark {
+  --tamar-v22-border: color-mix(in srgb, var(--color-border) 92%, transparent);
+  --tamar-v22-shadow: 0 1px 2px rgba(0,0,0,.24), 0 16px 36px -20px rgba(0,0,0,.58);
+  --tamar-v22-shadow-hover: 0 2px 5px rgba(0,0,0,.28), 0 20px 44px -22px rgba(0,0,0,.66);
+  --tamar-v22-frame-shadow: 0 36px 92px -38px rgba(0,0,0,.68);
+}
+
+/* --------------------------------------------------------------------------
+   V22 application frame — on Dashboard only. This is the large visual change
+   missing from V3: main + right sidebar sit inside one centered floating frame.
+   -------------------------------------------------------------------------- */
+.tamar-v22-app-viewport {
+  position: relative;
+}
+
+.tamar-v22-app-viewport--dashboard {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(37,99,235,.055), transparent 31%),
+    linear-gradient(145deg, #e9eef5 0%, #f6f8fb 52%, #e7ecf4 100%) !important;
+}
+
+.tamar-v22-app-viewport--dashboard::before {
+  content: "";
+  position: absolute;
+  inset: var(--tamar-v22-frame-gap);
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--color-border) 58%, transparent);
+  border-radius: 30px;
+  background: var(--color-surface);
+  box-shadow: var(--tamar-v22-frame-shadow);
+}
+
+[data-theme="dark"] .tamar-v22-app-viewport--dashboard,
+html.dark .tamar-v22-app-viewport--dashboard {
+  background: linear-gradient(145deg, #090d15 0%, #121827 52%, #0b1019 100%) !important;
+}
+
+.tamar-v22-app-viewport--dashboard .tamar-v22-sidebar {
+  top: var(--tamar-v22-frame-gap) !important;
+  right: var(--tamar-v22-frame-gap) !important;
+  bottom: var(--tamar-v22-frame-gap) !important;
+  height: auto !important;
+  border-radius: 0 30px 30px 0;
+  box-shadow: none !important;
+  z-index: 4;
+}
+
+.tamar-v22-app-viewport--dashboard .tamar-v22-app-main--dashboard {
+  position: absolute !important;
+  top: var(--tamar-v22-frame-gap) !important;
+  right: calc(var(--tamar-v22-frame-gap) + var(--tamar-v22-sidebar-width)) !important;
+  bottom: var(--tamar-v22-frame-gap) !important;
+  left: var(--tamar-v22-frame-gap) !important;
+  z-index: 3;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  border-radius: 30px 0 0 30px;
+  background: linear-gradient(180deg, #f6f8fc 0%, #eef2f7 30%, var(--color-page) 100%) !important;
+  overflow: hidden !important;
+}
+
+[data-theme="dark"] .tamar-v22-app-viewport--dashboard .tamar-v22-app-main--dashboard,
+html.dark .tamar-v22-app-viewport--dashboard .tamar-v22-app-main--dashboard {
+  background: linear-gradient(180deg, #151c2b 0%, #101622 34%, var(--color-page) 100%) !important;
+}
+
+/* Normal non-dashboard pages keep the existing fixed-right sidebar contract. */
+.tamar-v22-shell-main { margin-right: var(--tamar-v22-sidebar-width) !important; }
+.tamar-v22-app-viewport--dashboard .tamar-v22-shell-main { margin-right: 0 !important; }
+
+/* --------------------------------------------------------------------------
+   Sidebar — same geometry/language as the approved V22 prototype.
+   -------------------------------------------------------------------------- */
+.tamar-v22-sidebar {
+  width: var(--tamar-v22-sidebar-width) !important;
+  flex-basis: var(--tamar-v22-sidebar-width) !important;
+  right: 0 !important;
+  border-left: 1px solid var(--tamar-v22-border) !important;
+  border-right: 0 !important;
+  background: linear-gradient(180deg, var(--color-surface-raised) 0%, color-mix(in srgb, var(--color-surface-raised) 96%, var(--color-primary-soft)) 100%) !important;
+  box-shadow: -10px 0 34px rgba(15,23,42,.045) !important;
+  overflow: hidden !important;
+  --tamar-v22-sidebar-pad: 15px;
+}
+
+.tamar-v22-sidebar-brand {
+  min-height: 68px;
+  margin-inline: var(--tamar-v22-sidebar-pad);
+  padding-inline: 1px;
+  border-bottom-color: var(--color-border) !important;
+}
+.tamar-v22-sidebar-brand-mark {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: #fff;
+  font-family: 'Rubik', var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--color-primary) 68%, transparent);
+}
+.tamar-v22-sidebar-brand-name {
+  color: var(--color-text-primary);
+  font-family: 'Rubik', var(--font-ui) !important;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.tamar-v22-sidebar-nav { padding: 12px var(--tamar-v22-sidebar-pad) 14px; }
+.tamar-v22-sidebar-section + .tamar-v22-sidebar-section { margin-top: 18px; }
+.tamar-v22-sidebar-section-label {
+  padding: 5px 7px 7px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.tamar-v22-sidebar-item {
+  position: relative;
+  min-height: 38px;
+  margin: 2px 0;
+  border: 0 !important;
+  border-radius: 10px;
+  padding: 0 8px;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.tamar-v22-sidebar-item:hover {
+  background: var(--color-surface-muted) !important;
+  color: var(--color-text-primary) !important;
+}
+.tamar-v22-sidebar-item[data-active="true"] {
+  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--color-primary-soft) 88%, transparent) 100%) !important;
+  color: var(--color-primary) !important;
+  font-weight: 700;
+}
+.tamar-v22-sidebar-item[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  right: calc(-1 * var(--tamar-v22-sidebar-pad));
+  top: 7px;
+  bottom: 7px;
+  width: 5px;
+  border-radius: 5px 0 0 5px;
+  background: linear-gradient(180deg, var(--color-primary-hover), var(--color-primary));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-primary) 34%, transparent);
+}
+.tamar-v22-sidebar-badge { background: var(--color-danger) !important; color: #fff !important; }
+.tamar-v22-sidebar-footer { padding: 12px var(--tamar-v22-sidebar-pad) 14px; }
+.tamar-v22-sidebar-theme-row {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 11px;
+  background: var(--color-surface-muted);
+  padding: 6px 8px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+.tamar-v22-sidebar-footer .theme-control { position: static !important; }
+.tamar-v22-sidebar-user { margin-top: 10px; padding: 4px 2px; }
+.tamar-v22-sidebar-avatar {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Dashboard canvas and header.
+   -------------------------------------------------------------------------- */
+.tamar-v22-dashboard-page {
+  padding: 22px 26px 22px !important;
+  background: transparent !important;
+  color: var(--color-text-primary);
+}
+.tamar-v22-dashboard-main { overflow: hidden !important; }
+.tamar-v22-dashboard-header {
+  min-height: 62px;
+  padding: 0 2px 7px;
+  border: 0 !important;
+  background: transparent !important;
+}
+.tamar-v22-dashboard-heading h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: 'Rubik', var(--font-ui) !important;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -.03em;
+}
+.tamar-v22-dashboard-heading p {
+  margin-top: 7px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+.tamar-v22-dashboard-actions { padding-top: 2px; }
+.tamar-v22-header-button {
+  min-height: 40px;
+  border-radius: 13px;
+  padding: 0 16px;
+  font-family: 'Rubik', var(--font-ui) !important;
+  font-size: 12.5px;
+  font-weight: 700;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.tamar-v22-header-button--primary {
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: #fff;
+  box-shadow: 0 10px 24px -18px color-mix(in srgb, var(--color-primary) 92%, transparent);
+}
+.tamar-v22-header-button--secondary {
+  border: 1px solid var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-surface-raised) 94%, transparent);
+  color: var(--color-text-primary);
+}
+.tamar-v22-header-button--secondary:hover { background: var(--color-surface-muted); }
+
+/* --------------------------------------------------------------------------
+   KPI row — preserve up to six real Tamar KPIs, but use V22 card language.
+   -------------------------------------------------------------------------- */
+.tamar-v22-kpi-grid {
+  margin-bottom: 14px !important;
+  max-height: none !important;
+}
+.tamar-v22-kpi-grid-inner {
+  height: 104px;
+  gap: 14px !important;
+}
+.tamar-v22-kpi-card,
+.tamar-v22-add-kpi {
+  height: 104px;
+  min-height: 104px;
+  border-radius: 19px !important;
+}
+.tamar-v22-kpi-card {
+  border: 1px solid var(--tamar-v22-border) !important;
+  background: linear-gradient(180deg, var(--color-surface-raised) 0%, color-mix(in srgb, var(--color-surface-raised) 97%, var(--color-primary-soft)) 100%) !important;
+  box-shadow: var(--tamar-v22-shadow) !important;
+  padding: 13px 14px 11px;
+  overflow: hidden;
+  transition: box-shadow 160ms ease;
+}
+.tamar-v22-kpi-card:hover { transform: none !important; box-shadow: var(--tamar-v22-shadow-hover) !important; }
+.tamar-v22-kpi-title {
+  color: var(--color-text-secondary);
+  font-family: 'Rubik', var(--font-ui) !important;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tamar-v22-kpi-subtitle {
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.tamar-v22-kpi-icon { width: 30px; height: 30px; border-radius: 50% !important; }
+.tamar-v22-kpi-value {
+  color: var(--color-text-primary) !important;
+  font-family: 'Rubik', var(--font-ui) !important;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.03em;
+}
+.tamar-v22-kpi-helper { margin-top: 4px; color: var(--color-text-muted); font-size: 9.5px; font-weight: 500; line-height: 1.2; }
+.tamar-v22-kpi-card[data-featured="true"] {
+  border-color: rgba(255,255,255,.08) !important;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 38%),
+    linear-gradient(145deg, #173fc1 0%, var(--color-primary) 52%, var(--color-primary-hover) 100%) !important;
+  color: #fff !important;
+}
+.tamar-v22-kpi-card[data-featured="true"] * { color: #fff !important; }
+.tamar-v22-kpi-card[data-featured="true"] .tamar-v22-kpi-icon { background: rgba(255,255,255,.14) !important; border-color: rgba(255,255,255,.28) !important; }
+.tamar-v22-add-kpi { padding: 10px; }
+
+/* --------------------------------------------------------------------------
+   Main two-row grid — analytics row then operational row.
+   -------------------------------------------------------------------------- */
+.tamar-v22-dashboard-layout {
+  grid-template-rows: minmax(220px, 1.02fr) minmax(215px, .98fr) !important;
+  gap: 16px !important;
+  overflow: hidden !important;
+}
+.tamar-v22-dashboard-card {
+  border: 1px solid var(--tamar-v22-border) !important;
+  border-radius: var(--tamar-v22-card-radius) !important;
+  background: linear-gradient(180deg, var(--color-surface-raised) 0%, color-mix(in srgb, var(--color-surface-raised) 98%, var(--color-primary-soft)) 100%) !important;
+  box-shadow: var(--tamar-v22-shadow) !important;
+  overflow: hidden !important;
+}
+.tamar-v22-dashboard-card:hover { box-shadow: var(--tamar-v22-shadow-hover) !important; }
+.tamar-v22-card-header { min-height: 58px; }
+.tamar-v22-card-title {
+  color: var(--color-text-primary);
+  font-family: 'Rubik', var(--font-ui) !important;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.018em;
+}
+.tamar-v22-card-subtitle { margin-top: 3px; color: var(--color-text-muted); font-size: 10px; font-weight: 500; line-height: 1.3; }
+.tamar-v22-card-icon-chip {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.tamar-v22-count-chip { border-radius: 999px; background: var(--color-primary-soft); padding: 6px 9px; color: var(--color-primary); font-size: 10px; font-weight: 700; }
+.tamar-v22-expand-button { width: 30px !important; height: 30px !important; border-radius: 50% !important; padding: 0 !important; box-shadow: none !important; }
+
+/* V22 bar chart including a real visual empty state instead of a blank card. */
+.tamar-v22-bar-chart { padding-inline: 8px !important; }
+.tamar-v22-bar-chart .dashboard-bar-columns { gap: 14px !important; }
+.tamar-v22-bar-chart .dashboard-v22-bar { border-radius: 999px !important; }
+.tamar-v22-empty-chart { justify-content: flex-end; }
+.tamar-v22-empty-chart-message {
+  position: absolute;
+  top: 10px;
+  right: 18px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+.tamar-v22-empty-chart-bars {
+  display: flex;
+  height: 100%;
+  min-height: 150px;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 16px;
+  padding: 24px 18px 0;
+}
+.tamar-v22-empty-chart-column { display: flex; height: 100%; min-width: 0; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; }
+.tamar-v22-empty-chart-bar {
+  display: block;
+  width: min(34px, 62%);
+  min-height: 30px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(45deg, #dfe5ef 0 2px, transparent 2px 6px);
+}
+.tamar-v22-empty-chart-bar--accent { background: linear-gradient(180deg, var(--color-primary-soft-strong, #cfdcff), var(--color-primary-soft)); }
+.tamar-v22-empty-chart-label { color: var(--color-text-muted); font-size: 10px; }
+
+/* Donut / pie card, including a neutral zero ring so an empty local DB still
+   shows the approved V22 component rather than a large blank panel. */
+.tamar-v22-donut-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 154px;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 14px;
+}
+.tamar-v22-donut-legend { display: flex; min-width: 0; flex-direction: column; justify-content: center; gap: 8px; }
+.tamar-v22-donut-legend-row {
+  display: flex;
+  min-height: 38px;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 76%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--color-surface-muted) 72%, var(--color-surface-raised));
+  padding: 7px 9px;
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.tamar-v22-donut-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 10%, transparent); }
+.tamar-v22-donut-percent { color: var(--color-text-muted); font-size: 9px; }
+.tamar-v22-donut-legend-row strong { color: var(--color-text-primary); font-family: 'Rubik', var(--font-ui); font-size: 12px; }
+.tamar-v22-donut-visual { display: flex; min-height: 0; align-items: center; justify-content: center; }
+.tamar-v22-donut-chart { min-width: 0; }
+.tamar-v22-donut-chart svg { width: 154px !important; height: 154px !important; }
+.tamar-v22-donut-chart .donut-center span:first-child { font-family: 'Rubik', var(--font-ui) !important; }
+.tamar-v22-empty-donut-ring {
+  border-radius: 50%;
+  background: conic-gradient(from -22deg, #dfe5ef 0 18%, #cbd8fb 18% 44%, #e9edf4 44% 66%, #dfe5ef 66% 100%);
+  box-shadow: 0 12px 28px -20px rgba(15,23,42,.18);
+  position: relative;
+}
+.tamar-v22-empty-donut-ring::after {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+.tamar-v22-empty-donut-center { pointer-events: none; }
+.tamar-v22-empty-donut-center span { color: var(--color-text-primary); font-family: 'Rubik', var(--font-ui); font-size: 24px; font-weight: 700; line-height: 1; }
+.tamar-v22-empty-donut-center small { margin-top: 5px; color: var(--color-text-muted); font-size: 10px; font-weight: 600; }
+
+/* Workload: real 2×2 tiles, but a single local-development user expands to a
+   full-width tile so it never looks like a tiny line inside a huge card. */
+.tamar-v22-workload-card { padding: 0 !important; }
+.tamar-v22-team-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: minmax(74px, auto);
+  gap: 10px 12px;
+  padding: 0 14px 14px;
+}
+.tamar-v22-team-grid--single { grid-template-columns: 1fr; grid-template-rows: auto; grid-auto-rows: auto; align-content: start; flex: 0 0 auto !important; overflow: visible !important; }
+.tamar-v22-team-grid--single .tamar-v22-team-tile { min-height: 92px; max-height: 112px; }
+.tamar-v22-team-tile {
+  display: flex;
+  min-width: 0;
+  min-height: 82px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+  border-radius: 15px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-surface-muted) 74%, var(--color-surface-raised)), var(--color-surface-raised));
+  padding: 11px 12px;
+}
+.tamar-v22-team-avatar { display: flex; width: 38px; height: 38px; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary)); color: #fff; font-size: 11px; font-weight: 700; }
+.tamar-v22-team-name { color: var(--color-text-primary); font-family: 'Rubik', var(--font-ui); font-size: 12.5px; font-weight: 700; }
+.tamar-v22-team-meta { display: flex; flex-wrap: wrap; gap: 5px 8px; margin-top: 4px; color: var(--color-text-muted); font-size: 10px; font-weight: 500; }
+.tamar-v22-team-track { display: flex; height: 5px; justify-content: flex-end; overflow: hidden; margin-top: 8px; border-radius: 999px; background: var(--color-surface-muted); }
+.tamar-v22-team-bar { display: flex; height: 100%; flex-direction: row-reverse; overflow: hidden; border-radius: 999px; }
+.tamar-v22-team-bar > span { display: block; height: 100%; }
+.tamar-v22-team-status { flex: 0 0 auto; border-radius: 999px; padding: 5px 8px; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.tamar-v22-team-status--ok { background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface-raised)); color: var(--color-success); }
+.tamar-v22-team-status--urgent { background: color-mix(in srgb, var(--color-warning) 14%, var(--color-surface-raised)); color: var(--color-warning); }
+
+/* Immediate treatment: white like the other cards in Light Mode, navy only in Dark Mode. */
+.tamar-v22-attention-card { padding: 0 !important; background: var(--color-surface-raised) !important; color: var(--color-text-primary) !important; }
+.tamar-v22-attention-title { color: var(--color-danger) !important; }
+.tamar-v22-attention-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); grid-template-rows: repeat(2, minmax(0,1fr)); gap: 8px; padding: 0 12px 12px; }
+.tamar-v22-attention-card.dashboard-expanded-card .tamar-v22-attention-list { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-rows: minmax(54px, auto); }
+.tamar-v22-attention-row { display: flex; min-height: 0; align-items: center; gap: 8px; border: 0; border-radius: 11px; background: var(--color-surface-muted); padding: 7px 9px; color: var(--color-text-primary); transition: background-color 150ms ease; }
+.tamar-v22-attention-row:hover { background: color-mix(in srgb, var(--color-danger) 6%, var(--color-surface-muted)); }
+.tamar-v22-attention-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: var(--color-danger); }
+.tamar-v22-attention-name { color: var(--color-text-primary); font-size: 10.5px; font-weight: 700; }
+.tamar-v22-attention-meta, .tamar-v22-attention-time { color: var(--color-text-muted); font-size: 9px; font-weight: 500; }
+.tamar-v22-attention-time { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; }
+[data-theme="dark"] .tamar-v22-attention-card, html.dark .tamar-v22-attention-card { border-color: transparent !important; background: linear-gradient(160deg,#172552 0%,#0f1839 100%) !important; color:#fff !important; box-shadow:0 18px 40px -28px rgba(9,17,48,.9) !important; }
+[data-theme="dark"] .tamar-v22-attention-title, html.dark .tamar-v22-attention-title { color:#fff !important; }
+[data-theme="dark"] .tamar-v22-attention-card .tamar-v22-card-subtitle, html.dark .tamar-v22-attention-card .tamar-v22-card-subtitle { color:rgba(255,255,255,.58) !important; }
+[data-theme="dark"] .tamar-v22-attention-row, html.dark .tamar-v22-attention-row { background:rgba(255,255,255,.06); color:#fff; }
+[data-theme="dark"] .tamar-v22-attention-name, html.dark .tamar-v22-attention-name { color:#fff; }
+[data-theme="dark"] .tamar-v22-attention-meta, [data-theme="dark"] .tamar-v22-attention-time, html.dark .tamar-v22-attention-meta, html.dark .tamar-v22-attention-time { color:rgba(255,255,255,.58); }
+
+.tamar-v22-empty-state { display:flex; min-height:88px; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:10.5px; font-weight:600; text-align:center; }
+.tamar-v22-toolbar-pill, .tamar-v22-segmented-button, .tamar-v22-filter-toolbar button, .tamar-v22-filter-toolbar select, .tamar-v22-filter-toolbar input { border-radius:var(--tamar-v22-control-radius) !important; }
+
+@media (min-width: 1600px) and (min-height: 900px) {
+  :root { --tamar-v22-sidebar-width: 220px; --tamar-v22-frame-gap: 30px; }
+  .tamar-v22-dashboard-page { padding: 28px 32px 28px !important; }
+  .tamar-v22-dashboard-header { min-height: 70px; }
+  .tamar-v22-dashboard-heading h1 { font-size: 34px; }
+  .tamar-v22-kpi-grid-inner, .tamar-v22-kpi-card, .tamar-v22-add-kpi { height: 116px; min-height: 116px; }
+  .tamar-v22-kpi-grid-inner { gap: 18px !important; }
+  .tamar-v22-kpi-value { font-size: 26px; }
+  .tamar-v22-dashboard-layout { grid-template-rows:minmax(260px,1fr) minmax(250px,1fr) !important; gap:20px !important; }
+  .tamar-v22-card-title { font-size: 16px; }
+  .tamar-v22-card-subtitle { font-size: 10.5px; }
+  .tamar-v22-donut-layout { grid-template-columns:minmax(0,1fr) 176px; gap:18px; padding:0 18px 18px; }
+  .tamar-v22-donut-chart svg { width:168px !important; height:168px !important; }
+  .tamar-v22-team-grid { gap:14px 16px; padding:0 18px 18px; }
+  .tamar-v22-team-tile { min-height:96px; padding:14px 15px; }
+  .tamar-v22-team-avatar { width:42px; height:42px; }
+  .tamar-v22-team-name { font-size:13.5px; }
+  .tamar-v22-team-meta { font-size:10.5px; }
+  .tamar-v22-team-status { padding:6px 10px; font-size:9.5px; }
+  .tamar-v22-attention-list { gap:8px; padding:0 16px 16px; }
+  .tamar-v22-attention-row { padding:9px 11px; }
+  .tamar-v22-attention-name { font-size:11.5px; }
+}
+
+@media (max-width: 1280px) {
+  :root { --tamar-v22-sidebar-width: 200px; --tamar-v22-frame-gap: 14px; }
+  .tamar-v22-dashboard-page { padding: 14px 18px 16px !important; }
+  .tamar-v22-dashboard-header { min-height: 58px; }
+  .tamar-v22-dashboard-heading h1 { font-size: 25px; }
+  .tamar-v22-header-button { min-height:36px; padding-inline:12px; font-size:11.5px; }
+  .tamar-v22-kpi-grid-inner, .tamar-v22-kpi-card, .tamar-v22-add-kpi { height:92px; min-height:92px; }
+  .tamar-v22-kpi-grid-inner { gap:10px !important; }
+  .tamar-v22-kpi-value { font-size:21px; }
+  .tamar-v22-dashboard-layout { grid-template-rows:minmax(200px,1fr) minmax(190px,1fr) !important; gap:10px !important; }
+  .tamar-v22-donut-layout { grid-template-columns:minmax(0,1fr) 136px; gap:8px; padding-inline:8px; }
+  .tamar-v22-donut-chart svg { width:134px !important; height:134px !important; }
+  .tamar-v22-team-grid { gap:8px; padding:0 10px 10px; }
+  .tamar-v22-team-tile { min-height:72px; padding:8px 9px; }
+  .tamar-v22-team-avatar { width:31px; height:31px; }
+  .tamar-v22-team-status { display:none; }
+  .tamar-v22-attention-list { gap:4px; padding:0 9px 9px; }
+}
+
+@media (max-width: 1080px) {
+  .tamar-v22-app-viewport--dashboard::before { display:none; }
+  .tamar-v22-app-viewport--dashboard { background:var(--color-page) !important; }
+  .tamar-v22-app-viewport--dashboard .tamar-v22-sidebar { top:0 !important; right:0 !important; bottom:0 !important; height:100vh !important; border-radius:0; }
+  .tamar-v22-app-viewport--dashboard .tamar-v22-app-main--dashboard { position:relative !important; inset:auto !important; height:100% !important; margin-right:var(--tamar-v22-sidebar-width) !important; border-radius:0; }
+  .tamar-v22-team-grid { grid-template-columns:1fr; grid-template-rows:none; overflow-y:auto; }
+  .tamar-v22-donut-layout { grid-template-columns:1fr; }
+  .tamar-v22-donut-visual { grid-row:1; }
+  .tamar-v22-donut-legend { grid-row:2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tamar-v22-sidebar-item, .tamar-v22-kpi-card, .tamar-v22-dashboard-card { transition:none !important; }
+}
+
+
+/* V5 structural corrections: local column expansion, full donut expansion,
+   compact single-user workload, and consistent dashboard typography. */
+.tamar-v22-dashboard-page,
+.tamar-v22-dashboard-page button,
+.tamar-v22-dashboard-page input,
+.tamar-v22-dashboard-page select {
+  font-family: var(--font-ui) !important;
+}
+.tamar-v22-dashboard-main { position: relative !important; }
+.tamar-v22-expanded-panel {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 40;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+.tamar-v22-expanded-panel--donut { padding: 4px; }
+.tamar-v22-donut-card--expanded {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: var(--tamar-v22-card-radius) !important;
+}
+.tamar-v22-donut-card--expanded .tamar-v22-donut-expanded-overview {
+  min-height: 250px;
+  flex: 1 1 auto;
+  align-items: stretch;
+}
+.tamar-v22-donut-card--expanded .tamar-v22-donut-chart svg {
+  width: min(270px, 88%) !important;
+  height: min(270px, 88%) !important;
+}
+.tamar-v22-donut-card--expanded .dashboard-inline-details-panel {
+  flex: 1 1 auto;
+  max-height: none !important;
+}
+.tamar-v22-donut-legend-row:disabled { opacity: .86; }
+.tamar-v22-donut-legend-row strong { font-size: 11.5px; }
+.tamar-v22-team-grid--single {
+  width: 100%;
+  max-height: 128px;
+  padding-bottom: 14px;
+}
+.tamar-v22-team-grid--single .tamar-v22-team-tile {
+  width: 100%;
+  align-self: start;
+}
+.tamar-v22-workload-card.dashboard-expanded-card .tamar-v22-team-grid {
+  overflow-y: auto;
+}
+.tamar-v22-attention-card.dashboard-expanded-card,
+.tamar-v22-workload-card.dashboard-expanded-card {
+  height: 100% !important;
+}
+
+@media (max-width: 1280px) {
+  .tamar-v22-donut-card--expanded .tamar-v22-donut-chart svg {
+    width: min(220px, 82%) !important;
+    height: min(220px, 82%) !important;
+  }
+  .tamar-v22-attention-list { gap: 5px; }
+}
+
+/* tamar-v22-dashboard-system:v5:end */
+
+/* tamar-inquiry-layout-compact:v4:start */
+
+/*
+ * Compact Inquiry Layout Builder.
+ *
+ * Important:
+ * The JSX deliberately keeps "min-h-9 items-center"
+ * because the existing architecture test requires that
+ * source contract. Visual height is reduced here instead.
+ */
+
+.tamar-inquiry-layout-compact-v4 {
+  gap: 6px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Top editor card slightly tighter */
+.tamar-inquiry-layout-compact-v4
+> section:first-child {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* Entire connected configuration feels like one block */
+.tamar-inquiry-layout-compact-v4
+[data-connected-inquiry-sections="true"] {
+  border-radius: 12px !important;
+  box-shadow:
+    0 4px 14px rgba(15,23,42,.045) !important;
+}
+
+/* -------------------------------------------
+   GROUP HEADER
+-------------------------------------------- */
+
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > header {
+  min-height: 31px !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > header input {
+  height: 26px !important;
+  min-height: 26px !important;
+  font-size: 12px !important;
+}
+
+/* -------------------------------------------
+   FIELD GRID
+-------------------------------------------- */
+
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-grid="12"] {
+  gap: 6px !important;
+  padding: 6px !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+[data-testid^="layout-field-"] {
+  border-radius: 10px !important;
+}
+
+/*
+ * Source stays min-h-9 for the test;
+ * runtime becomes compact through this override.
+ */
+.tamar-inquiry-layout-compact-v4
+[data-testid^="layout-field-"]
+> div:first-child {
+  min-height: 27px !important;
+  height: 27px !important;
+
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Field labels */
+.tamar-inquiry-layout-compact-v4
+[data-testid^="layout-field-"]
+> div:first-child > span {
+  font-size: 11px !important;
+}
+
+/* Preview fields */
+.tamar-inquiry-layout-compact-v4
+[data-testid^="layout-field-"]
+input:not([type="checkbox"]):not([type="radio"]),
+.tamar-inquiry-layout-compact-v4
+[data-testid^="layout-field-"]
+select {
+  height: 28px !important;
+  min-height: 28px !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+[data-testid^="layout-field-"]
+textarea {
+  min-height: 42px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+/* -------------------------------------------
+   ADD FIELD TO CURRENT GROUP
+-------------------------------------------- */
+
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section]
+> div:last-child {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section]
+> div:last-child > select {
+  height: 30px !important;
+  min-height: 30px !important;
+
+  border-radius: 9px !important;
+  border-style: dashed !important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-primary) 28%,
+      var(--color-border-strong)
+    ) !important;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-surface-muted) 72%,
+      var(--color-surface-raised)
+    ) !important;
+
+  color: var(--color-primary) !important;
+
+  font-size: 11px !important;
+  font-weight: 700 !important;
+
+  padding-inline: 10px !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section]
+> div:last-child > select:hover,
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section]
+> div:last-child > select:focus {
+  border-color: var(--color-primary) !important;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-primary-soft) 48%,
+      var(--color-surface-raised)
+    ) !important;
+}
+
+/* -------------------------------------------
+   ADD GROUP
+-------------------------------------------- */
+
+.tamar-inquiry-layout-compact-v4
+.tamar-between-groups-v4 {
+  min-height: 31px !important;
+
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-surface-muted) 38%,
+      var(--color-surface-raised)
+    ) !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+.tamar-between-groups-v4 > button {
+  height: 28px !important;
+  min-height: 28px !important;
+
+  gap: 6px !important;
+
+  border-radius: 9px !important;
+  border-style: dashed !important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-primary) 34%,
+      var(--color-border-strong)
+    ) !important;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-primary-soft) 64%,
+      var(--color-surface-raised)
+    ) !important;
+
+  color: var(--color-primary) !important;
+
+  padding-inline: 12px !important;
+
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* -------------------------------------------
+   Dark Mode
+-------------------------------------------- */
+
+[data-theme="dark"]
+.tamar-inquiry-layout-compact-v4
+.tamar-between-groups-v4 {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-surface-muted) 78%,
+      var(--color-surface-raised)
+    ) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tamar-inquiry-layout-compact-v4 button,
+  .tamar-inquiry-layout-compact-v4 select {
+    transition: none !important;
+  }
+}
+
+/* tamar-inquiry-layout-compact:v4:end */
+
+/* tamar-inquiry-add-controls:v3:start */
+
+/* =========================================================
+   Add Field inline inside the section field flow
+========================================================= */
+
+/* Footer becomes part of the field area, not a separated strip */
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > div:last-child {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+
+    min-height: auto !important;
+
+    padding: 6px !important;
+    padding-top: 0 !important;
+
+    border-top: 0 !important;
+    background: transparent !important;
+
+    align-items: stretch !important;
+    justify-content: stretch !important;
+}
+
+/* The select sits like another field card */
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > div:last-child > select {
+    grid-column: span 6 !important;
+
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+
+    height: 42px !important;
+    min-height: 42px !important;
+
+    margin: 0 !important;
+
+    border:
+        1px dashed
+        color-mix(
+            in srgb,
+            var(--color-primary) 44%,
+            var(--color-border-strong)
+        ) !important;
+
+    border-radius: 12px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-primary-soft) 18%,
+            var(--color-surface-raised)
+        ) !important;
+
+    color: var(--color-primary) !important;
+
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+
+    text-align: center !important;
+    text-align-last: center !important;
+
+    padding-inline: 28px !important;
+
+    cursor: pointer !important;
+    box-shadow: none !important;
+
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease,
+        box-shadow 150ms ease !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > div:last-child > select:hover,
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > div:last-child > select:focus {
+    border-color: var(--color-primary) !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-primary-soft) 48%,
+            var(--color-surface-raised)
+        ) !important;
+
+    box-shadow:
+        0 0 0 3px
+        color-mix(
+            in srgb,
+            var(--color-primary) 10%,
+            transparent
+        ) !important;
+}
+
+/* "No more fields" appears in the same exact slot */
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > div:last-child > p {
+    grid-column: span 6 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 0 14px !important;
+
+    border:
+        1px dashed
+        var(--color-border-strong) !important;
+
+    border-radius: 12px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-surface-muted) 76%,
+            var(--color-surface-raised)
+        ) !important;
+
+    color: var(--color-text-muted) !important;
+
+    font-size: 10.75px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+}
+
+/* Keep add-group separate but visually lighter */
+.tamar-inquiry-layout-compact-v4
+.tamar-between-groups-v4 {
+    min-height: 38px !important;
+    padding: 4px 10px !important;
+    background: transparent !important;
+}
+
+.tamar-inquiry-layout-compact-v4
+.tamar-between-groups-v4 > button {
+    min-width: 170px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+
+    border:
+        1px dashed
+        color-mix(
+            in srgb,
+            var(--color-primary) 58%,
+            var(--color-border-strong)
+        ) !important;
+
+    border-radius: 10px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-primary-soft) 68%,
+            var(--color-surface-raised)
+        ) !important;
+
+    color: var(--color-primary) !important;
+
+    padding-inline: 13px !important;
+
+    font-size: 11px !important;
+    font-weight: 700 !important;
+
+    box-shadow: none !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .tamar-inquiry-layout-compact-v4
+    [data-inquiry-section] > div:last-child > select,
+
+    .tamar-inquiry-layout-compact-v4
+    [data-inquiry-section] > div:last-child > p {
+        grid-column: 1 / -1 !important;
+    }
+}
+
+/* Dark mode */
+[data-theme="dark"]
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > div:last-child > select {
+    background:
+        color-mix(
+            in srgb,
+            var(--color-primary-soft) 36%,
+            var(--color-surface-raised)
+        ) !important;
+}
+
+[data-theme="dark"]
+.tamar-inquiry-layout-compact-v4
+[data-inquiry-section] > div:last-child > p {
+    background:
+        color-mix(
+            in srgb,
+            var(--color-surface-muted) 84%,
+            var(--color-surface-raised)
+        ) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tamar-inquiry-layout-compact-v4
+    [data-inquiry-section] > div:last-child > select,
+    .tamar-inquiry-layout-compact-v4
+    .tamar-between-groups-v4 > button {
+        transition: none !important;
+    }
+}
+
+/* tamar-inquiry-add-controls:v3:end */
+
+/* tamar-hierarchy-redesign:v3:start */
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.tamar-hierarchy-page-v3 {
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(
+                in srgb,
+                var(--color-primary-soft) 10%,
+                var(--color-page)
+            ) 0%,
+            var(--color-page) 24%,
+            var(--color-page) 100%
+        );
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.tamar-hierarchy-header-v3 {
+    min-height: 76px;
+
+    border-bottom:
+        1px solid
+        var(--color-border);
+
+    background:
+        transparent;
+}
+
+.tamar-hierarchy-context-v3 {
+    background:
+        color-mix(
+            in srgb,
+            var(--color-surface-muted) 72%,
+            var(--color-surface-raised)
+        );
+}
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.tamar-hierarchy-main-v3 {
+    overflow:
+        hidden;
+}
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.tamar-hierarchy-toolbar-v3 {
+    box-shadow:
+        0 6px 20px
+        rgba(15, 23, 42, .04);
+}
+
+.tamar-hierarchy-toolbar-v3 input {
+    box-shadow:
+        none !important;
+}
+
+/* =========================================================
+   ENTITY CARD
+========================================================= */
+
+.tamar-hierarchy-entity-v3 {
+    min-height:
+        166px !important;
+
+    padding:
+        14px !important;
+
+    border-radius:
+        18px !important;
+
+    box-shadow:
+        0 6px 18px
+        rgba(15,23,42,.045) !important;
+}
+
+.tamar-hierarchy-entity-v3:hover {
+    transform:
+        none !important;
+
+    box-shadow:
+        0 10px 24px
+        rgba(37,99,235,.075) !important;
+}
+
+.tamar-hierarchy-entity-v3 h3 {
+    font-size:
+        16px !important;
+
+    line-height:
+        1.25 !important;
+}
+
+.tamar-hierarchy-entity-v3
+.mt-auto.grid {
+    margin-top:
+        14px !important;
+}
+
+.tamar-hierarchy-entity-v3
+.pt-4 {
+    padding-top:
+        10px !important;
+}
+
+/* =========================================================
+   GUIDANCE / DETAILS PANEL
+========================================================= */
+
+.tamar-hierarchy-guidance-v3 {
+    box-shadow:
+        0 6px 22px
+        rgba(15,23,42,.045);
+}
+
+.tamar-hierarchy-guidance-v3
+> div:first-child {
+    padding-bottom:
+        12px !important;
+}
+
+.tamar-hierarchy-guidance-v3 h2 {
+    margin-top:
+        8px !important;
+
+    font-size:
+        19px !important;
+
+    line-height:
+        1.25 !important;
+}
+
+.tamar-hierarchy-guidance-v3
+.mt-4.grid {
+    gap:
+        8px !important;
+}
+
+.tamar-hierarchy-guidance-v3
+.mt-4.grid > div {
+    padding:
+        10px 12px !important;
+
+    border:
+        1px solid
+        var(--color-border);
+
+    border-radius:
+        12px;
+}
+
+.tamar-hierarchy-guidance-v3
+.mt-4.rounded-xl {
+    padding:
+        11px !important;
+
+    font-size:
+        11px !important;
+
+    line-height:
+        1.55 !important;
+}
+
+/* =========================================================
+   LAYOUT
+========================================================= */
+
+.tamar-hierarchy-cards-v3 {
+    padding-bottom:
+        8px;
+}
+
+@media (min-width: 1024px) {
+    .tamar-hierarchy-page-v3
+    .hierarchy-layout {
+        grid-template-areas:
+            "content sidebar";
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(280px, 300px);
+
+        gap:
+            16px;
+    }
+}
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+[data-theme="dark"]
+.tamar-hierarchy-page-v3 {
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(
+                in srgb,
+                var(--color-primary-soft) 16%,
+                var(--color-page)
+            ) 0%,
+            var(--color-page) 24%,
+            var(--color-page) 100%
+        );
+}
+
+[data-theme="dark"]
+.tamar-hierarchy-toolbar-v3,
+
+[data-theme="dark"]
+.tamar-hierarchy-entity-v3,
+
+[data-theme="dark"]
+.tamar-hierarchy-guidance-v3 {
+    box-shadow:
+        var(--shadow-card) !important;
+}
+
+/* =========================================================
+   THEME CONTROL
+   No sidebar -> bottom-right
+========================================================= */
+
+.app-shell-theme-control {
+    left:
+        auto !important;
+
+    top:
+        auto !important;
+
+    right:
+        18px !important;
+
+    bottom:
+        18px !important;
+
+    z-index:
+        120 !important;
+}
+
+.app-shell-theme-control
+.theme-control__menu {
+    left:
+        auto !important;
+
+    right:
+        0 !important;
+}
+
+@media (max-width: 720px) {
+    .tamar-hierarchy-header-v3 {
+        min-height:
+            68px !important;
+
+        padding-inline:
+            14px !important;
+    }
+
+    .tamar-hierarchy-context-v3 {
+        display:
+            none !important;
+    }
+
+    .app-shell-theme-control {
+        right:
+            10px !important;
+
+        bottom:
+            10px !important;
+    }
+}
+
+/* tamar-hierarchy-redesign:v3:end */
+
+/* tamar-hierarchy-brand-attention:v1:start */
+
+/* =========================================================
+   TAMAR BRAND BAR
+   Sub-environment + Room selection
+========================================================= */
+
+.tamar-hierarchy-brandbar-v4 {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    min-height: 68px;
+
+    flex: 0 0 68px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #172f56 0%,
+            #1c3b68 55%,
+            #214878 100%
+        );
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,.10);
+
+    border-radius:
+        0 0 22px 22px;
+
+    box-shadow:
+        0 10px 28px
+        rgba(15,23,42,.13);
+
+    overflow: hidden;
+}
+
+.tamar-hierarchy-brandbar-v4::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at 50% -40%,
+            rgba(255,255,255,.15),
+            transparent 58%
+        );
+}
+
+.tamar-hierarchy-brandbar-v4__inner {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tamar-hierarchy-brandbar-v4__logo {
+    color: #fff;
+
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+
+    letter-spacing: -.02em;
+
+    text-shadow:
+        0 2px 8px
+        rgba(0,0,0,.16);
+}
+
+/* Keep the internal hierarchy page heading visually connected
+   to the new Tamar brand bar. */
+.tamar-hierarchy-brandbar-v4
++ .tamar-hierarchy-header-v3 {
+    padding-top: 14px !important;
+}
+
+/* =========================================================
+   DARK MODE CONTROL
+   Bottom-right, but without covering the action buttons.
+========================================================= */
+
+.app-shell-theme-control {
+    position: fixed !important;
+
+    left: auto !important;
+    top: auto !important;
+
+    right: 18px !important;
+    bottom: 18px !important;
+
+    z-index: 130 !important;
+}
+
+/* Open the menu inward instead of outside the screen. */
+.app-shell-theme-control
+.theme-control__menu {
+    left: auto !important;
+    right: 0 !important;
+}
+
+/*
+ * The hierarchy right-side details card reaches the bottom of
+ * the viewport. Reserve room for the theme control so that the
+ * theme control does not overlap "חזרה", "משתמשים", etc.
+ */
+.tamar-hierarchy-guidance-v3 {
+    padding-bottom: 78px !important;
+}
+
+/* If the local hierarchy has a later guidance hook, support it too. */
+.tamar-hierarchy-guidance-v2 {
+    padding-bottom: 78px !important;
+}
+
+/* =========================================================
+   "דורש טיפול מיידי" EMPTY STATE
+   Center horizontally AND vertically.
+========================================================= */
+
+.tamar-attention-empty {
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 100% !important;
+    height: 100% !important;
+
+    min-height: 0 !important;
+
+    margin: 0 !important;
+
+    text-align: center !important;
+}
+
+/*
+ * DashboardCard adds one internal full-height wrapper.
+ * When the attention card is empty, convert its body to a real
+ * centering container instead of centering only inside 84px.
+ */
+.tamar-v22-attention-card:has(.tamar-attention-empty)
+> div
+> div[dir="rtl"],
+
+.tamar-reference-attention-card:has(.tamar-attention-empty)
+> div
+> div[dir="rtl"] {
+    display: flex !important;
+
+    min-height: 0 !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.tamar-v22-attention-card:has(.tamar-attention-empty)
+> div
+> div[dir="rtl"]
+> div,
+
+.tamar-reference-attention-card:has(.tamar-attention-empty)
+> div
+> div[dir="rtl"]
+> div {
+    display: flex !important;
+
+    flex: 1 1 auto !important;
+
+    width: 100% !important;
+    height: 100% !important;
+
+    min-height: 0 !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+[data-theme="dark"]
+.tamar-hierarchy-brandbar-v4 {
+    background:
+        linear-gradient(
+            135deg,
+            #0f1c34 0%,
+            #152949 55%,
+            #19345b 100%
+        );
+
+    border-bottom-color:
+        rgba(255,255,255,.07);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 720px) {
+
+    .tamar-hierarchy-brandbar-v4 {
+        min-height: 58px;
+        flex-basis: 58px;
+
+        border-radius:
+            0 0 18px 18px;
+    }
+
+    .tamar-hierarchy-brandbar-v4__logo {
+        font-size: 21px;
+    }
+
+    .app-shell-theme-control {
+        right: 10px !important;
+        bottom: 10px !important;
+    }
+
+    .tamar-hierarchy-guidance-v3,
+    .tamar-hierarchy-guidance-v2 {
+        padding-bottom:
+            66px !important;
+    }
+}
+
+/* tamar-hierarchy-brand-attention:v1:end */
+
+/* tamar-hierarchy-brand-height-theme-inline:v1:start */
+
+/* Taller blue Tamar brand header on hierarchy / room-selection pages */
+:where(
+  .tamar-hierarchy-brand-bar,
+  .tamar-top-brand-bar,
+  .hierarchy-brand-bar,
+  .hierarchy-top-brand-bar,
+  .hierarchy-page__brand-bar,
+  .hierarchy-header-banner,
+  .hierarchy-hero-bar,
+  .room-selection-brand-bar,
+  .subenvironment-brand-bar
+) {
+  min-height: 108px !important;
+  padding-top: 26px !important;
+  padding-bottom: 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-bottom-left-radius: 28px !important;
+  border-bottom-right-radius: 28px !important;
+}
+
+:where(
+  .tamar-hierarchy-brand-bar,
+  .tamar-top-brand-bar,
+  .hierarchy-brand-bar,
+  .hierarchy-top-brand-bar,
+  .hierarchy-page__brand-bar,
+  .hierarchy-header-banner,
+  .hierarchy-hero-bar,
+  .room-selection-brand-bar,
+  .subenvironment-brand-bar
+) :where(h1, h2, .brand-name, .brand-title, .tamar-brand-title, .hierarchy-brand-title) {
+  line-height: 1.1 !important;
+}
+
+/* Dark-mode control fixed bottom-right and forced into one horizontal row */
+.app-shell-theme-control {
+  position: fixed !important;
+  left: auto !important;
+  top: auto !important;
+  right: 16px !important;
+  bottom: 16px !important;
+  z-index: 160 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.app-shell-theme-control .theme-control {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.app-shell-theme-control .theme-control__buttons {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  min-width: 84px !important;
+  white-space: nowrap !important;
+}
+
+.app-shell-theme-control .theme-control__toggle,
+.app-shell-theme-control .theme-control__menu-button {
+  display: inline-flex !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 40px !important;
+  flex: 0 0 42px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.app-shell-theme-control .theme-control__menu-button {
+  border-inline-end: 1px solid var(--color-border-strong) !important;
+}
+
+@media (max-width: 640px) {
+  .app-shell-theme-control {
+    right: 12px !important;
+    bottom: 12px !important;
+  }
+}
+
+/* Keep the bottom-right control visually balanced near hierarchy side cards */
+:where(.hierarchy-layout, .hierarchy-layout__content, .hierarchy-layout__sidebar) {
+  overflow: visible !important;
+}
+
+/* tamar-hierarchy-brand-height-theme-inline:v1:end */
+
+/* tamar-hierarchy-professional:v5:start */
+
+/* =========================================================
+   PAGE BACKGROUND
+========================================================= */
+
+.tamar-hierarchy-page-v3 {
+    background:
+        radial-gradient(
+            circle at 84% 4%,
+            color-mix(
+                in srgb,
+                var(--color-primary-soft) 36%,
+                transparent
+            ),
+            transparent 30%
+        ),
+        linear-gradient(
+            180deg,
+            color-mix(
+                in srgb,
+                var(--color-primary-soft) 9%,
+                var(--color-page)
+            ) 0%,
+            var(--color-page) 30%,
+            var(--color-page) 100%
+        ) !important;
+}
+
+/* =========================================================
+   PROFESSIONAL TAMAR BRAND BAR
+========================================================= */
+
+.tamar-hierarchy-brandbar-v4 {
+    position: relative !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 100% !important;
+
+    min-height: 96px !important;
+    flex: 0 0 96px !important;
+
+    padding:
+        18px 24px !important;
+
+    border-radius:
+        0 0 26px 26px !important;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,.10) !important;
+
+    background:
+        linear-gradient(
+            118deg,
+            #142e54 0%,
+            #1e4475 52%,
+            #2d5e94 100%
+        ) !important;
+
+    box-shadow:
+        0 12px 30px
+        rgba(15,23,42,.15) !important;
+
+    overflow: hidden !important;
+}
+
+.tamar-hierarchy-brandbar-v4::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at 22% -25%,
+            rgba(255,255,255,.22),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 78% 130%,
+            rgba(96,165,250,.24),
+            transparent 38%
+        );
+}
+
+.tamar-hierarchy-brandbar-v4::after {
+    content: "";
+
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 0;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.28),
+            transparent
+        );
+}
+
+.tamar-hierarchy-brandbar-v4__inner {
+    position: relative !important;
+    z-index: 1 !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 6px !important;
+}
+
+.tamar-hierarchy-brandbar-v4__inner::after {
+    content: "מערכת ניהול ותפעול";
+
+    color:
+        rgba(255,255,255,.74);
+
+    font-size:
+        11px;
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .015em;
+}
+
+.tamar-hierarchy-brandbar-v4__logo {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 10px !important;
+
+    color:
+        #fff !important;
+
+    font-size:
+        25px !important;
+
+    font-weight:
+        800 !important;
+
+    line-height:
+        1 !important;
+
+    letter-spacing:
+        -.025em !important;
+
+    text-shadow:
+        0 2px 10px
+        rgba(0,0,0,.16) !important;
+}
+
+.tamar-hierarchy-brandbar-v4__logo::before {
+    content: "";
+
+    width: 11px;
+    height: 11px;
+
+    border:
+        2px solid
+        rgba(255,255,255,.92);
+
+    border-radius:
+        3px;
+
+    transform:
+        rotate(45deg);
+
+    box-shadow:
+        6px 6px 0 -3px
+        rgba(255,255,255,.42);
+}
+
+/* =========================================================
+   INTERNAL PAGE HEADER
+========================================================= */
+
+.tamar-hierarchy-header-v3 {
+    min-height:
+        78px !important;
+
+    padding:
+        16px 22px 13px !important;
+
+    border-bottom:
+        1px solid
+        var(--color-border) !important;
+
+    background:
+        transparent !important;
+}
+
+.tamar-hierarchy-header-v3 h1 {
+    font-size:
+        25px !important;
+
+    line-height:
+        1.2 !important;
+}
+
+.tamar-hierarchy-context-v3 {
+    min-width:
+        188px;
+
+    padding:
+        8px 11px !important;
+
+    border-color:
+        var(--color-border) !important;
+
+    border-radius:
+        13px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-surface-muted) 72%,
+            var(--color-surface-raised)
+        ) !important;
+
+    box-shadow:
+        0 4px 14px
+        rgba(15,23,42,.035);
+}
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.tamar-hierarchy-main-v3 {
+    padding-top:
+        8px !important;
+}
+
+@media (min-width: 1024px) {
+    .tamar-hierarchy-page-v3
+    .hierarchy-layout {
+        grid-template-columns:
+            minmax(0,1fr)
+            304px !important;
+
+        gap:
+            16px !important;
+
+        align-items:
+            start !important;
+    }
+}
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.tamar-hierarchy-toolbar-v3 {
+    min-height:
+        62px;
+
+    padding:
+        9px 10px !important;
+
+    border:
+        1px solid
+        var(--color-border) !important;
+
+    border-radius:
+        17px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-surface-raised) 96%,
+            transparent
+        ) !important;
+
+    box-shadow:
+        0 7px 22px
+        rgba(15,23,42,.045) !important;
+}
+
+.tamar-hierarchy-toolbar-v3
+.inquiry-input-surface,
+
+.tamar-hierarchy-toolbar-v3
+input {
+    box-shadow:
+        none !important;
+}
+
+/* =========================================================
+   CARDS GRID
+========================================================= */
+
+.tamar-hierarchy-cards-v3 {
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(300px,380px)
+        ) !important;
+
+    justify-content:
+        start !important;
+
+    align-content:
+        start !important;
+
+    gap:
+        12px !important;
+
+    padding:
+        3px 2px 10px !important;
+}
+
+/* =========================================================
+   SUB-ENVIRONMENT / ROOM CARDS
+========================================================= */
+
+.tamar-hierarchy-entity-v3 {
+    min-height:
+        174px !important;
+
+    padding:
+        15px !important;
+
+    border:
+        1px solid
+        var(--color-border) !important;
+
+    border-radius:
+        18px !important;
+
+    background:
+        var(--color-surface-raised) !important;
+
+    box-shadow:
+        0 7px 22px
+        rgba(15,23,42,.045) !important;
+
+    transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        background-color 160ms ease !important;
+}
+
+.tamar-hierarchy-entity-v3:hover {
+    transform:
+        none !important;
+
+    border-color:
+        color-mix(
+            in srgb,
+            var(--color-primary) 46%,
+            var(--color-border)
+        ) !important;
+
+    box-shadow:
+        0 11px 28px
+        rgba(37,99,235,.075) !important;
+}
+
+.tamar-hierarchy-entity-v3.ring-1 {
+    border-color:
+        color-mix(
+            in srgb,
+            var(--color-primary) 72%,
+            var(--color-border)
+        ) !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-primary-soft) 24%,
+            var(--color-surface-raised)
+        ) !important;
+
+    box-shadow:
+        0 0 0 2px
+        color-mix(
+            in srgb,
+            var(--color-primary) 10%,
+            transparent
+        ),
+        0 10px 26px
+        rgba(37,99,235,.08) !important;
+
+    --tw-ring-shadow:
+        0 0 #0000 !important;
+}
+
+.tamar-hierarchy-entity-v3 h3 {
+    font-size:
+        17px !important;
+
+    line-height:
+        1.25 !important;
+}
+
+.tamar-hierarchy-entity-v3
+.mt-auto.grid {
+    margin-top:
+        14px !important;
+
+    border-radius:
+        12px !important;
+}
+
+.tamar-hierarchy-entity-v3
+.mt-auto.grid > span {
+    padding:
+        9px 11px !important;
+
+    font-size:
+        11px !important;
+}
+
+.tamar-hierarchy-entity-v3
+.pt-4 {
+    padding-top:
+        10px !important;
+}
+
+.tamar-hierarchy-entity-v3
+.pt-4 > button {
+    height:
+        38px !important;
+
+    border-radius:
+        11px !important;
+}
+
+/* =========================================================
+   DETAILS PANEL — COMPACT, NOT A FULL EMPTY COLUMN
+========================================================= */
+
+.tamar-hierarchy-guidance-v3 {
+    position:
+        sticky !important;
+
+    top:
+        12px !important;
+
+    align-self:
+        start !important;
+
+    width:
+        100% !important;
+
+    height:
+        auto !important;
+
+    min-height:
+        0 !important;
+
+    max-height:
+        calc(100vh - 230px) !important;
+
+    padding:
+        15px !important;
+
+    border:
+        1px solid
+        var(--color-border) !important;
+
+    border-radius:
+        18px !important;
+
+    background:
+        var(--color-surface-raised) !important;
+
+    box-shadow:
+        0 8px 24px
+        rgba(15,23,42,.05) !important;
+
+    overflow:
+        auto !important;
+}
+
+.tamar-hierarchy-guidance-v3
+> div:first-child {
+    padding-bottom:
+        12px !important;
+}
+
+.tamar-hierarchy-guidance-v3
+h2 {
+    margin-top:
+        7px !important;
+
+    font-size:
+        19px !important;
+
+    line-height:
+        1.25 !important;
+}
+
+.tamar-hierarchy-guidance-v3
+.mt-4.grid {
+    margin-top:
+        12px !important;
+
+    gap:
+        8px !important;
+}
+
+.tamar-hierarchy-guidance-v3
+.mt-4.grid > div {
+    padding:
+        10px 11px !important;
+
+    border:
+        1px solid
+        var(--color-border) !important;
+
+    border-radius:
+        12px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-surface-muted) 70%,
+            var(--color-surface-raised)
+        ) !important;
+}
+
+.tamar-hierarchy-guidance-v3
+.mt-4.rounded-xl {
+    margin-top:
+        10px !important;
+
+    padding:
+        11px !important;
+
+    border-color:
+        var(--color-border) !important;
+
+    font-size:
+        11px !important;
+
+    line-height:
+        1.55 !important;
+}
+
+/* =========================================================
+   FOOTER ACTIONS + DARK MODE — ONE ROW
+========================================================= */
+
+.tamar-hierarchy-footer-actions {
+    display:
+        flex !important;
+
+    flex-wrap:
+        nowrap !important;
+
+    align-items:
+        center !important;
+
+    gap:
+        8px !important;
+
+    margin-top:
+        16px !important;
+
+    padding-top:
+        13px !important;
+
+    border-top:
+        1px solid
+        var(--color-border);
+}
+
+.tamar-hierarchy-footer-actions
+> button {
+    min-width:
+        0 !important;
+
+    height:
+        40px !important;
+
+    flex:
+        1 1 0 !important;
+
+    padding-inline:
+        10px !important;
+
+    border-radius:
+        11px !important;
+
+    font-size:
+        11px !important;
+}
+
+.tamar-hierarchy-inline-theme {
+    position:
+        relative;
+
+    display:
+        flex;
+
+    flex:
+        0 0 auto;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+}
+
+.tamar-hierarchy-inline-theme
+.theme-control {
+    position:
+        static !important;
+}
+
+.tamar-hierarchy-inline-theme
+.theme-control__buttons {
+    display:
+        inline-flex !important;
+
+    flex-direction:
+        row !important;
+
+    flex-wrap:
+        nowrap !important;
+
+    height:
+        40px !important;
+
+    overflow:
+        hidden !important;
+
+    border:
+        1px solid
+        var(--color-border-strong) !important;
+
+    border-radius:
+        11px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-surface-muted) 76%,
+            var(--color-surface-raised)
+        ) !important;
+
+    box-shadow:
+        none !important;
+}
+
+.tamar-hierarchy-inline-theme
+.theme-control__toggle,
+
+.tamar-hierarchy-inline-theme
+.theme-control__menu-button {
+    display:
+        inline-flex !important;
+
+    width:
+        39px !important;
+
+    min-width:
+        39px !important;
+
+    height:
+        39px !important;
+
+    flex:
+        0 0 39px !important;
+
+    align-items:
+        center !important;
+
+    justify-content:
+        center !important;
+
+    margin:
+        0 !important;
+
+    border-radius:
+        0 !important;
+}
+
+.tamar-hierarchy-inline-theme
+.theme-control__menu-button {
+    border-inline-end:
+        1px solid
+        var(--color-border) !important;
+}
+
+.tamar-hierarchy-inline-theme
+.theme-control__menu {
+    left:
+        auto !important;
+
+    right:
+        0 !important;
+
+    top:
+        auto !important;
+
+    bottom:
+        calc(100% + 8px) !important;
+}
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+[data-theme="dark"]
+.tamar-hierarchy-brandbar-v4 {
+    background:
+        linear-gradient(
+            118deg,
+            #0e1d36 0%,
+            #142c4f 52%,
+            #1c3b68 100%
+        ) !important;
+}
+
+[data-theme="dark"]
+.tamar-hierarchy-entity-v3,
+
+[data-theme="dark"]
+.tamar-hierarchy-guidance-v3,
+
+[data-theme="dark"]
+.tamar-hierarchy-toolbar-v3 {
+    box-shadow:
+        var(--shadow-card) !important;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 720px) {
+    .tamar-hierarchy-brandbar-v4 {
+        min-height:
+            76px !important;
+
+        flex-basis:
+            76px !important;
+
+        padding:
+            13px 16px !important;
+
+        border-radius:
+            0 0 20px 20px !important;
+    }
+
+    .tamar-hierarchy-brandbar-v4__logo {
+        font-size:
+            22px !important;
+    }
+
+    .tamar-hierarchy-context-v3 {
+        display:
+            none !important;
+    }
+
+    .tamar-hierarchy-guidance-v3 {
+        position:
+            static !important;
+
+        max-height:
+            none !important;
+    }
+
+    .tamar-hierarchy-footer-actions {
+        flex-wrap:
+            wrap !important;
+    }
+
+    .tamar-hierarchy-inline-theme {
+        margin-inline-start:
+            auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tamar-hierarchy-entity-v3 {
+        transition:
+            none !important;
+    }
+}
+
+/* tamar-hierarchy-professional:v5:end */
+
+/* tamar-dashboard-polish:v4:start */
+
+/* =========================================================
+   דורש טיפול מיידי
+   Center only the empty-state body.
+========================================================= */
+
+.tamar-v22-attention-card,
+.tamar-reference-attention-card {
+    position: relative !important;
+}
+
+.tamar-attention-empty-v4 {
+    position: absolute !important;
+
+    top: 54px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    left: 12px !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: auto !important;
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 16px !important;
+
+    text-align: center !important;
+
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+
+    color: var(--color-text-muted) !important;
+}
+
+/* =========================================================
+   עומס עבודה בצוות
+   Slightly shorter / cleaner employee card.
+========================================================= */
+
+.tamar-v22-workload-card
+.tamar-workload-person-v4,
+
+.tamar-reference-workload-card
+.tamar-workload-person-v4 {
+    min-height: 56px !important;
+
+    padding:
+        6px 10px !important;
+
+    border-radius:
+        12px !important;
+}
+
+/* Tighten common large paddings inside each employee. */
+.tamar-workload-person-v4
+:where(
+    [class*="py-3"],
+    [class*="py-4"]
+) {
+    padding-top:
+        5px !important;
+
+    padding-bottom:
+        5px !important;
+}
+
+/* Avatar should not determine the height of the entire row. */
+.tamar-workload-person-v4
+:where(
+    [class*="h-12"][class*="w-12"],
+    [class*="h-11"][class*="w-11"]
+) {
+    width:
+        36px !important;
+
+    height:
+        36px !important;
+
+    min-width:
+        36px !important;
+}
+
+/* =========================================================
+   Workload graph / baseline
+   No JSX hook necessary.
+
+   Detect the neutral rounded track by the fact that it contains
+   a child whose width is calculated inline by React.
+========================================================= */
+
+.tamar-workload-person-v4
+[class*="rounded-full"]:has(> [style*="width"]) {
+    height:
+        7px !important;
+
+    min-height:
+        7px !important;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--color-text-muted) 34%,
+            var(--color-surface-muted)
+        ) !important;
+
+    box-shadow:
+        inset 0 0 0 1px
+        color-mix(
+            in srgb,
+            var(--color-text-muted) 18%,
+            transparent
+        ) !important;
+
+    opacity:
+        1 !important;
+}
+
+/* The calculated/colored portion keeps the same 7px geometry. */
+.tamar-workload-person-v4
+[class*="rounded-full"]:has(> [style*="width"])
+> [style*="width"] {
+    min-height:
+        7px !important;
+
+    height:
+        7px !important;
+}
+
+/*
+ * Fallback for versions where the neutral bar has no inline-width
+ * child but still uses a Tailwind rounded-full background class.
+ */
+.tamar-workload-person-v4
+[class*="rounded-full"][class*="bg-slate"],
+
+.tamar-workload-person-v4
+[class*="rounded-full"][class*="bg-gray"] {
+    background:
+        color-mix(
+            in srgb,
+            var(--color-text-muted) 34%,
+            var(--color-surface-muted)
+        ) !important;
+
+    box-shadow:
+        inset 0 0 0 1px
+        color-mix(
+            in srgb,
+            var(--color-text-muted) 18%,
+            transparent
+        ) !important;
+}
+
+/* Dark mode */
+[data-theme="dark"]
+.tamar-workload-person-v4
+[class*="rounded-full"]:has(> [style*="width"]),
+
+html.dark
+.tamar-workload-person-v4
+[class*="rounded-full"]:has(> [style*="width"]) {
+    background:
+        color-mix(
+            in srgb,
+            var(--color-text-secondary) 38%,
+            var(--color-surface-muted)
+        ) !important;
+
+    box-shadow:
+        inset 0 0 0 1px
+        color-mix(
+            in srgb,
+            var(--color-text-secondary) 22%,
+            transparent
+        ) !important;
+}
+
+/* tamar-dashboard-polish:v4:end */
+
+/* tamar-dashboard-polish:v5:start */
+
+/* =========================================================
+   דורש טיפול מיידי — true center
+========================================================= */
+
+.tamar-v22-attention-card,
+.tamar-reference-attention-card {
+    position: relative !important;
+}
+
+.tamar-v22-attention-card
+.tamar-attention-empty-v5,
+
+.tamar-reference-attention-card
+.tamar-attention-empty-v5 {
+    position: absolute !important;
+
+    top: 58px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+
+    display: grid !important;
+    place-items: center !important;
+
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 20px !important;
+
+    text-align: center !important;
+
+    font-size: 12px !important;
+    font-weight: 600 !important;
+
+    color: var(--color-text-muted) !important;
+
+    pointer-events: none !important;
+}
+
+/* =========================================================
+   עומס עבודה — shorter employee block
+========================================================= */
+
+.tamar-v22-workload-card
+.tamar-workload-person-v5,
+
+.tamar-reference-workload-card
+.tamar-workload-person-v5 {
+    min-height: 54px !important;
+
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    padding-inline: 10px !important;
+
+    border-radius: 12px !important;
+}
+
+/* If the row itself has a hard min-height from Tailwind */
+.tamar-workload-person-v5[class*="min-h-"] {
+    min-height: 54px !important;
+}
+
+/* Compact the most common large inner paddings */
+.tamar-workload-person-v5
+:where(
+    [class~="p-4"],
+    [class~="py-4"],
+    [class~="py-3"]
+) {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
+/* Smaller avatar only when it is one of the oversized versions */
+.tamar-workload-person-v5
+:where(
+    [class~="h-12"][class~="w-12"],
+    [class~="h-11"][class~="w-11"]
+) {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+}
+
+/* =========================================================
+   Workload baseline
+   Target ONLY thin rounded tracks, not avatars.
+========================================================= */
+
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-1"],
+
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-1.5"],
+
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-2"],
+
+.tamar-reference-workload-card
+[class~="rounded-full"][class~="h-1"],
+
+.tamar-reference-workload-card
+[class~="rounded-full"][class~="h-1.5"],
+
+.tamar-reference-workload-card
+[class~="rounded-full"][class~="h-2"] {
+    height: 7px !important;
+    min-height: 7px !important;
+
+    background:
+        #d4d8df !important;
+
+    box-shadow:
+        inset 0 0 0 1px
+        #c7ccd4 !important;
+
+    opacity: 1 !important;
+}
+
+/*
+ * The colored child of the track remains visible.
+ * Its existing blue/red background is intentionally not changed.
+ */
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-1"]
+> *,
+
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-1.5"]
+> *,
+
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-2"]
+> * {
+    min-height: 7px !important;
+}
+
+/* Dark mode */
+[data-theme="dark"]
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-1"],
+
+[data-theme="dark"]
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-1.5"],
+
+[data-theme="dark"]
+.tamar-v22-workload-card
+[class~="rounded-full"][class~="h-2"] {
+    background:
+        #475569 !important;
+
+    box-shadow:
+        inset 0 0 0 1px
+        #64748b !important;
+}
+
+/* tamar-dashboard-polish:v5:end */
+
+/* tamar-workload-track-stronger:v1:start */
+
+/*
+ * Workload graph rail:
+ * keep the same geometry, only increase visual contrast.
+ */
+
+/* Current compact employee row */
+.tamar-workload-person-v5
+:where(
+    [class~="rounded-full"][class~="h-1"],
+    [class~="rounded-full"][class~="h-1.5"],
+    [class~="rounded-full"][class~="h-2"]
+),
+
+/* Fallback for other current Workload versions */
+.tamar-v22-workload-card
+:where(
+    [class~="rounded-full"][class~="h-1"],
+    [class~="rounded-full"][class~="h-1.5"],
+    [class~="rounded-full"][class~="h-2"]
+),
+
+.tamar-reference-workload-card
+:where(
+    [class~="rounded-full"][class~="h-1"],
+    [class~="rounded-full"][class~="h-1.5"],
+    [class~="rounded-full"][class~="h-2"]
+) {
+    background: #c6ccd5 !important;
+
+    box-shadow:
+        inset 0 0 0 1px #b9c1cc !important;
+
+    opacity: 1 !important;
+}
+
+/* Slightly clearer edge without making the graph chunky */
+.tamar-workload-person-v5
+:where(
+    [class~="rounded-full"][class~="h-1"],
+    [class~="rounded-full"][class~="h-1.5"],
+    [class~="rounded-full"][class~="h-2"]
+) {
+    min-height: 6px !important;
+}
+
+/* Dark mode */
+[data-theme="dark"]
+.tamar-workload-person-v5
+:where(
+    [class~="rounded-full"][class~="h-1"],
+    [class~="rounded-full"][class~="h-1.5"],
+    [class~="rounded-full"][class~="h-2"]
+),
+
+[data-theme="dark"]
+.tamar-v22-workload-card
+:where(
+    [class~="rounded-full"][class~="h-1"],
+    [class~="rounded-full"][class~="h-1.5"],
+    [class~="rounded-full"][class~="h-2"]
+) {
+    background: #526174 !important;
+
+    box-shadow:
+        inset 0 0 0 1px #64748b !important;
+}
+
+/* tamar-workload-track-stronger:v1:end */
+
+/* tamar-sidebar-clean-nav:v3:start */
+
+/* =========================================================
+   Sidebar — one navigation list
+========================================================= */
+
+.tamar-sidebar-default-nav-v3 {
+    position: relative;
+
+    display: flex !important;
+
+    min-height: 0 !important;
+
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
+/*
+ * Prevent older V22 patches from recreating
+ * "ראשי" / "כללי" through pseudo elements.
+ */
+.tamar-sidebar-default-nav-v3::before,
+.tamar-sidebar-default-nav-v3::after,
+
+.tamar-sidebar-default-nav-v3
+.tamar-reference-sidebar-nav::before,
+
+.tamar-sidebar-default-nav-v3
+.tamar-reference-sidebar-nav::after {
+    content: none !important;
+
+    display: none !important;
+}
+
+/* =========================================================
+   Back to rooms
+   Separate navigation action ABOVE the tabs
+========================================================= */
+
+.tamar-sidebar-back-action-v3 {
+    display: inline-flex !important;
+
+    width: fit-content !important;
+    max-width: 100% !important;
+
+    min-height: 36px !important;
+
+    flex: 0 0 auto !important;
+
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    gap: 7px !important;
+
+    margin:
+        0 2px 15px auto !important;
+
+    padding:
+        7px 9px !important;
+
+    border:
+        0 !important;
+
+    border-radius:
+        10px !important;
+
+    background:
+        transparent !important;
+
+    color:
+        var(--color-text-secondary) !important;
+
+    font-size:
+        12px !important;
+
+    font-weight:
+        600 !important;
+
+    box-shadow:
+        none !important;
+
+    transition:
+        color 150ms ease,
+        background-color 150ms ease !important;
+}
+
+.tamar-sidebar-back-action-v3:hover {
+    color:
+        var(--color-primary) !important;
+
+    background:
+        var(--color-primary-soft) !important;
+}
+
+.tamar-sidebar-back-action-v3:focus-visible {
+    outline:
+        none !important;
+
+    box-shadow:
+        0 0 0 2px
+        var(--color-focus) !important;
+}
+
+/* =========================================================
+   Navigation list
+========================================================= */
+
+.tamar-sidebar-nav-items-v3 {
+    display: flex !important;
+
+    min-height: 0 !important;
+
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+
+    /*
+     * A little more air than before,
+     * without making the sidebar too tall.
+     */
+    gap:
+        9px !important;
+}
+
+/* Keep each tab compact and consistent. */
+.tamar-sidebar-nav-items-v3
+.tamar-v22-sidebar-item {
+    min-height:
+        43px !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        9px 12px !important;
+}
+
+/* Disable older my-1 / adjacent-margin behavior. */
+.tamar-sidebar-nav-items-v3
+.tamar-v22-sidebar-item
++ .tamar-v22-sidebar-item {
+    margin-top:
+        0 !important;
+}
+
+/*
+ * Do NOT remove the ::after from individual active items:
+ * it is the blue active stripe.
+ */
+
+/* Dark mode */
+[data-theme="dark"]
+.tamar-sidebar-back-action-v3 {
+    color:
+        var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"]
+.tamar-sidebar-back-action-v3:hover {
+    color:
+        var(--color-primary) !important;
+
+    background:
+        var(--color-primary-soft) !important;
+}
+
+/* Smaller displays */
+@media (max-height: 760px) {
+    .tamar-sidebar-nav-items-v3 {
+        gap:
+            6px !important;
+    }
+
+    .tamar-sidebar-nav-items-v3
+    .tamar-v22-sidebar-item {
+        min-height:
+            40px !important;
+
+        padding-top:
+            7px !important;
+
+        padding-bottom:
+            7px !important;
+    }
+
+    .tamar-sidebar-back-action-v3 {
+        margin-bottom:
+            10px !important;
+    }
+}
+
+/* tamar-sidebar-clean-nav:v3:end */

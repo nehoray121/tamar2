@@ -1,0 +1,32 @@
+[
+  {
+    "path": "src/styles.css",
+    "sha256Before": "c303312cd21d0c01261d52f754ab5588848efb43bafeebaf7a56b6fbdc3820e9",
+    "backupPath": ".tamar-backups/tamar-v22-dashboard-and-sidebar-v4-2026-08-19T14-43-53-439Z/src/styles.css"
+  },
+  {
+    "path": "src/components/layout/AppShell.jsx",
+    "sha256Before": "1501f12bd3db5666739d73ab0247a8e38c53d038dd255c7d19ed5fd191ed693a",
+    "backupPath": ".tamar-backups/tamar-v22-dashboard-and-sidebar-v4-2026-08-19T14-43-53-439Z/src/components/layout/AppShell.jsx"
+  },
+  {
+    "path": "src/features/dashboard/components/DashboardHeader.jsx",
+    "sha256Before": "7aa8f1000974802439aefde42c385d9204cbd093baa7539e9bf279fd06701f97",
+    "backupPath": ".tamar-backups/tamar-v22-dashboard-and-sidebar-v4-2026-08-19T14-43-53-439Z/src/features/dashboard/components/DashboardHeader.jsx"
+  },
+  {
+    "path": "src/features/dashboard/components/PeriodicBarChart.jsx",
+    "sha256Before": "d20e4c509acffb50e01546ec44c19e1c96a36365288906a84b121b3f3d98c241",
+    "backupPath": ".tamar-backups/tamar-v22-dashboard-and-sidebar-v4-2026-08-19T14-43-53-439Z/src/features/dashboard/components/PeriodicBarChart.jsx"
+  },
+  {
+    "path": "src/features/dashboard/components/UrgencyDonutChart.jsx",
+    "sha256Before": "5fb31d5e97973774eb1185a5cb8d8bd91c67d9818e4b6c7c979bee60c0cec736",
+    "backupPath": ".tamar-backups/tamar-v22-dashboard-and-sidebar-v4-2026-08-19T14-43-53-439Z/src/features/dashboard/components/UrgencyDonutChart.jsx"
+  },
+  {
+    "path": "src/pages/DashboardPage/DashboardPage.jsx",
+    "sha256Before": "11115743ebff46de464bbc69f207b47bef18b54369aca9c579ca1a2052c6ab1b",
+    "backupPath": ".tamar-backups/tamar-v22-dashboard-and-sidebar-v4-2026-08-19T14-43-53-439Z/src/pages/DashboardPage/DashboardPage.jsx"
+  }
+]

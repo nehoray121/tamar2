@@ -1,0 +1,14 @@
+{
+  "package": "tamardashboardfieldcategories-v4-runtimefix",
+  "root": "C:\\Users\\nehor\\Desktop\\tamar",
+  "files": [
+    {
+      "path": "tamar-server/src/services/analytics/AnalyticsService.js",
+      "beforeSha256": "3766a82a5ece35f40ec6aeeb484891ba35411d472aef7260747a02ced133d1c1"
+    },
+    {
+      "path": "tamar-server/tests/tamar-dashboard-dynamic-categories.unit.test.js",
+      "beforeSha256": "7b6a07c273846b6745e1e1d7895f68bc1865299676449bdbaceea8a23b811f2d"
+    }
+  ]
+}

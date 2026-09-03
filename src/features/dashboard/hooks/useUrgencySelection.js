@@ -7,49 +7,94 @@ const DONUT_COLOR_PALETTE = [
     '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#14B8A6'
 ];
 
-export function useUrgencySelection({ donutSource, prioritySource = [], expandedSection, now }) {
+export function useUrgencySelection({ donutSource, prioritySource = [], distributionGroups = null, expandedSection, now }) {
     const [selectedDonutCategoryId, setSelectedDonutCategoryId] = useState(null);
     const [donutCategoryPage, setDonutCategoryPage] = useState(0);
     const [donutInquiryPage, setDonutInquiryPage] = useState(0);
 
     const allPriorityData = useMemo(() => {
-        if (prioritySource.length) {
-            return prioritySource.filter((item) => item.value > 0).map((item, index) => ({
-                label: item.label,
-                rawLabel: item.rawLabel || item.label,
-                value: item.value,
-                color: item.color || DONUT_COLOR_PALETTE[index % DONUT_COLOR_PALETTE.length],
-                priorityLevel: index
-            }));
+        if (Array.isArray(distributionGroups)) {
+            return distributionGroups
+                .map((group, index) => {
+                    const label = String(
+                        group?.label
+                        || group?.name
+                        || 'ללא ערך'
+                    ).trim() || 'ללא ערך';
+
+                    return {
+                        label,
+                        rawLabel: label,
+                        value: Number(
+                            group?.total
+                            ?? group?.value
+                            ?? 0
+                        ),
+                        color: group?.color
+                            || DONUT_COLOR_PALETTE[
+                                index % DONUT_COLOR_PALETTE.length
+                            ],
+                        priorityLevel: index,
+                        items: Array.isArray(group?.items)
+                            ? group.items
+                            : []
+                    };
+                })
+                .filter((item) => item.value > 0);
         }
+
+        if (prioritySource.length) {
+            return prioritySource
+                .filter((item) => item.value > 0)
+                .map((item, index) => ({
+                    label: item.label,
+                    rawLabel: item.rawLabel || item.label,
+                    value: item.value,
+                    color: item.color
+                        || DONUT_COLOR_PALETTE[
+                            index % DONUT_COLOR_PALETTE.length
+                        ],
+                    priorityLevel: index
+                }));
+        }
+
         const grouped = new Map();
 
         donutSource.forEach((item) => {
             const label = item.priority || 'לא מסווג';
-            const knownPriority = undefined;
             const current = grouped.get(label) || {
                 label,
                 rawLabel: label,
                 value: 0,
-                color: item.chartColor || knownPriority?.chartColor || '',
-                priorityLevel: item.priorityLevel ?? knownPriority?.priorityLevel ?? knownPriority?.level ?? 999
+                color: item.chartColor || '',
+                priorityLevel: item.priorityLevel ?? 999
             };
 
             current.value += 1;
-            current.color = current.color || item.chartColor || knownPriority?.chartColor || '';
-            current.priorityLevel = Math.min(current.priorityLevel, item.priorityLevel ?? knownPriority?.priorityLevel ?? knownPriority?.level ?? 999);
+            current.color = current.color || item.chartColor || '';
+            current.priorityLevel = Math.min(
+                current.priorityLevel,
+                item.priorityLevel ?? 999
+            );
             grouped.set(label, current);
         });
 
         return Array.from(grouped.values())
             .filter((item) => item.value > 0)
-            .sort((a, b) => b.value - a.value || a.priorityLevel - b.priorityLevel || a.label.localeCompare(b.label, 'he'))
+            .sort(
+                (a, b) =>
+                    b.value - a.value
+                    || a.priorityLevel - b.priorityLevel
+                    || a.label.localeCompare(b.label, 'he')
+            )
             .map((item, index) => ({
                 ...item,
-                color: item.color || DONUT_COLOR_PALETTE[index % DONUT_COLOR_PALETTE.length]
+                color: item.color
+                    || DONUT_COLOR_PALETTE[
+                        index % DONUT_COLOR_PALETTE.length
+                    ]
             }));
-    }, [donutSource, prioritySource]);
-
+    }, [distributionGroups, donutSource, prioritySource]);
     const priorityData = useMemo(() => allPriorityData.slice(0, DONUT_MAX_VISIBLE_CATEGORIES), [allPriorityData]);
     const totalDonutInquiries = useMemo(() => allPriorityData.reduce((sum, item) => sum + item.value, 0), [allPriorityData]);
     const hiddenDonutCategoryCount = Math.max(0, allPriorityData.length - priorityData.length);
@@ -59,10 +104,24 @@ export function useUrgencySelection({ donutSource, prioritySource = [], expanded
         const total = totalDonutInquiries;
 
         return priorityData.map((item) => {
-            const inquiriesByCategory = donutSource
-                .filter((inquiry) => (inquiry.priority || 'לא מסווג') === item.rawLabel)
-                .sort((a, b) => (a.priorityLevel ?? 999) - (b.priorityLevel ?? 999) || b.date.localeCompare(a.date));
-            const percentage = total > 0 ? (item.value / total) * 100 : 0;
+
+            const inquiriesByCategory = (
+                Array.isArray(item.items)
+                    ? [...item.items]
+                    : donutSource.filter(
+                        (inquiry) =>
+                            (inquiry.priority || 'לא מסווג')
+                            === item.rawLabel
+                    )
+            ).sort(
+                (a, b) =>
+                    (a.priorityLevel ?? 999)
+                    - (b.priorityLevel ?? 999)
+                    || String(b.date || '').localeCompare(
+                        String(a.date || '')
+                    )
+            );
+const percentage = total > 0 ? (item.value / total) * 100 : 0;
 
             return {
                 ...item,

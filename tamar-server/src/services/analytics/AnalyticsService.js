@@ -34,6 +34,49 @@ const dateLabel = (value) => {
 };
 const paginationDefaults = Object.freeze({ page: 1, limit: 25, totalItems: 0, totalPages: 0, hasNext: false, hasPrevious: false });
 
+// tamar-dashboard-dynamic-category-aggregation:v1
+const dashboardCategoryPipeline = (groupField, summaryShape) => {
+    // tamar-dashboard-empty-category-pipeline-runtime-fix:v1
+    if (!groupField) return [{ $match: { $expr: { $eq: [1, 0] } } }];
+    const valueExpression = groupField === 'priority' ? '$priority' : `$fieldValues.${groupField}`;
+    return [
+        { $set: { __dashboardGroupValue: valueExpression } },
+        { $set: {
+            __dashboardGroupValues: {
+                $cond: [
+                    { $isArray: '$__dashboardGroupValue' },
+                    '$__dashboardGroupValue',
+                    ['$__dashboardGroupValue']
+                ]
+            }
+        } },
+        { $unwind: { path: '$__dashboardGroupValues', preserveNullAndEmptyArrays: true } },
+        { $set: {
+            __dashboardGroupLabel: {
+                $let: {
+                    vars: {
+                        normalized: {
+                            $trim: {
+                                input: {
+                                    $convert: {
+                                        input: '$__dashboardGroupValues',
+                                        to: 'string',
+                                        onError: '',
+                                        onNull: ''
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    in: { $cond: [{ $eq: ['$$normalized', ''] }, 'ללא ערך', '$$normalized'] }
+                }
+            }
+        } },
+        { $group: { _id: '$__dashboardGroupLabel', total: { $sum: 1 }, items: { $push: summaryShape } } },
+        { $sort: { total: -1, _id: 1 } }
+    ];
+};
+
 class AnalyticsService {
     constructor({ organization, scopeResolver, userManagementService }) {
         Object.assign(this, { organization, scopeResolver, userManagementService });
@@ -72,10 +115,10 @@ class AnalyticsService {
         const roomIds = access.roomIds.map(oid);
         const visibility = [];
         if (superSystems.length) visibility.push({ systemId: { $in: superSystems } });
-        if (roomIds.length) visibility.push({ visibleRoomIds: { $in: roomIds } });
+        if (roomIds.length) visibility.push({ currentRoomId: { $in: roomIds } });
         const conditions = [{ $or: visibility.length ? visibility : [{ _id: null }] }];
         for (const field of ['systemId', 'environmentId', 'subEnvironmentId']) if (query[field]) conditions.push({ [field]: oid(query[field]) });
-        if (query.roomId) conditions.push({ visibleRoomIds: oid(query.roomId) });
+        if (query.roomId) conditions.push({ currentRoomId: oid(query.roomId) });
         if (query.assigneeId) conditions.push({ activeAssigneeIds: oid(query.assigneeId) });
         if (query.dateFrom || query.dateTo) conditions.push({ createdAt: {
             ...(query.dateFrom ? { $gte: query.dateFrom } : {}), ...(query.dateTo ? { $lte: query.dateTo } : {})
@@ -97,6 +140,7 @@ class AnalyticsService {
         const summaryShape = Object.fromEntries(
             Object.keys(summaryProjection).map((field) => [field, `$${field}`])
         );
+        const categoryTrendPipeline = dashboardCategoryPipeline(query.groupField, summaryShape);
         const [facet = {}] = await Ticket.aggregate([
             { $match: match },
             { $facet: {
@@ -116,6 +160,7 @@ class AnalyticsService {
                     { $group: { _id: periodExpression(grouping), total: { $sum: 1 }, items: { $push: summaryShape } } },
                     { $sort: { _id: 1 } }
                 ],
+                categoryTrend: categoryTrendPipeline,
                 openedTrend: [
                     { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'Asia/Jerusalem' } }, value: { $sum: 1 } } },
                     { $sort: { _id: 1 } }
@@ -175,13 +220,57 @@ class AnalyticsService {
         const activityByDate = new Map();
         (facet.openedTrend || []).forEach((item) => activityByDate.set(item._id, { label: item._id, opened: item.value, closed: 0 }));
         (facet.closedTrend || []).forEach((item) => activityByDate.set(item._id, { ...(activityByDate.get(item._id) || { label: item._id, opened: 0 }), closed: item.value }));
+        let workloadRows = facet.workload || [];
+        if (query.roomId) {
+            const roomMemberships = await OrganizationMembership.find({
+                roomId: oid(query.roomId),
+                isActive: true,
+                role: ROLES.ROOM_USER
+            }).select('userId').lean().exec();
+
+            const roomUserIds = [...new Set(
+                roomMemberships
+                    .map((membership) => String(membership.userId || ''))
+                    .filter(Boolean)
+            )];
+
+            const roomUsers = roomUserIds.length
+                ? await User.find({
+                    _id: { $in: roomUserIds.map(oid) },
+                    isActive: true
+                }).select('_id displayName').lean().exec()
+                : [];
+
+            const workloadByUserId = new Map(
+                workloadRows.map((row) => [String(row.userId || row._id || ''), row])
+            );
+
+            workloadRows = roomUsers
+                .map((user) => {
+                    const userId = String(user._id);
+                    const workload = workloadByUserId.get(userId);
+                    return {
+                        userId,
+                        name: user.displayName,
+                        total: workload?.total || 0,
+                        urgent: workload?.urgent || 0
+                    };
+                })
+                .sort((left, right) => (
+                    right.total - left.total
+                    || right.urgent - left.urgent
+                    || String(left.name || '').localeCompare(String(right.name || ''), 'he')
+                ));
+        }
+
         return {
             definitions: { overdueHours: OVERDUE_HOURS, recentlyHandledDays: RECENTLY_HANDLED_DAYS, urgentPriorities: ['HIGH', 'CRITICAL'] },
             metrics,
             trend: (facet.trend || []).map((entry) => ({ label: entry._id, sortKey: entry._id, total: entry.total, items: (entry.items || []).map(toInquiry) })),
+            categoryTrend: (facet.categoryTrend || []).map((entry) => ({ label: entry._id, sortKey: entry._id, total: entry.total, items: (entry.items || []).map(toInquiry) })),
             activityTrend: [...activityByDate.values()].sort((a, b) => a.label.localeCompare(b.label)),
             priorityData: (facet.priorities || []).map((item) => ({ key: item._id, label: priorityLabels[item._id] || item._id, rawLabel: uiPriorityLabels[item._id] || item._id, value: item.value, color: priorityColors[item._id] || '#64748B' })),
-            workload: facet.workload || [], attention: (facet.attention || []).map(toInquiry),
+            workload: workloadRows, attention: (facet.attention || []).map(toInquiry),
             inquiries: (facet.inquiries || []).map(toInquiry), loads: {
                 environments: facet.environmentLoad || [], subEnvironments: facet.subEnvironmentLoad || [], rooms: facet.roomLoad || []
             }, access
@@ -232,12 +321,22 @@ class AnalyticsService {
         for (const field of ['systemId', 'environmentId', 'subEnvironmentId']) if (query[field]) scopeConditions.push({ [field]: oid(query[field]) });
         if (query.roomId) scopeConditions.push({ roomId: oid(query.roomId) });
         const historyFilter = scopeConditions.length ? { $and: scopeConditions } : { systemId: { $in: analytics.access.systemIds.map(oid) } };
-        const auditEvents = await TicketHistory.find(historyFilter).sort({ createdAt: -1 }).limit(100).lean().exec();
+        const auditEvents = await TicketHistory.find(historyFilter)
+    .populate('actorUserId', 'displayName email')
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .lean()
+    .exec();
         const checks = [];
         if (analytics.metrics.unassigned) checks.push({ id: 'unassigned', severity: 'critical', category: 'תפעול', title: 'פניות ללא מטפל', entity: 'היקף נבחר', explanation: `${analytics.metrics.unassigned} פניות פתוחות ללא שיוך`, detectedAt: 'כעת', action: 'פתח פניות' });
         if (analytics.metrics.overdue) checks.push({ id: 'overdue', severity: 'warning', category: 'תפעול', title: 'פניות באיחור', entity: 'היקף נבחר', explanation: `${analytics.metrics.overdue} פניות פתוחות מעל ${OVERDUE_HOURS} שעות`, detectedAt: 'כעת', action: 'פתח פניות' });
         const activeUsers = userData.items.filter((user) => user.isActive).length;
-        const managerCount = userData.items.filter((user) => [ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN, ROLES.ROOM_MANAGER].includes(user.primaryRole)).length;
+        const managerCount = userData.items.filter((user) => [
+    ROLES.SUPER_ADMIN,
+    ROLES.ENVIRONMENT_ADMIN,
+    ROLES.SYSTEM_ADMIN,
+    ROLES.ROOM_MANAGER
+].includes(user.primaryRole)).length;
         const scopeLabel = [
             organization.environments.find((item) => item.id === query.environmentId)?.name,
             organization.subEnvironments.find((item) => item.id === query.subEnvironmentId)?.name,
@@ -284,10 +383,26 @@ class AnalyticsService {
                 ]
             },
             checks,
-            auditEvents: auditEvents.map((event) => ({ id: String(event._id), type: event.eventType, action: event.eventType, actor: String(event.actorUserId), timestamp: event.createdAt, date: new Intl.DateTimeFormat('he-IL', { dateStyle: 'short', timeStyle: 'short' }).format(event.createdAt), result: 'הושלם', entity: event.ticketNumber, scope: String(event.roomId), details: event.changedFields.join(', ') }))
+            auditEvents: auditEvents.map((event) => ({
+    id: String(event._id),
+    type: event.eventType,
+    action: event.eventType,
+    actor: event.actorUserId?.displayName
+        || String(event.actorUserId?._id || event.actorUserId),
+    timestamp: event.createdAt,
+    date: new Intl.DateTimeFormat('he-IL', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+    }).format(event.createdAt),
+    result: 'הושלם',
+    entity: event.ticketNumber,
+    scope: String(event.roomId),
+    details: event.changedFields.join(', ')
+}))
         };
     }
 }
 
 module.exports = AnalyticsService;
 module.exports.METRIC_DEFINITIONS = { OVERDUE_HOURS, RECENTLY_HANDLED_DAYS };
+module.exports.dashboardCategoryPipeline = dashboardCategoryPipeline;

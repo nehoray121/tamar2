@@ -251,10 +251,11 @@ class TicketTransferService {
     }
 
     async cancel(userId, transferId, expectedVersion, reason) {
-        const result = await this.transactionRunner.run(async (session) => {
-            const access = await this.authorizationService.resolveAccess(userId, { session });
-            const transfer = await this.transferRepository.findById(transferId, { session });
-            if (!transfer || !this.transferAuthorizationService.canViewDestination(access, transfer)) throw transferNotFound();
+    const result = await this.transactionRunner.run(async (session) => {
+        const access = await this.authorizationService.resolveAccess(userId, { session });
+        const transfer = await this.transferRepository.findById(transferId, { session });
+        if (!transfer || !this.transferAuthorizationService.canView(access, transfer)) throw transferNotFound();
+
             if (transfer.status !== TRANSFER_STATUSES.PENDING_ACCEPTANCE) {
                 throw transferError(409, 'TRANSFER_NOT_PENDING', 'Transfer is no longer pending');
             }

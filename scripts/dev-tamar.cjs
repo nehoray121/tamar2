@@ -1,11 +1,12 @@
 const { randomBytes } = require('node:crypto');
-const { spawn, spawnSync } = require('node:child_process');
+const { spawn, spawnSync, execFileSync } = require('node:child_process');
 const { createServer } = require('node:net');
 const fs = require('node:fs');
 const path = require('node:path');
 
 const projectRoot = path.resolve(__dirname, '..');
 const backendRoot = path.join(projectRoot, 'tamar-server');
+
 const readPort = (name, fallback) => {
     const value = Number.parseInt(process.env[name] || String(fallback), 10);
     if (!Number.isInteger(value) || value < 1 || value > 65535) {
@@ -13,9 +14,10 @@ const readPort = (name, fallback) => {
     }
     return value;
 };
+
 const localAuthPort = readPort('TAMAR_DEV_LOCAL_AUTH_PORT', 4100);
 const backendPort = readPort('TAMAR_DEV_BACKEND_PORT', 4000);
-const frontendPort = readPort('TAMAR_DEV_FRONTEND_PORT', 5174);
+const frontendPort = readPort('TAMAR_DEV_FRONTEND_PORT', 5173);
 const loopback = '127.0.0.1';
 const localAuthUrl = 'http://' + loopback + ':' + localAuthPort;
 const frontendOrigin = 'http://' + loopback + ':' + frontendPort;
@@ -27,18 +29,99 @@ let shuttingDown = false;
 const ensureStableHmacKey = () => {
     fs.mkdirSync(secretDirectory, { recursive: true });
     if (!fs.existsSync(hmacPath)) {
-        fs.writeFileSync(hmacPath, randomBytes(48).toString('base64url'), { encoding: 'utf8', mode: 0o600, flag: 'wx' });
+        fs.writeFileSync(hmacPath, randomBytes(48).toString('base64url'), {
+            encoding: 'utf8',
+            mode: 0o600,
+            flag: 'wx'
+        });
     }
     const key = fs.readFileSync(hmacPath, 'utf8').trim();
     if (Buffer.byteLength(key, 'utf8') < 32) throw new Error('The local HMAC key is invalid');
     return key;
 };
+
 const assertPortAvailable = (port) => new Promise((resolve, reject) => {
     const probe = createServer();
     probe.unref();
-    probe.once('error', () => reject(new Error('Port ' + port + ' is already in use; refusing to stop an unowned process')));
+    probe.once('error', () => reject(new Error(
+        'Port ' + port + ' is already in use; refusing to stop an unowned process'
+    )));
     probe.listen(port, loopback, () => probe.close(resolve));
 });
+
+const getWindowsListenerPids = (port) => {
+    try {
+        const script = [
+            `$items = Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue`,
+            '$items | Select-Object -ExpandProperty OwningProcess -Unique'
+        ].join('; ');
+        const output = execFileSync(
+            'powershell.exe',
+            ['-NoProfile', '-Command', script],
+            { encoding: 'utf8', windowsHide: true }
+        );
+        return [...new Set(
+            output
+                .split(/\r?\n/u)
+                .map((line) => Number.parseInt(line.trim(), 10))
+                .filter((pid) => Number.isInteger(pid) && pid > 0)
+        )];
+    } catch {
+        return [];
+    }
+};
+
+const freeFrontendPort = async () => {
+    if (process.platform !== 'win32') {
+        await assertPortAvailable(frontendPort);
+        return;
+    }
+
+    const pids = getWindowsListenerPids(frontendPort)
+        .filter((pid) => pid !== process.pid);
+
+    if (!pids.length) {
+        await assertPortAvailable(frontendPort);
+        return;
+    }
+
+    console.log(JSON.stringify({
+        event: 'dev-tamar.frontend-port-in-use',
+        port: frontendPort,
+        pids
+    }));
+
+    for (const pid of pids) {
+        const result = spawnSync(
+            'taskkill.exe',
+            ['/pid', String(pid), '/t', '/f'],
+            { stdio: 'inherit', windowsHide: true }
+        );
+        if (result.status !== 0) {
+            throw new Error(
+                'Failed to stop process ' + pid + ' that is listening on frontend port ' + frontendPort
+            );
+        }
+    }
+
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+        try {
+            await assertPortAvailable(frontendPort);
+            console.log(JSON.stringify({
+                event: 'dev-tamar.frontend-port-freed',
+                port: frontendPort,
+                stoppedPids: pids
+            }));
+            return;
+        } catch {
+            await new Promise((resolve) => setTimeout(resolve, 150));
+        }
+    }
+
+    throw new Error('Frontend port ' + frontendPort + ' is still in use after terminating its listener');
+};
+
 const spawnTracked = (command, args, options = {}) => {
     const child = spawn(command, args, {
         cwd: options.cwd || projectRoot,
@@ -49,24 +132,35 @@ const spawnTracked = (command, args, options = {}) => {
     children.add(child);
     child.once('exit', () => children.delete(child));
     child.once('error', (error) => {
-        console.error(JSON.stringify({ event: 'dev-tamar.child-error', command: path.basename(command), message: error.message }));
+        console.error(JSON.stringify({
+            event: 'dev-tamar.child-error',
+            command: path.basename(command),
+            message: error.message
+        }));
     });
     return child;
 };
+
 const terminate = (child) => {
     if (!child || child.exitCode !== null || child.signalCode) return;
     if (process.platform === 'win32') {
-        spawnSync('taskkill.exe', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore', windowsHide: true });
+        spawnSync(
+            'taskkill.exe',
+            ['/pid', String(child.pid), '/t', '/f'],
+            { stdio: 'ignore', windowsHide: true }
+        );
     } else {
         child.kill('SIGTERM');
     }
 };
+
 const shutdown = (exitCode = 0) => {
     if (shuttingDown) return;
     shuttingDown = true;
     for (const child of [...children]) terminate(child);
     setTimeout(() => process.exit(exitCode), 100).unref();
 };
+
 const waitForHttp = async (url, timeoutMs = 20_000) => {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
@@ -78,16 +172,20 @@ const waitForHttp = async (url, timeoutMs = 20_000) => {
     }
     throw new Error('Service did not become ready: ' + url);
 };
+
 const waitForExit = (child) => new Promise((resolve, reject) => {
     child.once('error', reject);
     child.once('exit', (code, signal) => {
         if (code === 0 && !signal) resolve();
-        else reject(new Error('Child exited with code ' + (code ?? 'null') + ' and signal ' + (signal ?? 'none')));
+        else reject(new Error(
+            'Child exited with code ' + (code ?? 'null') + ' and signal ' + (signal ?? 'none')
+        ));
     });
 });
 
 const main = async () => {
     const hmacKey = ensureStableHmacKey();
+
     const backendEnvironment = {
         ...process.env,
         NODE_ENV: 'development',
@@ -122,30 +220,61 @@ const main = async () => {
     const seedArgs = ['scripts/local-auth/seed.js'];
     if (process.argv.includes('--reset')) {
         seedArgs.push('--reset');
-        const confirmation = process.argv.find((argument) => argument.startsWith('--confirm-reset='));
+        const confirmation = process.argv.find((argument) =>
+            argument.startsWith('--confirm-reset=')
+        );
         if (confirmation) seedArgs.push(confirmation);
     }
-    const seed = spawnTracked(process.execPath, seedArgs, { cwd: backendRoot, env: backendEnvironment });
+
+    const seed = spawnTracked(
+        process.execPath,
+        seedArgs,
+        { cwd: backendRoot, env: backendEnvironment }
+    );
     await waitForExit(seed);
+
     if (process.argv.includes('--seed-only')) return;
 
-    await Promise.all([localAuthPort, backendPort, frontendPort].map(assertPortAvailable));
-    const localAuth = spawnTracked(process.execPath, ['scripts/local-auth/server.js'], { cwd: backendRoot, env: backendEnvironment });
+    // We only auto-terminate the listener on the frontend port.
+    // Backend and local-auth ports are still protected from accidental termination.
+    await freeFrontendPort();
+    await Promise.all([
+        localAuthPort,
+        backendPort
+    ].map(assertPortAvailable));
+
+    const localAuth = spawnTracked(
+        process.execPath,
+        ['scripts/local-auth/server.js'],
+        { cwd: backendRoot, env: backendEnvironment }
+    );
     await waitForHttp(localAuthUrl + '/health');
 
-    const backend = spawnTracked(process.execPath, ['src/server.js'], { cwd: backendRoot, env: backendEnvironment });
+    const backend = spawnTracked(
+        process.execPath,
+        ['src/server.js'],
+        { cwd: backendRoot, env: backendEnvironment }
+    );
     await waitForHttp('http://' + loopback + ':' + backendPort + '/api/health');
 
     const viteCli = path.join(projectRoot, 'node_modules', 'vite', 'bin', 'vite.js');
-    const frontend = spawnTracked(process.execPath, [viteCli, '--host', loopback, '--port', String(frontendPort), '--strictPort'], {
-        cwd: projectRoot,
-        env: {
-            ...process.env,
-            VITE_API_PROXY_TARGET: 'http://' + loopback + ':' + backendPort,
-            VITE_TAMAR_LOCAL_PERSONAL_NUMBER_LOGIN: 'true',
-            VITE_TAMAR_LOCAL_AUTH_URL: localAuthUrl
+    if (!fs.existsSync(viteCli)) {
+        throw new Error('Vite is not installed. Run npm install in the project root.');
+    }
+
+    const frontend = spawnTracked(
+        process.execPath,
+        [viteCli, '--host', loopback, '--port', String(frontendPort), '--strictPort'],
+        {
+            cwd: projectRoot,
+            env: {
+                ...process.env,
+                VITE_API_PROXY_TARGET: 'http://' + loopback + ':' + backendPort,
+                VITE_TAMAR_LOCAL_PERSONAL_NUMBER_LOGIN: 'true',
+                VITE_TAMAR_LOCAL_AUTH_URL: localAuthUrl
+            }
         }
-    });
+    );
     await waitForHttp(frontendOrigin);
 
     console.log(JSON.stringify({
@@ -159,7 +288,12 @@ const main = async () => {
     for (const child of [localAuth, backend, frontend]) {
         child.once('exit', (code, signal) => {
             if (!shuttingDown) {
-                console.error(JSON.stringify({ event: 'dev-tamar.unexpected-exit', processId: child.pid, code, signal }));
+                console.error(JSON.stringify({
+                    event: 'dev-tamar.unexpected-exit',
+                    processId: child.pid,
+                    code,
+                    signal
+                }));
                 shutdown(1);
             }
         });
@@ -168,7 +302,11 @@ const main = async () => {
 
 process.once('SIGINT', () => shutdown(0));
 process.once('SIGTERM', () => shutdown(0));
+
 main().catch((error) => {
-    console.error(JSON.stringify({ event: 'dev-tamar.failed', message: error.message }));
+    console.error(JSON.stringify({
+        event: 'dev-tamar.failed',
+        message: error.message
+    }));
     shutdown(1);
 });

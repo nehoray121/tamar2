@@ -34,8 +34,16 @@ class RoomRepository {
         return Room.find(query).session(session || null).lean().exec();
     }
 
+    async findBySubEnvironmentId(subEnvironmentId, options = {}) {
+        return this.findBySubEnvironmentIds([subEnvironmentId], options);
+    }
+
     async findByEnvironmentId(environmentId, { operationalOnly = false, session } = {}) {
-        const query = { environmentId };
+        return this.findByEnvironmentIds([environmentId], { operationalOnly, session });
+    }
+
+    async findByEnvironmentIds(environmentIds, { operationalOnly = false, session } = {}) {
+        const query = { environmentId: { $in: environmentIds } };
         if (operationalOnly) Object.assign(query, { isActive: true, archivedAt: null });
         return Room.find(query).session(session || null).lean().exec();
     }
@@ -53,7 +61,9 @@ class RoomRepository {
 
     async updateById(id, updates, options = {}) {
         return Room.findByIdAndUpdate(id, { $set: updates }, {
-            returnDocument: 'after', runValidators: true, session: options.session
+            returnDocument: 'after',
+            runValidators: true,
+            session: options.session
         }).exec();
     }
 }

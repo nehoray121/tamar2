@@ -1,0 +1,9 @@
+{
+  "package": "tamartypography-sidebarfeel-v1",
+  "files": [
+    {
+      "path": "src/styles.css",
+      "beforeSha256": "1689553f96d55ea62f373d74ab63ef02ca2e5ab098f962469501a9da4a2a41b0"
+    }
+  ]
+}

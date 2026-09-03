@@ -6,6 +6,7 @@ import { mapTicketToDestinationFields } from '../../features/tickets/utils/mapTi
 import TicketChatDrawer from '../../features/tickets/chat/components/TicketChatDrawer.jsx';
 import { useSessionStore } from '../../store/session.store.js';
 import { ticketsApi } from '../../features/tickets/api/ticketsApi.js';
+import { subscribeBoardRealtime } from '../../features/tickets/boards/realtime/boardSocket.js';
 import { useRoomSettings } from '../../features/settings/hooks/useRoomSettings.js';
 import { createDefaultSections, defaultInquiryFields } from '../../features/settings/constants/settingsDefaults.js';
 import InquiryFormCanvas from '../../features/inquiries/layout/InquiryFormCanvas.jsx';
@@ -145,7 +146,14 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
     const [isEditing, setIsEditing] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [editDraft, setEditDraft] = useState(null);
-    const currentUser = useSessionStore((state) => state.currentUser);
+const [historyState, setHistoryState] = useState({
+    status: 'idle',
+    items: [],
+    error: ''
+});
+const [workflowStatus, setWorkflowStatus] = useState('idle');
+const currentUser = useSessionStore((state) => state.currentUser);
+
     const { settings: layoutSettings } = useRoomSettings();
     const canonicalTicketId = ticket.ticketId || ticket.ticket?.id || (viewType !== 'external' ? ticket.id : null);
 
@@ -167,7 +175,72 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
         return () => controller.abort();
     }, [canonicalTicketId]);
 
-    const resolvedTicket = detail || ticket.ticket || ticket;
+useEffect(() => {
+    if (!ticket.roomId || !ticket.boardType || !canonicalTicketId) {
+        return undefined;
+    }
+    return subscribeBoardRealtime({
+        roomId: ticket.roomId,
+        boardType: ticket.boardType,
+        onInvalidate: async () => {
+            try {
+                const response = await ticketsApi.get(canonicalTicketId);
+                setDetail(response.data);
+                if (activeTab === 'history') {
+                    const historyResponse = await ticketsApi.history(
+                        canonicalTicketId,
+                        { page: 1, limit: 100, sortDirection: 'desc' }
+                    );
+                    setHistoryState({
+                        status: 'ready',
+                        items: historyResponse.data?.items || [],
+                        error: ''
+                    });
+                }
+            } catch {
+                // The next explicit user action will surface the current error.
+            }
+        }
+    });
+}, [
+    activeTab,
+    canonicalTicketId,
+    ticket.boardType,
+    ticket.roomId
+]);
+
+useEffect(() => {
+    if (activeTab !== 'history' || !canonicalTicketId) return undefined;
+    const controller = new AbortController();
+    setHistoryState((current) => ({
+        ...current,
+        status: 'loading',
+        error: ''
+    }));
+    ticketsApi.history(
+        canonicalTicketId,
+        { page: 1, limit: 100, sortDirection: 'desc' },
+        { signal: controller.signal }
+    ).then((response) => {
+        setHistoryState({
+            status: 'ready',
+            items: response.data?.items || [],
+            error: ''
+        });
+    }).catch((historyError) => {
+        if (historyError?.name === 'AbortError') return;
+        setHistoryState({
+            status: 'error',
+            items: [],
+            error: historyError?.message
+                || 'לא ניתן לטעון את היסטוריית השינויים.'
+        });
+    });
+    return () => controller.abort();
+}, [activeTab, canonicalTicketId]);
+
+const resolvedTicket = detail || ticket.ticket || ticket;
+
     const fieldValues = resolvedTicket.fieldValues || ticket.fieldValues || {};
     const serverCapabilities = resolvedTicket.capabilities || {};
     const viewCapabilities = getTicketCapabilities(viewType);
@@ -175,15 +248,20 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
         ...viewCapabilities,
         canEdit: Boolean(serverCapabilities.canEdit),
         canClose: Boolean(serverCapabilities.canClose),
-        canChat: Boolean(serverCapabilities.canWriteChat),
-        canSend: Boolean(viewCapabilities.canSend && serverCapabilities.canTransfer)
-    };
+            canChat: Boolean(serverCapabilities.canWriteChat),
+    canSend: Boolean(viewCapabilities.canSend && serverCapabilities.canTransfer),
+    canAcceptTransfer: Boolean(serverCapabilities.canAcceptTransfer),
+    canCancelTransfer: Boolean(serverCapabilities.canCancelTransfer)
+};
+
     const modalTabs = getTicketModalTabs(viewType).filter((tab) => tab.id !== 'send' || capabilities.canSend);
     const displayTicket = {
         ...ticket,
         ticket: resolvedTicket,
         ticketId: canonicalTicketId,
-        ticketVersion: Number(resolvedTicket.version) || ticket.ticketVersion || 0,
+transferId: ticket.transferId || ticket.transfer?.id || null,
+ticketVersion: Number(resolvedTicket.version) || ticket.ticketVersion || 0,
+
         capabilities: serverCapabilities,
         subject: resolvedTicket.subject || ticket.name || '',
         description: resolvedTicket.description || ticket.description || '',
@@ -199,7 +277,11 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
     const status = resolvedTicket.status === 'CLOSED' ? 'סגורה' : 'פתוחה';
     const layoutFields = layoutSettings.fields?.length ? layoutSettings.fields : defaultInquiryFields;
     const layoutSections = layoutSettings.sections?.length ? layoutSettings.sections : createDefaultSections(layoutFields);
-    const editableLayoutFieldIds = new Set(['phone', 'customerId', 'handler', 'treatment', 'network', 'description']);
+    const readOnlyLayoutFieldIds = new Set([
+    'status',
+    'openDate',
+    'closingDate'
+]);
     const layoutValues = {
         ...fieldValues,
         ...(isEditing ? editDraft?.fieldValues : {}),
@@ -230,22 +312,73 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
         fieldValues: { ...(current?.fieldValues || {}), [key]: value }
     }));
     const saveChanges = async () => {
-        if (!editDraft || !canonicalTicketId) return;
-        setDetailError('');
-        setDetailStatus('saving');
-        try {
-            const response = await ticketsApi.update(canonicalTicketId, editDraft, displayTicket.ticketVersion);
-            setDetail(response.data);
-            setIsEditing(false);
-            setEditDraft(null);
-            setDetailStatus('ready');
-            onUpdated?.(response.data);
-        } catch (saveError) {
-            setDetailError(saveError?.message || 'לא ניתן לשמור את השינויים בפנייה.');
-            setDetailStatus('error');
+    if (!editDraft || !canonicalTicketId) return;
+    setDetailError('');
+    setDetailStatus('saving');
+    try {
+        const response = await ticketsApi.update(
+            canonicalTicketId,
+            editDraft,
+            displayTicket.ticketVersion
+        );
+        setDetail(response.data);
+        setIsEditing(false);
+        setEditDraft(null);
+        setDetailStatus('ready');
+        onUpdated?.(response.data);
+    } catch (saveError) {
+        setDetailError(
+            saveError?.message
+            || 'לא ניתן לשמור את השינויים בפנייה.'
+        );
+        setDetailStatus('error');
+    }
+};
+
+const resolveTransfer = async (action) => {
+    const transferId = displayTicket.transferId;
+    if (!transferId || workflowStatus === 'saving') return;
+
+    let reason = '';
+    if (action === 'cancel') {
+        reason = window.prompt(
+            'יש להזין סיבה לביטול ההעברה:',
+            ''
+        )?.trim() || '';
+        if (!reason) return;
+    }
+
+    setWorkflowStatus('saving');
+    setDetailError('');
+    try {
+        const response = action === 'accept'
+            ? await ticketsApi.acceptTransfer(
+                transferId,
+                displayTicket.ticketVersion
+            )
+            : await ticketsApi.cancelTransfer(
+                transferId,
+                displayTicket.ticketVersion,
+                reason
+            );
+        const nextTicket = response.data?.ticket;
+        if (nextTicket) {
+            setDetail(nextTicket);
+            onUpdated?.(nextTicket);
         }
-    };
-    return (
+        setActiveTab('info');
+    } catch (workflowError) {
+        setDetailError(
+            workflowError?.message
+            || 'לא ניתן להשלים את פעולת ההעברה.'
+        );
+    } finally {
+        setWorkflowStatus('idle');
+    }
+};
+
+return (
+
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5" dir="rtl">
             <div className="inquiry-backdrop absolute inset-0" onClick={onClose} />
 
@@ -285,7 +418,25 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
                                     {capabilities.canEdit && !isEditing && <ModalActionButton icon="filePlus" onClick={startEditing}>עריכת פנייה</ModalActionButton>}
                                     {capabilities.canChat && <ModalActionButton icon="chat" onClick={() => setIsChatOpen(true)}>{chatTitle}</ModalActionButton>}
                                     {capabilities.canClose && <ModalActionButton icon="check" tone="success" onClick={onCloseInquiry}>סגירת פנייה</ModalActionButton>}
-                                    {isEditing && (
+{capabilities.canAcceptTransfer && (
+    <ModalActionButton
+        icon="check"
+        tone="primary"
+        onClick={() => resolveTransfer('accept')}
+    >
+        {workflowStatus === 'saving' ? 'מבצע…' : 'קבלת פנייה'}
+    </ModalActionButton>
+)}
+{capabilities.canCancelTransfer && (
+    <ModalActionButton
+        icon="close"
+        onClick={() => resolveTransfer('cancel')}
+    >
+        ביטול העברה
+    </ModalActionButton>
+)}
+{isEditing && (
+
                                         <>
                                             <ModalActionButton icon="check" tone="primary" onClick={saveChanges}>{detailStatus === 'saving' ? 'שומר…' : 'שמור שינויים'}</ModalActionButton>
                                             <ModalActionButton icon="close" onClick={() => { setIsEditing(false); setEditDraft(null); }}>ביטול</ModalActionButton>
@@ -298,7 +449,7 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
                                     sections={layoutSections}
                                     values={layoutValues}
                                     editableValues={isEditing}
-                                    isFieldEditable={(field) => editableLayoutFieldIds.has(field.id)}
+                                    isFieldEditable={(field) => !readOnlyLayoutFieldIds.has(field.id)}
                                     onValueChange={(fieldId, value) => {
                                         if (fieldId === 'description') {
                                             setEditDraft((current) => ({ ...current, description: value }));
@@ -310,11 +461,55 @@ const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred,
                             </div>
                         )}
 
-                        {activeTab === 'send' && capabilities.canSend && (
-                            <div className="mx-auto max-w-[850px]">
-                                <SendInquiryView ticket={displayTicket} onTransferred={onTransferred} />
-                            </div>
-                        )}
+                        {activeTab === 'history' && (
+    <div className="mx-auto max-w-[850px] space-y-2">
+        {historyState.status === 'loading' && (
+            <div className="text-xs font-bold inquiry-muted-text">
+                טוען היסטוריית שינויים…
+            </div>
+        )}
+        {historyState.error && (
+            <div className="rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-600 dark:text-red-300">
+                {historyState.error}
+            </div>
+        )}
+        {historyState.items.map((entry) => (
+            <article
+                key={entry.id}
+                className="inquiry-panel rounded-xl p-3"
+            >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <strong className="text-[13px] inquiry-primary-text">
+                        {entry.actor?.displayName || 'משתמש מערכת'}
+                    </strong>
+                    <time className="text-[11px] font-bold inquiry-muted-text">
+                        {new Date(entry.createdAt).toLocaleString('he-IL')}
+                    </time>
+                </div>
+                <div className="mt-1 text-[12px] font-bold inquiry-secondary-text">
+                    {entry.eventType} · {entry.changedFields?.join(', ') || 'ללא שינויי שדות'}
+                </div>
+            </article>
+        ))}
+        {historyState.status === 'ready'
+            && historyState.items.length === 0
+            && (
+                <div className="text-center text-xs font-bold inquiry-muted-text">
+                    אין עדיין אירועי היסטוריה.
+                </div>
+            )}
+    </div>
+)}
+
+{activeTab === 'send' && capabilities.canSend && (
+    <div className="mx-auto max-w-[850px]">
+        <SendInquiryView
+            ticket={displayTicket}
+            onTransferred={onTransferred}
+        />
+    </div>
+)}
+
                     </div>
 
                     {isChatOpen && canonicalTicketId && (

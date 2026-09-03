@@ -1,5 +1,10 @@
-const { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } = require('jose');
 const { authenticationError } = require('./authenticationErrors.js');
+
+let josePromise = null;
+const loadJose = () => {
+    josePromise ||= import('jose');
+    return josePromise;
+};
 
 const extractBearerToken = ({ headers = {}, rawHeaders = [] }, maxLength) => {
     const authorizationCount = rawHeaders.reduce((count, value, index) => (
@@ -15,14 +20,39 @@ const extractBearerToken = ({ headers = {}, rawHeaders = [] }, maxLength) => {
 };
 
 class AccessTokenVerifier {
-    constructor({ authConfig, keyResolver, jwtVerifyImplementation = jwtVerify }) {
+    constructor({
+        authConfig,
+        keyResolver,
+        jwtVerifyImplementation,
+        decodeProtectedHeaderImplementation,
+        createRemoteJWKSetImplementation,
+        joseLoader = loadJose
+    }) {
         this.config = authConfig;
-        this.keyResolver = keyResolver || createRemoteJWKSet(new URL(authConfig.jwksUri), {
-            timeoutDuration: 5000,
-            cooldownDuration: 30000,
-            cacheMaxAge: 600000
-        });
-        this.jwtVerify = jwtVerifyImplementation;
+        this.keyResolver = keyResolver || null;
+        this.jwtVerify = jwtVerifyImplementation || null;
+        this.decodeProtectedHeader = decodeProtectedHeaderImplementation || null;
+        this.createRemoteJWKSet = createRemoteJWKSetImplementation || null;
+        this.joseLoader = joseLoader;
+        this.initializationPromise = null;
+    }
+
+    async ensureJose() {
+        if (this.keyResolver && this.jwtVerify && this.decodeProtectedHeader) return;
+
+        this.initializationPromise ||= (async () => {
+            const jose = await this.joseLoader();
+            this.jwtVerify ||= jose.jwtVerify;
+            this.decodeProtectedHeader ||= jose.decodeProtectedHeader;
+            this.createRemoteJWKSet ||= jose.createRemoteJWKSet;
+            this.keyResolver ||= this.createRemoteJWKSet(new URL(this.config.jwksUri), {
+                timeoutDuration: 5000,
+                cooldownDuration: 30000,
+                cacheMaxAge: 600000
+            });
+        })();
+
+        await this.initializationPromise;
     }
 
     extractFromHttpRequest(request) {
@@ -40,7 +70,8 @@ class AccessTokenVerifier {
 
     async verify(token) {
         try {
-            const header = decodeProtectedHeader(token);
+            await this.ensureJose();
+            const header = this.decodeProtectedHeader(token);
             if (!header.alg || !this.config.allowedAlgorithms.includes(header.alg) || header.alg === 'none' || header.alg.startsWith('HS')) {
                 throw authenticationError('INVALID_ACCESS_TOKEN', null, 'disallowed_algorithm');
             }

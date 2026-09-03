@@ -10,6 +10,7 @@ import OrganizationTab from '../../features/superAdmin/components/OrganizationTa
 import UsersPermissionsTab from '../../features/superAdmin/components/UsersPermissionsTab.jsx';
 import SystemControlTab from '../../features/superAdmin/components/SystemControlTab.jsx';
 import ChangeLogTab from '../../features/superAdmin/components/ChangeLogTab.jsx';
+import { subscribeSystemRealtime } from '../../features/tickets/boards/realtime/boardSocket.js';
 
 const DEFAULT_TREND_FILTER = {
     preset: '14d',
@@ -43,7 +44,7 @@ const renderActiveTab = (activeTab, data, setActiveTab, overviewProps, onRefresh
         case 'organization':
             return <OrganizationTab data={data} onRefresh={onRefresh} />;
         case 'users':
-            return <UsersPermissionsTab data={data} />;
+            return <UsersPermissionsTab data={data} onRefresh={onRefresh} />;
         case 'control':
             return <SystemControlTab data={data} />;
         case 'audit':
@@ -74,7 +75,11 @@ const SuperAdminPage = () => {
             });
         return () => controller.abort();
     }, [scope.environmentId, scope.subEnvironmentId, scope.roomId, appliedTrendFilter, refreshRevision]);
-    const data = runtime.data;
+    useEffect(() => subscribeSystemRealtime({
+    onInvalidate: () => setRefreshRevision((value) => value + 1)
+}), []);
+
+const data = runtime.data;
     const options = useMemo(() => superAdminService.getScopeOptions(scope, data?.organization), [scope, data?.organization]);
 
     const handleTrendPresetChange = (preset) => {

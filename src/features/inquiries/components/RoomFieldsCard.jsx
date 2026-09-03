@@ -9,7 +9,6 @@ const LABEL_ROOM = 'חדר';
 const LABEL_REQUIRED = 'שדות חובה';
 const LABEL_HANDLER = 'גורם מטפל';
 const LABEL_TREATMENT_MODE = 'אופן טיפול בפנייה';
-const LABEL_ASSIGNEE = 'שיוך אישי';
 const LABEL_LOCATION = 'מיקום';
 const LABEL_EXTRA_REQUIRED = 'שדה חדר נוסף (אופציונלי)';
 const LABEL_EXTRA_OPTIONAL = 'שדה חדר נוסף 2 (אופציונלי)';
@@ -18,7 +17,6 @@ const PLACEHOLDER_ENTER_TREATMENT = 'הכנס/י אופן טיפול';
 const PLACEHOLDER_ENTER_LOCATION = 'הכנס/י מיקום';
 const PLACEHOLDER_VALUE = 'ערך';
 const LABEL_SELECT_PREFIX = 'בחר';
-const PLACEHOLDER_ASSIGNMENT = 'הניהול מתבצע מחלונית השיוך';
 
 const CompactSelect = ({ value, onChange, disabled, options, prefix, className = '' }) => {
     const selectedOption = options.find((option) => option.id === value) ?? options[0];
@@ -27,7 +25,12 @@ const CompactSelect = ({ value, onChange, disabled, options, prefix, className =
     return (
         <div className={`min-w-0 ${className}`}>
             <div className="inquiry-input-surface grid h-9 grid-cols-[auto_minmax(0,1fr)_18px] items-center gap-2 rounded-lg px-3 shadow-[0_2px_8px_rgba(37,99,235,0.04)]">
-                <span className="shrink-0 whitespace-nowrap text-[12px] font-semibold inquiry-muted-text">{prefix}:</span>
+                <span
+                    style={prefix === LABEL_ENVIRONMENT ? { paddingRight: '8px' } : undefined}
+                    className="shrink-0 whitespace-nowrap text-[12px] font-semibold inquiry-muted-text"
+                >
+                    {prefix}:
+                </span>
                 <div className="relative min-w-0">
                     <span className={`block truncate text-right text-[12px] font-black ${disabled ? 'opacity-60' : 'inquiry-primary-text'}`}>{selectedLabel}</span>
                     <select
@@ -228,22 +231,6 @@ const RoomFieldsCard = ({
             }
         ];
 
-        if (assignmentEnabled) {
-            nodes.splice(2, 0, {
-                id: 'assignment-summary',
-                type: 'text',
-                element: (
-                    <div key="assignment-summary" className="min-w-0">
-                        <FieldLabel>{LABEL_ASSIGNEE}</FieldLabel>
-                        <div className="inquiry-input-surface flex min-h-[42px] items-center justify-between gap-3 rounded-lg px-3 py-2 text-right text-[12px] font-semibold shadow-[0_2px_8px_rgba(37,99,235,0.04)]">
-                            <Icon name="users" className="h-4 w-4 shrink-0 inquiry-muted-text" />
-                            <span className={`min-w-0 flex-1 truncate ${assignedUsersSummary ? 'inquiry-primary-text font-black' : 'inquiry-muted-text'}`}>{assignedUsersSummary || PLACEHOLDER_ASSIGNMENT}</span>
-                        </div>
-                    </div>
-                )
-            });
-        }
-
         dynamicFields.forEach((field) => {
             nodes.push({
                 id: field.id,
@@ -265,9 +252,9 @@ const RoomFieldsCard = ({
                     <h2 className="whitespace-nowrap text-lg font-black inquiry-primary-text">{LABEL_ROOM_FIELDS}</h2>
                 </div>
 
-                <CompactSelect className="w-[clamp(160px,15vw,200px)] shrink-0" prefix={LABEL_ENVIRONMENT} value={environmentId} onChange={(event) => setEnvironmentId(event.target.value)} options={environments} />
-                <CompactSelect className="w-[clamp(160px,15vw,200px)] shrink-0" prefix={LABEL_SUB_ENVIRONMENT} value={subEnvironmentId} onChange={(event) => setSubEnvironmentId(event.target.value)} options={selectedEnvironment.subEnvironments} disabled={!selectedEnvironment.subEnvironments.length} />
-                <CompactSelect className="w-[clamp(90px,9vw,120px)] shrink-0" prefix={LABEL_ROOM} value={roomId} onChange={(event) => setRoomId(event.target.value)} options={selectedSubEnvironment?.rooms ?? []} disabled={!selectedSubEnvironment?.rooms?.length} />
+                <CompactSelect className="w-[clamp(145px,13vw,185px)] shrink-0" prefix={LABEL_ENVIRONMENT} value={environmentId} onChange={(event) => setEnvironmentId(event.target.value)} options={environments} />
+                <CompactSelect className="w-[clamp(145px,13vw,185px)] shrink-0" prefix={LABEL_SUB_ENVIRONMENT} value={subEnvironmentId} onChange={(event) => setSubEnvironmentId(event.target.value)} options={selectedEnvironment.subEnvironments} disabled={!selectedEnvironment.subEnvironments.length} />
+                <CompactSelect className="w-[clamp(145px,13vw,185px)] shrink-0" prefix={LABEL_ROOM} value={roomId} onChange={(event) => setRoomId(event.target.value)} options={selectedSubEnvironment?.rooms ?? []} disabled={!selectedSubEnvironment?.rooms?.length} />
 
                 <div className="mr-auto inline-flex h-7 shrink-0 items-center gap-2 rounded-md bg-blue-700 px-3 text-[12px] font-black text-white">
                     <span>{LABEL_REQUIRED}</span>
@@ -276,7 +263,7 @@ const RoomFieldsCard = ({
                 </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto pt-4">
+            <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-1 pt-4">
                 <div className="space-y-4 md:hidden">
                     {fieldNodes.map((item) => item.element)}
                 </div>

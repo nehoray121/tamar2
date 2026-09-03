@@ -16,13 +16,21 @@ class HierarchyIntegrityService {
     }
 
     async resolveUsingCanonicalAdapter(input, options = {}) {
-        const lineage = await this.hierarchyRepository.resolveScopeLineage(input.scopeType, input.scopeId, options);
-        if (!lineage) throw invalidHierarchy('Requested organizational scope does not exist or is inactive');
+        const lineage = await this.hierarchyRepository.resolveScopeLineage(
+            input.scopeType,
+            input.scopeId,
+            options
+        );
+        if (!lineage) {
+            throw invalidHierarchy('Requested organizational scope does not exist or is inactive');
+        }
         if (!sameId(lineage.systemId, input.systemId)
             || (input.environmentId && !sameId(lineage.environmentId, input.environmentId))
             || (input.subEnvironmentId && !sameId(lineage.subEnvironmentId, input.subEnvironmentId))
             || (input.roomId && !sameId(lineage.roomId, input.roomId))) {
-            throw invalidHierarchy('Submitted organization lineage does not match the canonical scope lineage');
+            throw invalidHierarchy(
+                'Submitted organization lineage does not match the canonical scope lineage'
+            );
         }
 
         return {
@@ -43,22 +51,43 @@ class HierarchyIntegrityService {
         }
 
         const system = await this.hierarchyRepository.findActiveSystemById(input.systemId);
-        if (!system) throw invalidHierarchy('Requested system does not exist or is inactive');
+        if (!system) {
+            throw invalidHierarchy('Requested system does not exist or is inactive');
+        }
 
         if (input.scopeType === SCOPE_TYPES.SYSTEM) {
             return { ...input, scopeId: system._id, systemId: system._id };
         }
 
-        const [environment, subEnvironment] = await Promise.all([
-            this.hierarchyRepository.findActiveEnvironmentById(input.environmentId),
-            this.hierarchyRepository.findActiveSubEnvironmentById(input.subEnvironmentId)
-        ]);
-
-        if (!environment || !subEnvironment) {
-            throw invalidHierarchy('Requested organizational scope does not exist or is inactive');
+        const environment = await this.hierarchyRepository.findActiveEnvironmentById(
+            input.environmentId
+        );
+        if (!environment || !sameId(environment.systemId, system._id)) {
+            throw invalidHierarchy(
+                'Requested environment does not exist or does not belong to the submitted system'
+            );
         }
-        if (!sameId(environment.systemId, system._id) || !sameId(subEnvironment.environmentId, environment._id)) {
-            throw invalidHierarchy('Sub-environment does not belong to the submitted environment and system');
+
+        if (input.scopeType === SCOPE_TYPES.ENVIRONMENT) {
+            return {
+                ...input,
+                scopeId: environment._id,
+                systemId: system._id,
+                environmentId: environment._id,
+                subEnvironmentId: undefined,
+                roomId: undefined
+            };
+        }
+
+        const subEnvironment = await this.hierarchyRepository.findActiveSubEnvironmentById(
+            input.subEnvironmentId
+        );
+        if (!subEnvironment
+            || !sameId(subEnvironment.environmentId, environment._id)
+            || !sameId(subEnvironment.systemId, system._id)) {
+            throw invalidHierarchy(
+                'Sub-environment does not belong to the submitted environment and system'
+            );
         }
 
         if (input.scopeType === SCOPE_TYPES.SUB_ENVIRONMENT) {
@@ -105,11 +134,37 @@ class HierarchyIntegrityService {
     }
 
     async getActiveRoomIdsForSubEnvironments(subEnvironmentIds, options = {}) {
-        return this.hierarchyRepository.findActiveRoomIdsBySubEnvironmentIds(subEnvironmentIds, options);
+        return this.hierarchyRepository.findActiveRoomIdsBySubEnvironmentIds(
+            subEnvironmentIds,
+            options
+        );
+    }
+
+    async getActiveRoomIdsForEnvironments(environmentIds, options = {}) {
+        if (typeof this.hierarchyRepository.findActiveRoomIdsByEnvironmentIds !== 'function') {
+            return [];
+        }
+        return this.hierarchyRepository.findActiveRoomIdsByEnvironmentIds(
+            environmentIds,
+            options
+        );
+    }
+
+    async getActiveSubEnvironmentIdsForEnvironments(environmentIds, options = {}) {
+        if (typeof this.hierarchyRepository.findActiveSubEnvironmentIdsByEnvironmentIds
+            !== 'function') {
+            return [];
+        }
+        return this.hierarchyRepository.findActiveSubEnvironmentIdsByEnvironmentIds(
+            environmentIds,
+            options
+        );
     }
 
     async getActiveRoomIdsForSystems(systemIds, options = {}) {
-        if (typeof this.hierarchyRepository.findActiveRoomIdsBySystemIds !== 'function') return [];
+        if (typeof this.hierarchyRepository.findActiveRoomIdsBySystemIds !== 'function') {
+            return [];
+        }
         return this.hierarchyRepository.findActiveRoomIdsBySystemIds(systemIds, options);
     }
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DashboardHeader from '../../features/dashboard/components/DashboardHeader.jsx';
 import DashboardInquiryModal from '../../features/dashboard/components/DashboardInquiryModal.jsx';
+import DashboardWorkloadModal from '../../features/dashboard/components/DashboardWorkloadModal.jsx';
 import DashboardKpiGrid from '../../features/dashboard/components/DashboardKpiGrid.jsx';
 import ImmediateTreatmentPanel from '../../features/dashboard/components/ImmediateTreatmentPanel.jsx';
 import KpiEditorModal from '../../features/dashboard/components/KpiEditorModal.jsx';
@@ -11,19 +12,92 @@ import { useDashboardData } from '../../features/dashboard/hooks/useDashboardDat
 import { useDashboardKpis } from '../../features/dashboard/hooks/useDashboardKpis.js';
 import { useExpandedDashboardPanel } from '../../features/dashboard/hooks/useExpandedDashboardPanel.js';
 import { useUrgencySelection } from '../../features/dashboard/hooks/useUrgencySelection.js';
+import {
+    buildDashboardWorkloadPeople,
+    filterDashboardInquiriesForKpi,
+    queueDashboardListTarget
+} from '../../features/dashboard/utils/dashboardDrilldown.js';
+import { useSessionStore } from '../../store/session.store.js';
 
 const DashboardPage = () => {
     const dashboard = useDashboardData();
-    const { data, status, error, retry, filters, setFilters, filteredBarData, groupedBarData, categoryOptions, sortOptions, hasActiveFilters } = dashboard;
-    const inquiries = data.inquiries;
-    const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', subtitle: '', filteredData: [] });
+    const navigate = useSessionStore((state) => state.navigate);
+    const {
+        data,
+        status,
+        error,
+        retry,
+        filters,
+        setFilters,
+        filteredBarData,
+        groupedBarData,
+        categoryOptions,
+        sortOptions,
+        selectedCategoryField,
+        hasActiveFilters
+    } = dashboard;
+
+    const inquiries = data.inquiries || [];
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        title: '',
+        subtitle: '',
+        filteredData: []
+    });
     const [modalSearch, setModalSearch] = useState('');
-    const { expandedSection, setExpandedSection, fullSectionExpansion, toggleExpandedSection } = useExpandedDashboardPanel();
+    const [isWorkloadModalOpen, setIsWorkloadModalOpen] = useState(false);
+    const {
+        expandedSection,
+        fullSectionExpansion,
+        toggleExpandedSection
+    } = useExpandedDashboardPanel();
 
     const donutSource = hasActiveFilters ? filteredBarData : inquiries;
+
+    const donutDistributionGroups = React.useMemo(
+        () => (
+            filters.category === 'period'
+                ? null
+                : (groupedBarData || [])
+                    .filter(
+                        (group) =>
+                            Number(group?.total || 0) > 0
+                    )
+                    .map((group, index) => ({
+                        ...group,
+                        label: String(
+                            group?.label || 'ללא ערך'
+                        ),
+                        rawLabel: String(
+                            group?.label || 'ללא ערך'
+                        ),
+                        value: Number(group?.total || 0),
+                        items: Array.isArray(group?.items)
+                            ? group.items
+                            : [],
+                        priorityLevel: index
+                    }))
+        ),
+        [filters.category, groupedBarData]
+    );
+
+    const donutCategoryOptions = React.useMemo(
+        () => (categoryOptions || []).map(
+            (option) => (
+                option.value === 'period'
+                    ? {
+                        ...option,
+                        label: 'רמת דחיפות'
+                    }
+                    : option
+            )
+        ),
+        [categoryOptions]
+    );
     const todayString = new Date().toISOString().split('T')[0];
     const now = new Date(`${todayString}T12:00:00`);
     const totalInquiries = data.metrics.total || 0;
+
     const {
         priorityData,
         donutCategories,
@@ -44,7 +118,31 @@ const DashboardPage = () => {
         totalDonutInquiryPages,
         selectDonutCategory,
         formatDonutInquiryAge
-    } = useUrgencySelection({ donutSource, prioritySource: data.priorityData, expandedSection, now });
+    } = useUrgencySelection({
+        donutSource,
+        prioritySource: data.priorityData,
+        distributionGroups: donutDistributionGroups,
+        expandedSection,
+        now
+    });
+
+    const urgentDashboardInquiries = React.useMemo(
+        () => filterDashboardInquiriesForKpi(
+            'urgent',
+            inquiries,
+            now
+        ),
+        [inquiries, now]
+    );
+
+    const dashboardMetrics = React.useMemo(
+        () => ({
+            ...(data.metrics || {}),
+            urgentOpen: urgentDashboardInquiries.length
+        }),
+        [data.metrics, urgentDashboardInquiries.length]
+    );
+
     const {
         isKpiEditorOpen,
         selectedKpis,
@@ -60,23 +158,82 @@ const DashboardPage = () => {
         removeSelectedKpi,
         restoreRemovedKpi,
         dismissUndo
-    } = useDashboardKpis({ metrics: data.metrics });
+    } = useDashboardKpis({ metrics: dashboardMetrics });
 
     const workloadRows = data.workload || [];
+    const workloadPeople = React.useMemo(
+        () => buildDashboardWorkloadPeople(workloadRows, inquiries),
+        [workloadRows, inquiries]
+    );
 
-    const urgentQueueItems = React.useMemo(() => (data.attention || []).map((item) => {
-        const createdAt = new Date(item.createdAt || `${item.date}T12:00:00`);
-        const hoursOpen = Math.max(1, Math.round((now - createdAt) / 3600000));
-        return {
-            ...item,
-            durationLabel: hoursOpen < 24 ? `${hoursOpen} שעות` : `${Math.max(1, Math.floor(hoursOpen / 24))} ימים`,
-            assigneeLabel: item.assignee || 'ללא שיוך'
-        };
-    }), [data.attention, now]);
+    const urgentQueueItems = React.useMemo(
+        () => urgentDashboardInquiries.map((item) => {
+            const createdAt = new Date(
+                item.createdAt || `${item.date}T12:00:00`
+            );
+            const hoursOpen = Math.max(
+                1,
+                Math.round((now - createdAt) / 3600000)
+            );
+
+            return {
+                ...item,
+                durationLabel: hoursOpen < 24
+                    ? `${hoursOpen} שעות`
+                    : `${Math.max(1, Math.floor(hoursOpen / 24))} ימים`,
+                assigneeLabel: item.assignee || 'ללא שיוך'
+            };
+        }),
+        [urgentDashboardInquiries, now]
+    );
 
     const closeModal = () => {
         setModalSearch('');
-        setModalConfig({ isOpen: false, title: '', subtitle: '', filteredData: [] });
+        setModalConfig({
+            isOpen: false,
+            title: '',
+            subtitle: '',
+            filteredData: []
+        });
+    };
+
+    const openInquiryModal = ({
+        title,
+        subtitle,
+        items,
+        itemLabel = 'פניות'
+    }) => {
+        setModalSearch('');
+        setModalConfig({
+            isOpen: true,
+            title,
+            subtitle,
+            itemLabel,
+            filteredData: Array.isArray(items) ? items : []
+        });
+    };
+
+    const handleKpiTitleClick = (kpi) => {
+        const filtered = filterDashboardInquiriesForKpi(
+            kpi.id,
+            inquiries,
+            now
+        );
+
+        openInquiryModal({
+            title: kpi.title,
+            subtitle: `${filtered.length} פניות תואמות למדד שנבחר`,
+            items: filtered
+        });
+    };
+
+    const handleNavigateToListItem = (item) => {
+        const target = queueDashboardListTarget(item);
+        if (!target) return;
+
+        closeModal();
+        setIsWorkloadModalOpen(false);
+        navigate(target.viewId);
     };
 
     const handleDonutClick = (segment) => {
@@ -85,7 +242,13 @@ const DashboardPage = () => {
             return;
         }
 
-        const filtered = donutSource.filter((item) => item.priority === segment.rawLabel);
+        const filtered = Array.isArray(segment?.items)
+            ? segment.items
+            : donutSource.filter(
+                (item) =>
+                    item.priority === segment.rawLabel
+            );
+
         setModalSearch('');
         setModalConfig({
             isOpen: true,
@@ -116,150 +279,220 @@ const DashboardPage = () => {
     };
 
     if (status === 'loading' || status === 'idle') {
-        return <div dir="rtl" className="inquiry-page-surface flex h-full items-center justify-center text-sm font-black inquiry-secondary-text">טוען נתוני לוח בקרה...</div>;
-    }
-    if (status === 'error') {
         return (
-            <div dir="rtl" className="inquiry-page-surface flex h-full items-center justify-center p-6">
-                <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <h2 className="text-lg font-black inquiry-primary-text">לא ניתן לטעון את לוח הבקרה</h2>
-                    <p className="mt-2 text-sm inquiry-secondary-text">{error}</p>
-                    <button type="button" onClick={retry} className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white">נסה שוב</button>
-                </div>
+            <div dir="rtl" className="dashboard-gate-v4b">
+                <span className="dashboard-spinner-v4b" aria-hidden="true" />
+                <span>טוען נתוני לוח בקרה...</span>
             </div>
         );
     }
-    return (
-        <div dir="rtl" className={`inquiry-page-surface wave-bg flex h-full min-h-0 flex-col overflow-hidden px-3 pb-3 pt-2 shadow-none ${fullSectionExpansion ? 'lg:p-3' : ''}`}>
-            <DashboardHeader totalInquiries={totalInquiries} />
 
-            <main className="flex min-h-0 flex-1 flex-col overflow-auto">
-                <DashboardKpiGrid fullSectionExpansion={fullSectionExpansion} selectedKpis={selectedKpis} onEdit={openKpiEditor} onRemove={removeSelectedKpi} />
+    if (status === 'error') {
+        return (
+            <div dir="rtl" className="dashboard-gate-v4b">
+                <section className="dashboard-error-v4b">
+                    <h2>לא ניתן לטעון את לוח הבקרה</h2>
+                    <p>{error}</p>
+                    <button
+                        type="button"
+                        onClick={retry}
+                        className="tamar-ui-btn tamar-ui-btn--primary"
+                    >
+                        נסה שוב
+                    </button>
+                </section>
+            </div>
+        );
+    }
 
-                <div className="min-h-0 flex-1 overflow-hidden">
-                    {expandedSection === 'barChart' ? (
-                        <div className="grid h-full min-h-0 grid-cols-12">
-                            <div className="col-span-12 min-h-0">
-                                <PeriodicTrendCard
-                                    expandedSection={expandedSection}
-                                    filteredBarData={filteredBarData}
-                                    groupedBarData={groupedBarData}
-                                    filters={filters}
-                                    setFilters={setFilters}
-                                    categoryOptions={categoryOptions}
-                                    sortOptions={sortOptions}
-                                    handleBarClick={handleBarClick}
-                                    toggleExpandedSection={toggleExpandedSection}
-                                />
-                            </div>
-                        </div>
-                    ) : expandedSection === 'donut' ? (
-                        <div className="grid h-full min-h-0 grid-cols-12">
-                            <div className="col-span-12 min-h-0">
-                                <UrgencyBreakdownCard
-                                    expandedSection={expandedSection}
-                                    setExpandedSection={setExpandedSection}
-                                    priorityData={priorityData}
-                                    visibleDonutCategories={visibleDonutCategories}
-                                    hasHiddenDonutCategories={hasHiddenDonutCategories}
-                                    hiddenDonutCategoryCount={hiddenDonutCategoryCount}
-                                    hiddenDonutInquiryCount={hiddenDonutInquiryCount}
-                                    totalDonutCategoryCount={totalDonutCategoryCount}
-                                    totalDonutInquiries={totalDonutInquiries}
-                                    visibleDonutCategoryCards={visibleDonutCategoryCards}
-                                    donutCategories={donutCategories}
-                                    selectedDonutCategory={selectedDonutCategory}
-                                    visibleSelectedDonutInquiries={visibleSelectedDonutInquiries}
-                                    donutCategoryPage={donutCategoryPage}
-                                    setDonutCategoryPage={setDonutCategoryPage}
-                                    totalDonutCategoryPages={totalDonutCategoryPages}
-                                    donutInquiryPage={donutInquiryPage}
-                                    setDonutInquiryPage={setDonutInquiryPage}
-                                    totalDonutInquiryPages={totalDonutInquiryPages}
-                                    selectDonutCategory={selectDonutCategory}
-                                    handleDonutClick={handleDonutClick}
-                                    handleUrgentInspect={handleUrgentInspect}
-                                    formatDonutInquiryAge={formatDonutInquiryAge}
-                                    toggleExpandedSection={toggleExpandedSection}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <div dir="ltr" className="dashboard-motion grid h-full min-h-0 grid-cols-12 grid-rows-[minmax(300px,400px)_minmax(158px,178px)] gap-2">
-                            {expandedSection !== 'workload' && (
-                                <div className="dashboard-motion col-span-12 min-h-0 lg:col-span-4 lg:col-start-1 lg:row-start-1">
-                                    <UrgencyBreakdownCard
-                                        expandedSection={expandedSection}
-                                        setExpandedSection={setExpandedSection}
-                                        priorityData={priorityData}
-                                        visibleDonutCategories={visibleDonutCategories}
-                                        hasHiddenDonutCategories={hasHiddenDonutCategories}
-                                        hiddenDonutCategoryCount={hiddenDonutCategoryCount}
-                                        hiddenDonutInquiryCount={hiddenDonutInquiryCount}
-                                        totalDonutCategoryCount={totalDonutCategoryCount}
-                                        totalDonutInquiries={totalDonutInquiries}
-                                        visibleDonutCategoryCards={visibleDonutCategoryCards}
-                                        donutCategories={donutCategories}
-                                        selectedDonutCategory={selectedDonutCategory}
-                                        visibleSelectedDonutInquiries={visibleSelectedDonutInquiries}
-                                        donutCategoryPage={donutCategoryPage}
-                                        setDonutCategoryPage={setDonutCategoryPage}
-                                        totalDonutCategoryPages={totalDonutCategoryPages}
-                                        donutInquiryPage={donutInquiryPage}
-                                        setDonutInquiryPage={setDonutInquiryPage}
-                                        totalDonutInquiryPages={totalDonutInquiryPages}
-                                        selectDonutCategory={selectDonutCategory}
-                                        handleDonutClick={handleDonutClick}
-                                        handleUrgentInspect={handleUrgentInspect}
-                                        formatDonutInquiryAge={formatDonutInquiryAge}
-                                        toggleExpandedSection={toggleExpandedSection}
-                                    />
-                                </div>
-                            )}
+    const renderTrendCard = () => (
+        <PeriodicTrendCard
+            expandedSection={expandedSection}
+            filteredBarData={filteredBarData}
+            groupedBarData={groupedBarData}
+            filters={filters}
+            setFilters={setFilters}
+            categoryOptions={donutCategoryOptions}
+            selectedCategoryField={selectedCategoryField}
+            sortOptions={sortOptions}
+            handleBarClick={handleBarClick}
+            toggleExpandedSection={toggleExpandedSection}
+        />
+    );
 
-                            {expandedSection !== 'urgentQueue' && (
-                                <div className="dashboard-motion col-span-12 min-h-0 lg:col-span-8 lg:col-start-5 lg:row-start-1">
-                                    <PeriodicTrendCard
-                                        expandedSection={expandedSection}
-                                        filteredBarData={filteredBarData}
-                                        groupedBarData={groupedBarData}
-                                        filters={filters}
-                                        setFilters={setFilters}
-                                        categoryOptions={categoryOptions}
-                                        sortOptions={sortOptions}
-                                        handleBarClick={handleBarClick}
-                                        toggleExpandedSection={toggleExpandedSection}
-                                    />
-                                </div>
-                            )}
+    const renderUrgencyCard = () => (
+        <UrgencyBreakdownCard
+            expandedSection={expandedSection}
+            priorityData={priorityData}
+            visibleDonutCategories={visibleDonutCategories}
+            hasHiddenDonutCategories={hasHiddenDonutCategories}
+            hiddenDonutCategoryCount={hiddenDonutCategoryCount}
+            hiddenDonutInquiryCount={hiddenDonutInquiryCount}
+            totalDonutCategoryCount={totalDonutCategoryCount}
+            totalDonutInquiries={totalDonutInquiries}
+            visibleDonutCategoryCards={visibleDonutCategoryCards}
+            donutCategories={donutCategories}
+            selectedDonutCategory={selectedDonutCategory}
+            visibleSelectedDonutInquiries={visibleSelectedDonutInquiries}
+            donutCategoryPage={donutCategoryPage}
+            setDonutCategoryPage={setDonutCategoryPage}
+            totalDonutCategoryPages={totalDonutCategoryPages}
+            donutInquiryPage={donutInquiryPage}
+            setDonutInquiryPage={setDonutInquiryPage}
+            totalDonutInquiryPages={totalDonutInquiryPages}
+            selectDonutCategory={selectDonutCategory}
+            handleDonutClick={handleDonutClick}
+            handleUrgentInspect={handleUrgentInspect}
+            formatDonutInquiryAge={formatDonutInquiryAge}
+            filters={filters}
+            setFilters={setFilters}
+            categoryOptions={donutCategoryOptions}
+            selectedCategoryField={selectedCategoryField}
+            toggleExpandedSection={toggleExpandedSection}
+        />
+    );
 
-                            <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-1 ${expandedSection === 'workload' ? 'lg:col-span-4 lg:row-span-2' : 'lg:col-span-4 lg:row-start-2'}`}>
-                                <WorkloadPanel
-                                    rows={workloadRows}
-                                    expanded={expandedSection === 'workload'}
-                                    onToggle={() => toggleExpandedSection('workload')}
-                                />
-                            </div>
+    const renderWorkloadCard = () => (
+        <WorkloadPanel
+            rows={workloadPeople}
+            expanded={expandedSection === 'workload'}
+            onToggle={() => toggleExpandedSection('workload')}
+            onTitleClick={() => setIsWorkloadModalOpen(true)}
+        />
+    );
 
-                            <div className={`dashboard-motion col-span-12 min-h-0 lg:col-start-5 ${expandedSection === 'urgentQueue' ? 'lg:col-span-8 lg:row-span-2' : 'lg:col-span-8 lg:row-start-2'}`}>
-                                <ImmediateTreatmentPanel
-                                    items={urgentQueueItems}
-                                    expanded={expandedSection === 'urgentQueue'}
-                                    onToggle={() => toggleExpandedSection('urgentQueue')}
-                                    onInspect={handleUrgentInspect}
-                                />
-                            </div>
-                        </div>
-                    )}
+    const renderAttentionCard = () => (
+        <ImmediateTreatmentPanel
+            items={urgentQueueItems}
+            expanded={expandedSection === 'urgentQueue'}
+            onToggle={() => toggleExpandedSection('urgentQueue')}
+            onInspect={handleUrgentInspect}
+        />
+    );
+
+    const isBarColumnExpanded = expandedSection === 'barChart'
+        || expandedSection === 'urgentQueue';
+    const isDonutColumnExpanded = expandedSection === 'donut'
+        || expandedSection === 'workload';
+    const isPrimaryExpanded = fullSectionExpansion;
+
+    const renderBarColumn = () => {
+        if (expandedSection === 'barChart') {
+            return renderTrendCard();
+        }
+
+        if (expandedSection === 'urgentQueue') {
+            return renderAttentionCard();
+        }
+
+        return (
+            <>
+                <div className="dashboard-column-v4e__cell">
+                    {renderTrendCard()}
                 </div>
-            </main>
+                <div className="dashboard-column-v4e__cell">
+                    {renderAttentionCard()}
+                </div>
+            </>
+        );
+    };
+
+    const renderDonutColumn = () => {
+        if (expandedSection === 'donut') {
+            return renderUrgencyCard();
+        }
+
+        if (expandedSection === 'workload') {
+            return renderWorkloadCard();
+        }
+
+        return (
+            <>
+                <div className="dashboard-column-v4e__cell">
+                    {renderUrgencyCard()}
+                </div>
+                <div className="dashboard-column-v4e__cell">
+                    {renderWorkloadCard()}
+                </div>
+            </>
+        );
+    };
+
+    return (
+        <div dir="rtl" className="dashboard-page-v4b">
+            {isPrimaryExpanded ? (
+                <div className="dashboard-primary-expanded-v4j-header">
+                    <DashboardHeader
+                        totalInquiries={totalInquiries}
+                        onEdit={openKpiEditor}
+                        onCreateInquiry={() => navigate('new_complaint')}
+                    />
+
+                    <main className="dashboard-primary-expanded-v4f">
+                    {expandedSection === 'barChart'
+                        ? renderTrendCard()
+                        : renderUrgencyCard()}
+                    </main>
+                </div>
+            ) : (
+                <>
+                    <DashboardHeader
+                        totalInquiries={totalInquiries}
+                        onEdit={openKpiEditor}
+                        onCreateInquiry={() => navigate('new_complaint')}
+                    />
+
+                    <main className="dashboard-main-v4b">
+                        <DashboardKpiGrid
+                            fullSectionExpansion={fullSectionExpansion}
+                            selectedKpis={selectedKpis}
+                            onEdit={openKpiEditor}
+                            onRemove={removeSelectedKpi}
+                            onKpiTitleClick={handleKpiTitleClick}
+                        />
+
+                        <div className="dashboard-stage-v4b">
+                            <div className="dashboard-columns-v4e">
+                                <div
+                                    className={`dashboard-column-v4e dashboard-column-v4e--bar ${
+                                        isBarColumnExpanded
+                                            ? 'dashboard-column-v4e--expanded'
+                                            : ''
+                                    }`}
+                                >
+                                    {renderBarColumn()}
+                                </div>
+
+                                <div
+                                    className={`dashboard-column-v4e dashboard-column-v4e--donut ${
+                                        isDonutColumnExpanded
+                                            ? 'dashboard-column-v4e--expanded'
+                                            : ''
+                                    }`}
+                                >
+                                    {renderDonutColumn()}
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </>
+            )}
 
             <DashboardInquiryModal
                 modalConfig={modalConfig}
                 searchValue={modalSearch}
                 onSearchChange={setModalSearch}
                 onClose={closeModal}
+                onSelectItem={handleNavigateToListItem}
             />
+
+            <DashboardWorkloadModal
+                isOpen={isWorkloadModalOpen}
+                people={workloadPeople}
+                onClose={() => setIsWorkloadModalOpen(false)}
+                onSelectTask={handleNavigateToListItem}
+            />
+
             <KpiEditorModal
                 isOpen={isKpiEditorOpen}
                 onClose={closeKpiEditor}
@@ -270,12 +503,25 @@ const DashboardPage = () => {
                 onRemove={handleDraftRemoveKpi}
                 onSave={handleSaveKpiLayout}
             />
+
             {undoState && (
-                <div className="pointer-events-none fixed bottom-6 left-1/2 z-[95] -translate-x-1/2">
-                    <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-[0_16px_35px_rgba(15,23,42,0.16)]">
+                <div className="dashboard-undo-layer-v4b">
+                    <div className="dashboard-undo-v4b">
                         <span>הכרטיס הוסר מהדשבורד</span>
-                        <button type="button" onClick={restoreRemovedKpi} className="rounded-xl bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 transition hover:bg-blue-100">בטל</button>
-                        <button type="button" onClick={dismissUndo} className="rounded-xl px-2 py-1 text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">סגור</button>
+                        <button
+                            type="button"
+                            onClick={restoreRemovedKpi}
+                            className="tamar-ui-btn tamar-ui-btn--sm tamar-ui-btn--secondary"
+                        >
+                            בטל
+                        </button>
+                        <button
+                            type="button"
+                            onClick={dismissUndo}
+                            className="tamar-ui-btn tamar-ui-btn--sm tamar-ui-btn--ghost"
+                        >
+                            סגור
+                        </button>
                     </div>
                 </div>
             )}
@@ -284,8 +530,3 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
-
-
-
-
-

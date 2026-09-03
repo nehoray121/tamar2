@@ -40,7 +40,9 @@ const NewInquiryPage = () => {
                 />
 
                 <div className="mt-2 border-b border-[var(--color-border-strong)]">
-                    <InquiryTabs activeTab={form.activeTab} onFormClick={form.closeChat} onChatClick={form.openChat} onAssignmentClick={form.openAssignment} assignmentEnabled={form.assignmentEnabled} />
+                    <InquiryTabs activeTab={form.activeTab} onFormClick={form.closeChat} onChatClick={form.openChat} onAssignmentClick={form.openAssignment} assignmentEnabled={form.assignmentEnabled}
+                        assignmentCount={form.assignedUsers?.length || 0}
+                    />
                 </div>
             </div>
 
@@ -56,7 +58,6 @@ const NewInquiryPage = () => {
                     incidentDescriptionSettings={form.incidentDescriptionSettings}
                     onOpenHistory={() => form.setIsHistoryOpen(true)}
                     openedBy={form.currentUser?.displayName}
-                    openedByContext={form.currentUser?.email}
                     historyCount={form.openCustomerInquiries.length}
                 />
 

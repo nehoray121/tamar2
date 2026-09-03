@@ -111,24 +111,42 @@ const seed = async () => {
         pattern: DEVELOPMENT_PERSONAL_NUMBER_PATTERN
     });
     const users = {};
-    const baselineIdentities = DEVELOPMENT_IDENTITIES.filter((identity) => identity.key === 'requested-super-admin');
+    const baselineIdentities = DEVELOPMENT_IDENTITIES.filter((identity) => Boolean(identity.role));
     for (const identity of baselineIdentities) {
         const protection = personalNumbers.protect(identity.personalNumber);
+        const developmentSubject = createDevelopmentSubject(identity.personalNumber);
+
         users[identity.key] = await User.findOneAndUpdate(
-            { personalNumberLookupHash: protection.lookupHash },
-            { $setOnInsert: {
-                externalIdentity: {
-                    provider: 'local-development',
-                    subject: createDevelopmentSubject(identity.personalNumber)
-                },
-                personalNumberLookupHash: protection.lookupHash,
-                personalNumberLast4: protection.last4,
-                displayName: identity.displayName,
-                email: identity.email,
-                isActive: true,
-                lastIdentitySyncAt: new Date()
-            } },
-            { upsert: true, returnDocument: 'after', runValidators: true }
+            {
+                $or: [
+                    {
+                        personalNumberLookupHash: protection.lookupHash
+                    },
+                    {
+                        'externalIdentity.provider': 'local-development',
+                        'externalIdentity.subject': developmentSubject
+                    }
+                ]
+            },
+            {
+                $set: {
+                    externalIdentity: {
+                        provider: 'local-development',
+                        subject: developmentSubject
+                    },
+                    personalNumberLookupHash: protection.lookupHash,
+                    personalNumberLast4: protection.last4,
+                    displayName: identity.displayName,
+                    email: identity.email,
+                    isActive: true,
+                    lastIdentitySyncAt: new Date()
+                }
+            },
+            {
+                upsert: true,
+                returnDocument: 'after',
+                runValidators: true
+            }
         ).select('+personalNumberLookupHash +personalNumberLast4');
     }
 

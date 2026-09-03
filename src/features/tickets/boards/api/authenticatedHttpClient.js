@@ -1,3 +1,4 @@
+import { notifyError } from '../../../notifications/notificationBus.js';
 import { BoardApiError, toBoardApiError } from './boardApiErrors.js';
 
 let configuredTokenProvider = null;
@@ -45,7 +46,9 @@ export const createAuthenticatedHttpClient = ({
         });
     } catch (cause) {
         if (cause?.name === 'AbortError') throw cause;
-        throw toBoardApiError({ cause });
+        const error = toBoardApiError({ cause });
+        notifyError(error?.message || 'לא ניתן להשלים את הבקשה');
+        throw error;
     }
 
     const text = await response.text();
@@ -54,7 +57,11 @@ export const createAuthenticatedHttpClient = ({
         try { payload = JSON.parse(text); }
         catch { payload = null; }
     }
-    if (!response.ok || payload?.success === false) throw toBoardApiError({ response, body: payload });
+    if (!response.ok || payload?.success === false) {
+        const error = toBoardApiError({ response, body: payload });
+        notifyError(error?.message || 'לא ניתן להשלים את הבקשה');
+        throw error;
+    }
     return {
         status: response.status,
         data: payload?.data,

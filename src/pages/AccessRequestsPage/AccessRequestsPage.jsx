@@ -261,7 +261,7 @@ const AccessRequestsPage = () => {
                         <label className="block text-xs font-black text-[var(--color-text-secondary)]">סיבת הבקשה (אופציונלי)
                             <textarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={1000} className="inquiry-input-surface mt-1 min-h-20 w-full rounded-xl p-3 text-sm font-semibold" />
                         </label>
-                        <button disabled={submitting || !selectedScope.requestedScopeId} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 text-sm font-black text-white disabled:opacity-50">
+                        <button type="submit" disabled={submitting || !selectedScope.requestedScopeId} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 text-sm font-black text-white disabled:opacity-50">
                             <Icon name="send" className="h-4 w-4" />שליחת בקשה
                         </button>
                     </form>

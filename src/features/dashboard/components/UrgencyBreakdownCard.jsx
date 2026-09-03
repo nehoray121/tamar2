@@ -1,21 +1,54 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import Icon from '../../../components/common/Icon.jsx';
-import { DashboardCard } from './DashboardPrimitives.jsx';
+import React, { useMemo } from 'react';
+import Icon from '../../../components/common/TamarIcon.jsx';
+import {
+    DashboardCard,
+    DashboardDateInput,
+    DashboardSelectPill
+} from './DashboardPrimitives.jsx';
 import SectionExpandButton from './SectionExpandButton.jsx';
 import UrgencyDonutChart from './UrgencyDonutChart.jsx';
 
+const priorityColor = (item) => {
+    const label = String(item?.rawLabel || item?.label || '').replace(/-\d+$/, '');
+    if (label.includes('גבוה')) return 'var(--color-danger)';
+    if (label.includes('בינונ')) return 'var(--color-warning)';
+    if (label.includes('נמוכ')) return 'var(--color-primary)';
+    return item?.color || 'var(--color-info)';
+};
+
+const CategoryCard = ({ category, selected, onSelect }) => (
+    <button
+        type="button"
+        onClick={() => onSelect(category.id)}
+        className="tamar-claude-category"
+        data-selected={selected ? 'true' : 'false'}
+        style={{ '--category-color': category.color || 'var(--color-primary)' }}
+    >
+        <span className="tamar-claude-category__head">
+            <span className="tamar-claude-category__dot" />
+            <strong>{category.shortLabel}</strong>
+        </span>
+        <span className="tamar-claude-category__pct">
+            {category.formattedPercentage}% מהפניות
+        </span>
+        <span className="tamar-claude-category__value">{category.value}</span>
+        <span className="tamar-claude-category__track">
+            <span
+                style={{ width: `${Math.max(6, Number(category.percentage || 0))}%` }}
+            />
+        </span>
+    </button>
+);
+
 const UrgencyBreakdownCard = ({
     expandedSection,
-    priorityData,
-    visibleDonutCategoryCards,
-    donutCategories,
-    hasHiddenDonutCategories,
+    priorityData = [],
+    visibleDonutCategoryCards = [],
+    donutCategories = [],
     hiddenDonutCategoryCount = 0,
-    hiddenDonutInquiryCount = 0,
-    totalDonutCategoryCount,
     totalDonutInquiries,
     selectedDonutCategory,
-    visibleSelectedDonutInquiries,
+    visibleSelectedDonutInquiries = [],
     donutCategoryPage,
     setDonutCategoryPage,
     totalDonutCategoryPages,
@@ -23,297 +56,315 @@ const UrgencyBreakdownCard = ({
     setDonutInquiryPage,
     totalDonutInquiryPages,
     selectDonutCategory,
+    filters,
+    setFilters,
+    categoryOptions = [],
+    selectedCategoryField,
     handleDonutClick,
     handleUrgentInspect,
     formatDonutInquiryAge,
     toggleExpandedSection
 }) => {
-    const isDonutExpanded = expandedSection === 'donut';
-    const [showInlineDetails, setShowInlineDetails] = useState(false);
-    const visibleCardCount = visibleDonutCategoryCards.length;
-    const collapsedPanelHeight = totalDonutInquiryPages > 1 ? 292 : 252;
-    const inlineDetailsHeight = showInlineDetails ? '650px' : `${collapsedPanelHeight}px`;
-    const inquiryListHeight = showInlineDetails ? '390px' : '170px';
+    const expanded = expandedSection === 'donut';
 
-    const categoryGridClass = visibleCardCount <= 1 ? 'grid-cols-1' : visibleCardCount === 2 ? 'grid-cols-2' : 'grid-cols-3';
-    const categoryTotal = totalDonutCategoryCount ?? donutCategories.length;
-    const categorySummary = hiddenDonutCategoryCount > 0 ? `מוצגות ${donutCategories.length} מתוך ${categoryTotal} קטגוריות` : `${donutCategories.length} קטגוריות`;
-    const hiddenCategorySummary = hiddenDonutCategoryCount > 0 ? `ועוד ${hiddenDonutCategoryCount} קטגוריות לא מוצגות · ${hiddenDonutInquiryCount} פניות` : '';
-    const categoryRowsClass = visibleCardCount <= 3 ? 'grid-rows-1' : 'grid-rows-2';
-    const previewInquiries = useMemo(
-        () => (showInlineDetails ? visibleSelectedDonutInquiries : visibleSelectedDonutInquiries.slice(0, 3)),
-        [showInlineDetails, visibleSelectedDonutInquiries]
+    const data = useMemo(
+        () => priorityData.map((item) => ({
+            ...item,
+            color: priorityColor(item)
+        })),
+        [priorityData]
     );
 
-    useEffect(() => {
-        if (!isDonutExpanded || !selectedDonutCategory) {
-            setShowInlineDetails(false);
-        }
-    }, [isDonutExpanded, selectedDonutCategory]);
+    const total = data.reduce(
+        (sum, item) => sum + Number(item?.value || 0),
+        0
+    );
 
-    if (!isDonutExpanded) {
+    const legend = data
+        .filter((item) => Number(item?.value || 0) > 0)
+        .map((item) => ({
+            ...item,
+            percentage: total > 0
+                ? Math.round((Number(item.value || 0) / total) * 100)
+                : 0
+        }));
+
+    const renderLegend = () => (
+        <div
+            className={`tamar-claude-urgency-legend ${
+                legend.length > 3
+                    ? 'tamar-claude-urgency-legend--scroll'
+                    : ''
+            }`}
+        >
+            {legend.map((item) => (
+                <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleDonutClick?.(item)}
+                    className="tamar-claude-urgency-legend__row"
+                >
+                    <span
+                        className="tamar-claude-urgency-legend__dot"
+                        style={{ background: item.color }}
+                    />
+                    <span>{String(item.label).replace(/-\d+$/, '')}</span>
+                    <span>{item.percentage}%</span>
+                    <strong>{item.value}</strong>
+                </button>
+            ))}
+        </div>
+    );
+
+    if (!expanded) {
         return (
-            <DashboardCard className="dashboard-card-motion flex h-full min-h-0 flex-col p-3" dir="rtl">
-                <div className="flex shrink-0 items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                        <SectionExpandButton expanded={false} onClick={() => toggleExpandedSection('donut')} compact title="הרחב פילוח לפי דחיפות" />
-                        <div className="rounded-2xl bg-blue-50 p-2.5 text-blue-600 ring-1 ring-blue-100">
-                            <Icon name="dashboard" className="h-4 w-4" />
+            <DashboardCard className="tamar-claude-dashboard-card" dir="rtl">
+                <div className="tamar-claude-card-header">
+                    <div className="tamar-claude-card-header__main">
+                        <span className="tamar-claude-icon-chip">
+                            <Icon name="pie" className="h-[15px] w-[15px]" />
+                        </span>
+                        <div>
+                            <h2 className="tamar-claude-card-title">
+                                התפלגות פניות
+                            </h2>
+                            <p className="tamar-claude-card-subtitle">
+                                פילוח לפי רמת דחיפות
+                            </p>
                         </div>
                     </div>
-                    <div>
-                    <h2 className="text-[22px] font-black leading-7 inquiry-primary-text">פילוח לפי דחיפות</h2>
-                    <p className="mt-0.5 text-sm font-semibold inquiry-secondary-text">התפלגות כוללת במערכת</p>
-                    </div>
 
+                    <SectionExpandButton
+                        expanded={false}
+                        onClick={() => toggleExpandedSection('donut')}
+                        title="הרחב"
+                    />
                 </div>
 
-                <div className="flex min-h-0 flex-1 flex-col pt-1">
-                    <div className="flex min-h-0 flex-1 items-center justify-center">
-                        <UrgencyDonutChart data={priorityData} onSegmentClick={handleDonutClick} totalOverride={totalDonutInquiries} />
-                    </div>
+                <div className="tamar-claude-urgency-body">
+                    {renderLegend()}
+                    <UrgencyDonutChart
+                        data={data}
+                        onSegmentClick={handleDonutClick}
+                        totalOverride={totalDonutInquiries}
+                    />
                 </div>
             </DashboardCard>
         );
     }
 
     return (
-        <DashboardCard className="dashboard-card-motion dashboard-expanded-card flex h-full min-h-0 flex-col p-3" dir="rtl">
-            <div className="flex shrink-0 items-start justify-between gap-2">
-                <div>
-                    <h2 className="text-[22px] font-black leading-7 text-slate-950 dark:text-white">פילוח לפי דחיפות</h2>
-                    <p className="mt-0.5 text-sm font-semibold text-slate-400">התפלגות כוללת במערכת</p>
+        <DashboardCard className="tamar-claude-dashboard-card tamar-claude-dashboard-card--expanded" dir="rtl">
+            <div className="tamar-claude-card-header">
+                <div className="tamar-claude-card-header__main">
+                    <span className="tamar-claude-icon-chip">
+                        <Icon name="pie" className="h-[15px] w-[15px]" />
+                    </span>
+                    <div>
+                        <h2 className="tamar-claude-card-title">
+                            התפלגות פניות
+                        </h2>
+                        <p className="tamar-claude-card-subtitle">
+{filters?.category === 'period'
+                                ? 'פילוח לפי רמת דחיפות'
+                                : `פילוח לפי ${
+                                    selectedCategoryField?.name
+                                    || 'קטגוריה'
+                                }`}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                    <SectionExpandButton expanded onClick={() => toggleExpandedSection('donut')} compact title="מזער פילוח לפי דחיפות" />
-                    <div className="rounded-2xl bg-blue-50 p-2.5 text-blue-600 ring-1 ring-blue-100">
-                        <Icon name="dashboard" className="h-4 w-4" />
-                    </div>
+                <div className="tamar-claude-card-header__actions tamar-claude-urgency-header-actions">
+                    <DashboardDateInput
+                        label="מתאריך"
+                        value={filters?.dateFrom || ''}
+                        onChange={(value) =>
+                            setFilters?.((current) => ({
+                                ...current,
+                                dateFrom: value
+                            }))
+                        }
+                    />
+
+                    <DashboardDateInput
+                        label="עד"
+                        value={filters?.dateTo || ''}
+                        onChange={(value) =>
+                            setFilters?.((current) => ({
+                                ...current,
+                                dateTo: value
+                            }))
+                        }
+                    />
+                    <DashboardSelectPill
+                        label="קטגוריה"
+                        icon="filter"
+                        value={filters?.category || 'all'}
+                        onChange={(value) => {
+                            setFilters?.((current) => ({
+                                ...current,
+                                category: value
+                            }));
+                            setDonutCategoryPage(0);
+                            setDonutInquiryPage(0);
+                        }}
+                        options={categoryOptions.length
+                            ? categoryOptions
+                            : [{ value: 'all', label: 'כל הקטגוריות' }]}
+                    />
+
+                    <SectionExpandButton
+                        expanded
+                        onClick={() => toggleExpandedSection('donut')}
+                        title="מזער"
+                    />
                 </div>
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col gap-2 pt-2">
-                {showInlineDetails ? (
-                    <section className="flex shrink-0 min-h-[166px] flex-col rounded-[24px] inquiry-panel">
-                        <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3.5 py-2">
-                            <h3 className="text-lg font-black inquiry-primary-text">פילוח מדדים מפורט</h3>
-                            <span className="rounded-full inquiry-soft-panel px-2.5 py-0.5 text-xs font-black inquiry-muted-text">{categorySummary}</span>
+            <div className="tamar-claude-urgency-expanded">
+                <section className="tamar-claude-urgency-summary tamar-claude-urgency-summary--donut-only">
+                    <UrgencyDonutChart
+                        data={data}
+                        onSegmentClick={handleDonutClick}
+                        isExpanded
+                        totalOverride={totalDonutInquiries}
+                    />
+                </section>
+
+                <section className="tamar-claude-category-panel">
+                    <div className="tamar-claude-panel-header">
+                        <div>
+                            <h3>פילוח מדדים מפורט</h3>
+                            <p>לחצו על קטגוריה לצפייה בפניות</p>
                         </div>
-
-                        <div className="flex min-h-0 flex-1 items-start px-2.5 py-2.5">
-                            {donutCategories.length === 0 ? (
-                                <div className="flex h-full w-full items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 text-sm font-bold text-slate-400">אין קטגוריות להצגה</div>
-                            ) : (
-                                <div className="grid w-full gap-2 md:grid-cols-3">
-                                    {visibleDonutCategoryCards.map((category, index) => {
-                                        const isSelected = selectedDonutCategory?.id === category.id;
-
-                                        return (
-                                            <article
-                                                key={category.id}
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => selectDonutCategory(category.id)}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === 'Enter' || event.key === ' ') {
-                                                        event.preventDefault();
-                                                        selectDonutCategory(category.id);
-                                                    }
-                                                }}
-                                                className="flex min-h-[104px] cursor-pointer flex-col rounded-[18px] inquiry-panel p-2.5 text-right transition duration-300 hover:-translate-y-0.5"
-                                                style={isSelected ? { borderColor: category.color, backgroundColor: category.lightColor, boxShadow: `0 12px 24px ${category.borderColor}` } : { transitionDelay: `${index * 40}ms` }}
-                                            >
-                                                <div className="flex items-center justify-between gap-3">
-                                                    <div className="text-sm font-black inquiry-primary-text">{category.shortLabel}</div>
-                                                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
-                                                </div>
-
-                                                <div className="mt-1.5 flex items-end justify-between gap-2">
-                                                    <div className="text-sm font-bold inquiry-muted-text">פניות</div>
-                                                    <div className="text-[22px] font-black leading-7 inquiry-primary-text">{category.value}</div>
-                                                </div>
-
-                                                <div className="mt-1.5 text-xs font-semibold inquiry-secondary-text">{category.formattedPercentage}% מכלל הפניות</div>
-
-                                                <div className="mt-1.5 h-1.5 rounded-full bg-slate-100">
-                                                    <div className="h-full rounded-full" style={{ width: `${Math.max(6, category.percentage)}%`, backgroundColor: category.color }} />
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        selectDonutCategory(category.id);
-                                                    }}
-                                                    className="mt-auto pt-1.5 text-right text-xs font-bold"
-                                                    style={{ color: category.color }}
-                                                >
-                                                    צפה בפניות
-                                                </button>
-                                            </article>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    </section>
-                ) : (
-                    <div className="grid shrink-0 gap-2.5 xl:grid-cols-[minmax(270px,0.78fr)_minmax(0,1.22fr)]">
-                        <section className="flex min-h-[174px] flex-col rounded-[24px] border border-slate-200 bg-white px-3 py-2.5 shadow-sm   dark:border-slate-700/60 dark:bg-slate-900/70 dark:text-slate-100">
-                            <div className="flex min-h-0 flex-1 items-center justify-center">
-                                <div className="flex aspect-square w-full max-w-[248px] items-center justify-center">
-                                    <UrgencyDonutChart data={priorityData} onSegmentClick={handleDonutClick} isExpanded totalOverride={totalDonutInquiries} />
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="flex min-h-[174px] flex-col rounded-[24px] inquiry-panel">
-                            <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3.5 py-2">
-                                <h3 className="text-lg font-black inquiry-primary-text">פילוח מדדים מפורט</h3>
-                                <span className="rounded-full inquiry-soft-panel px-2.5 py-0.5 text-xs font-black inquiry-muted-text">{categorySummary}</span>
-                            </div>
-
-                            <div className="flex min-h-0 flex-1 flex-col px-2.5 py-2.5">
-                                {hiddenCategorySummary && <div className="mb-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-[11px] font-black text-[var(--color-text-secondary)]">{hiddenCategorySummary}</div>}
-                                {donutCategories.length === 0 ? (
-                                    <div className="flex h-full w-full items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 text-sm font-bold text-slate-400">אין קטגוריות להצגה</div>
-                                ) : (
-                                    <div className={`grid w-full gap-2 ${categoryGridClass} ${categoryRowsClass}`}>
-                                        {visibleDonutCategoryCards.map((category, index) => {
-                                            const isSelected = selectedDonutCategory?.id === category.id;
-
-                                            return (
-                                                <article
-                                                    key={category.id}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={() => selectDonutCategory(category.id)}
-                                                    onKeyDown={(event) => {
-                                                        if (event.key === 'Enter' || event.key === ' ') {
-                                                            event.preventDefault();
-                                                            selectDonutCategory(category.id);
-                                                        }
-                                                    }}
-                                                    className="flex min-h-[108px] cursor-pointer flex-col rounded-[18px] border border-slate-200 bg-white p-2.5 text-right shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md   dark:border-slate-700/60 dark:bg-slate-900/70 dark:text-slate-100"
-                                                    style={isSelected ? { borderColor: category.color, backgroundColor: category.lightColor, boxShadow: `0 12px 24px ${category.borderColor}` } : { transitionDelay: `${index * 40}ms` }}
-                                                >
-                                                    <div className="flex items-center justify-between gap-3">
-                                                        <div className="text-sm font-black inquiry-primary-text">{category.shortLabel}</div>
-                                                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
-                                                    </div>
-
-                                                    <div className="mt-1.5 flex items-end justify-between gap-2">
-                                                        <div className="text-sm font-bold inquiry-muted-text">פניות</div>
-                                                        <div className="text-[22px] font-black leading-7 inquiry-primary-text">{category.value}</div>
-                                                    </div>
-
-                                                    <div className="mt-1.5 text-xs font-semibold inquiry-secondary-text">{category.formattedPercentage}% מכלל הפניות</div>
-
-                                                    <div className="mt-1.5 h-1.5 rounded-full bg-slate-100">
-                                                        <div className="h-full rounded-full" style={{ width: `${Math.max(6, category.percentage)}%`, backgroundColor: category.color }} />
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            selectDonutCategory(category.id);
-                                                        }}
-                                                        className="mt-auto pt-1.5 text-right text-xs font-bold"
-                                                        style={{ color: category.color }}
-                                                    >
-                                                        צפה בפניות
-                                                    </button>
-                                                </article>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-
-                            {totalDonutCategoryPages > 1 && (
-                                <div className="flex shrink-0 items-center justify-between border-t border-slate-100 px-4 py-2 text-sm font-bold text-slate-500">
-                                    <button type="button" onClick={() => setDonutCategoryPage((currentPage) => Math.max(0, currentPage - 1))} disabled={donutCategoryPage === 0} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הקודם</button>
-                                    <span>עמוד {donutCategoryPage + 1} מתוך {totalDonutCategoryPages}</span>
-                                    <button type="button" onClick={() => setDonutCategoryPage((currentPage) => Math.min(totalDonutCategoryPages - 1, currentPage + 1))} disabled={donutCategoryPage >= totalDonutCategoryPages - 1} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הבא</button>
-                                </div>
-                            )}
-                        </section>
-                    </div>
-                )}
-
-                <section
-                    className="dashboard-inline-details-panel flex min-h-0 flex-col overflow-hidden rounded-[24px] inquiry-panel"
-                    style={{ maxHeight: inlineDetailsHeight, opacity: showInlineDetails ? 1 : 0.98 }}
-                >
-                    <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 py-2">
-                        <div className="flex items-center gap-3">
-                            <span className="text-lg font-black inquiry-primary-text">פניות בקטגוריה שנבחרה</span>
-                            {selectedDonutCategory && (
-                                <span className="rounded-full px-3 py-1 text-xs font-black inquiry-primary-text ring-1 ring-[var(--color-border)]" style={{ backgroundColor: selectedDonutCategory.lightColor }}>
-                                    {selectedDonutCategory.shortLabel} · {selectedDonutCategory.value}
-                                </span>
-                            )}
-                        </div>
-
-                        <button
-                            type="button"
-                            aria-expanded={showInlineDetails}
-                            onClick={() => selectedDonutCategory && setShowInlineDetails((current) => !current)}
-                            disabled={!selectedDonutCategory}
-                            className="rounded-2xl inquiry-control px-3.5 py-1.5 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            {showInlineDetails ? 'צמצם' : 'לראות עוד'}
-                        </button>
+                        <span>{donutCategories.length} קטגוריות</span>
                     </div>
 
-                    <div className="dashboard-inline-details-body flex min-h-0 flex-1 flex-col px-3 py-2" data-expanded={showInlineDetails ? 'true' : 'false'}>
-                        {previewInquiries.length === 0 ? (
-                            <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-[var(--color-border)] bg-transparent text-sm font-bold inquiry-muted-text">אין פניות בקטגוריה זו</div>
-                        ) : (
-                            <div className="dashboard-inquiry-list-reveal flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-transparent" data-expanded={showInlineDetails ? 'true' : 'false'} style={{ maxHeight: inquiryListHeight, opacity: showInlineDetails ? 1 : 0.96, transform: showInlineDetails ? 'translateY(0)' : 'translateY(-4px)' }}>
-                                <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_0.9fr_0.8fr] gap-3 border-b border-[var(--color-border)] inquiry-soft-panel px-3 py-2.5 text-xs font-black inquiry-muted-text" dir="rtl">
-                                    <span>מזהה</span>
-                                    <span>דחיפות</span>
-                                    <span>זמן פתוח</span>
-                                    <span>נציג מטפל</span>
-                                    <span>סטטוס</span>
-                                    <span>פעולה</span>
-                                </div>
+                    
 
-                                <div className={`min-h-0 flex-1 bg-transparent ${showInlineDetails ? 'overflow-y-auto' : 'overflow-hidden'}`}>
-                                    {previewInquiries.map((item) => (
-                                        <div key={item.id} className="grid min-h-[56px] grid-cols-[1.2fr_1fr_1fr_1fr_0.9fr_0.8fr] items-center gap-3 border-b border-[var(--color-border)] px-3 py-2.5 text-sm inquiry-secondary-text last:border-b-0" dir="rtl">
-                                            <span className="font-black inquiry-primary-text">{item.id}</span>
-
-                                            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 font-bold text-slate-600">
-                                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.chartColor }} />
-                                                {item.priority.replace(/-\d+$/, '')}
-                                            </span>
-
-                                            <span className="font-semibold text-slate-500 dark:text-white">{formatDonutInquiryAge(item.date)}</span>
-                                            <span className="font-semibold text-slate-600 dark:text-white">{item.assignee}</span>
-                                            <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-black ${item.status === 'open' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                {item.status === 'open' ? 'פתוחה' : 'סגורה'}
-                                            </span>
-                                            <button type="button" onClick={() => handleUrgentInspect(item)} className="rounded-2xl bg-blue-50 px-3 py-1.5 text-sm font-black text-blue-700 transition hover:bg-blue-100">צפייה</button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                    <div className="tamar-claude-category-grid">
+                        {visibleDonutCategoryCards.map((category) => (
+                            <CategoryCard
+                                key={category.id}
+                                category={category}
+                                selected={selectedDonutCategory?.id === category.id}
+                                onSelect={selectDonutCategory}
+                            />
+                        ))}
                     </div>
 
-                    {totalDonutInquiryPages > 1 && (
-                        <div className="flex shrink-0 items-center justify-between border-t border-slate-100 px-4 py-2 text-sm font-bold text-slate-500">
-                            <button type="button" onClick={() => setDonutInquiryPage((currentPage) => Math.max(0, currentPage - 1))} disabled={donutInquiryPage === 0} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הקודם</button>
-                            <span>עמוד {donutInquiryPage + 1} מתוך {totalDonutInquiryPages}</span>
-                            <button type="button" onClick={() => setDonutInquiryPage((currentPage) => Math.min(totalDonutInquiryPages - 1, currentPage + 1))} disabled={donutInquiryPage >= totalDonutInquiryPages - 1} className="rounded-2xl border border-slate-200 px-4 py-1.5 transition disabled:cursor-not-allowed disabled:opacity-40">הבא</button>
+                    {totalDonutCategoryPages > 1 && (
+                        <div className="tamar-claude-pager">
+                            <button
+                                type="button"
+                                disabled={donutCategoryPage === 0}
+                                onClick={() =>
+                                    setDonutCategoryPage((page) => Math.max(0, page - 1))
+                                }
+                            >
+                                הקודם
+                            </button>
+                            <span>
+                                עמוד {donutCategoryPage + 1} מתוך {totalDonutCategoryPages}
+                            </span>
+                            <button
+                                type="button"
+                                disabled={donutCategoryPage >= totalDonutCategoryPages - 1}
+                                onClick={() =>
+                                    setDonutCategoryPage((page) =>
+                                        Math.min(totalDonutCategoryPages - 1, page + 1)
+                                    )
+                                }
+                            >
+                                הבא
+                            </button>
                         </div>
                     )}
                 </section>
             </div>
+
+            <section className="tamar-claude-drilldown">
+                <div className="tamar-claude-panel-header">
+                    <h3>
+                        פניות בקטגוריה שנבחרה
+                        {selectedDonutCategory
+                            ? ` · ${selectedDonutCategory.shortLabel}`
+                            : ''}
+                    </h3>
+                </div>
+
+                <div className="tamar-claude-drilldown__head">
+                    <span>מזהה</span>
+                    <span>נושא</span>
+                    <span>דחיפות</span>
+                    <span>זמן פתוח</span>
+                    <span>נציג מטפל</span>
+                    <span>סטטוס</span>
+                    <span>פעולה</span>
+                </div>
+
+                <div className="tamar-claude-drilldown__body">
+                    {visibleSelectedDonutInquiries.map((item) => {
+                        const subject = item.subject
+                            || item.title
+                            || item.description
+                            || item.requester
+                            || '—';
+                        const assignee = item.assigneeLabel
+                            || item.assignee
+                            || 'לא משויך';
+                        const age = formatDonutInquiryAge?.(item.date)
+                            || item.durationLabel
+                            || '—';
+
+                        return (
+                            <div key={item.id} className="tamar-claude-drilldown__row">
+                                <strong>{item.id}</strong>
+                                <span title={subject}>{subject}</span>
+                                <span>{String(item.priority || '—').replace(/-\d+$/, '')}</span>
+                                <span>{age}</span>
+                                <span title={assignee}>{assignee}</span>
+                                <span>{item.status === 'open' ? 'פתוחה' : 'סגורה'}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleUrgentInspect(item)}
+                                >
+                                    צפייה
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {totalDonutInquiryPages > 1 && (
+                    <div className="tamar-claude-pager">
+                        <button
+                            type="button"
+                            disabled={donutInquiryPage === 0}
+                            onClick={() =>
+                                setDonutInquiryPage((page) => Math.max(0, page - 1))
+                            }
+                        >
+                            הקודם
+                        </button>
+                        <span>
+                            עמוד {donutInquiryPage + 1} מתוך {totalDonutInquiryPages}
+                        </span>
+                        <button
+                            type="button"
+                            disabled={donutInquiryPage >= totalDonutInquiryPages - 1}
+                            onClick={() =>
+                                setDonutInquiryPage((page) =>
+                                    Math.min(totalDonutInquiryPages - 1, page + 1)
+                                )
+                            }
+                        >
+                            הבא
+                        </button>
+                    </div>
+                )}
+            </section>
         </DashboardCard>
     );
 };

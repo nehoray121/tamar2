@@ -1,14 +1,14 @@
 import React from 'react';
 import Icon from '../common/Icon.jsx';
 
-const Button = ({ children, variant = 'primary', className = '', ...props }) => {
+const Button = ({ children, variant = 'primary', className = '', type = 'button', ...props }) => {
     const baseStyle = 'flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]';
     const variants = {
         primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]',
         outline: 'border border-[var(--color-primary)] bg-[var(--color-surface-raised)] text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)]',
         ghost: 'border border-[var(--color-border-strong)] bg-[var(--color-surface-raised)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-primary)]'
     };
-    return <button className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>{children}</button>;
+    return <button type={type} className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>{children}</button>;
 };
 
 const Badge = ({ children, type }) => {

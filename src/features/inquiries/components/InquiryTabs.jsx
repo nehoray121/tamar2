@@ -1,7 +1,14 @@
 import React from 'react';
 import Icon from '../../../components/common/Icon.jsx';
 
-const InquiryTabs = ({ activeTab, onFormClick, onChatClick, onAssignmentClick, assignmentEnabled = true }) => (
+const InquiryTabs = ({
+    activeTab,
+    onFormClick,
+    onChatClick,
+    onAssignmentClick,
+    assignmentEnabled = true,
+    assignmentCount = 0
+}) => (
     <div className="flex h-full items-end gap-1" dir="rtl">
         <button
             type="button"
@@ -27,11 +34,17 @@ const InquiryTabs = ({ activeTab, onFormClick, onChatClick, onAssignmentClick, a
             <button
                 type="button"
                 onClick={onAssignmentClick}
-                className={`flex h-10 min-w-[136px] items-center justify-center gap-2 rounded-t-2xl border px-6 text-sm font-black transition ${activeTab === 'assignment' ? 'inquiry-tab-button inquiry-tab-button--active' : 'inquiry-tab-button inquiry-tab-button--inactive'}`}
+                className={`flex h-10 min-w-[156px] items-center justify-center gap-2 rounded-t-2xl border px-5 text-sm font-black transition ${activeTab === 'assignment' ? 'inquiry-tab-button inquiry-tab-button--active' : 'inquiry-tab-button inquiry-tab-button--inactive'}`}
             >
-                שיוך אישי
+                שיוך משתמשים
                 <span className="flex h-4 w-4 shrink-0 items-center justify-center">
                     <Icon name="users" className="h-4 w-4 shrink-0" />
+                </span>
+                <span
+                    className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-black leading-none text-white shadow-sm"
+                    aria-label={`${Number(assignmentCount) || 0} משתמשים משויכים`}
+                >
+                    {Number(assignmentCount) || 0}
                 </span>
             </button>
         )}

@@ -10,17 +10,28 @@ const mapLineage = (lineage) => ({
 const sameId = (left, right) => String(left ?? '') === String(right ?? '');
 
 class MongoHierarchyAdapter {
-    constructor({ hierarchyService, systemRepository, environmentRepository, subEnvironmentRepository, roomRepository }) {
-        this.hierarchyService = hierarchyService;
-        this.systemRepository = systemRepository;
-        this.environmentRepository = environmentRepository;
-        this.subEnvironmentRepository = subEnvironmentRepository;
-        this.roomRepository = roomRepository;
+    constructor({
+        hierarchyService,
+        systemRepository,
+        environmentRepository,
+        subEnvironmentRepository,
+        roomRepository
+    }) {
+        Object.assign(this, {
+            hierarchyService,
+            systemRepository,
+            environmentRepository,
+            subEnvironmentRepository,
+            roomRepository
+        });
     }
 
     async safeResolve(entityType, id, options = {}) {
         try {
-            return await this.hierarchyService.resolveLineage(entityType, id, { requireOperational: true, ...options });
+            return await this.hierarchyService.resolveLineage(entityType, id, {
+                requireOperational: true,
+                ...options
+            });
         } catch {
             return null;
         }
@@ -35,27 +46,64 @@ class MongoHierarchyAdapter {
     }
 
     async findActiveSubEnvironmentById(id) {
-        return (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.SUB_ENVIRONMENT, id))?.subEnvironment || null;
+        return (await this.safeResolve(
+            ORGANIZATION_ENTITY_TYPES.SUB_ENVIRONMENT,
+            id
+        ))?.subEnvironment || null;
     }
 
     async findActiveRoomById(id) {
         return (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ROOM, id))?.room || null;
     }
 
-    async findActiveRoomIdsBySubEnvironmentIds(ids, options = {}) {
-        const rooms = await this.roomRepository.findBySubEnvironmentIds(ids, { ...options, operationalOnly: true });
+    async filterOperationalRooms(rooms, options = {}) {
         const resolved = await Promise.all(rooms.map(async (room) => (
-            (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ROOM, room._id)) ? room._id : null
+            (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ROOM, room._id, options))
+                ? room._id
+                : null
+        )));
+        return resolved.filter(Boolean);
+    }
+
+    async findActiveRoomIdsBySubEnvironmentIds(ids, options = {}) {
+        const rooms = await this.roomRepository.findBySubEnvironmentIds(ids, {
+            ...options,
+            operationalOnly: true
+        });
+        return this.filterOperationalRooms(rooms, options);
+    }
+
+    async findActiveRoomIdsByEnvironmentIds(ids, options = {}) {
+        const rooms = await this.roomRepository.findByEnvironmentIds(ids, {
+            ...options,
+            operationalOnly: true
+        });
+        return this.filterOperationalRooms(rooms, options);
+    }
+
+    async findActiveSubEnvironmentIdsByEnvironmentIds(ids, options = {}) {
+        const entities = await this.subEnvironmentRepository.findByEnvironmentIds(ids, {
+            ...options,
+            operationalOnly: true
+        });
+        const resolved = await Promise.all(entities.map(async (entity) => (
+            (await this.safeResolve(
+                ORGANIZATION_ENTITY_TYPES.SUB_ENVIRONMENT,
+                entity._id,
+                options
+            ))
+                ? entity._id
+                : null
         )));
         return resolved.filter(Boolean);
     }
 
     async findActiveRoomIdsBySystemIds(ids, options = {}) {
-        const rooms = await this.roomRepository.findBySystemIds(ids, { ...options, operationalOnly: true });
-        const resolved = await Promise.all(rooms.map(async (room) => (
-            (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ROOM, room._id, options)) ? room._id : null
-        )));
-        return resolved.filter(Boolean);
+        const rooms = await this.roomRepository.findBySystemIds(ids, {
+            ...options,
+            operationalOnly: true
+        });
+        return this.filterOperationalRooms(rooms, options);
     }
 
     async isRoomInSubEnvironment(roomId, subEnvironmentId) {
@@ -64,7 +112,10 @@ class MongoHierarchyAdapter {
     }
 
     async isSubEnvironmentInEnvironment(subEnvironmentId, environmentId) {
-        const lineage = await this.safeResolve(ORGANIZATION_ENTITY_TYPES.SUB_ENVIRONMENT, subEnvironmentId);
+        const lineage = await this.safeResolve(
+            ORGANIZATION_ENTITY_TYPES.SUB_ENVIRONMENT,
+            subEnvironmentId
+        );
         return sameId(lineage?.environment?._id, environmentId);
     }
 
@@ -74,19 +125,31 @@ class MongoHierarchyAdapter {
     }
 
     async getSubEnvironmentForRoom(roomId) {
-        return (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ROOM, roomId))?.subEnvironment || null;
+        return (await this.safeResolve(
+            ORGANIZATION_ENTITY_TYPES.ROOM,
+            roomId
+        ))?.subEnvironment || null;
     }
 
     async getEnvironmentForSubEnvironment(subEnvironmentId) {
-        return (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.SUB_ENVIRONMENT, subEnvironmentId))?.environment || null;
+        return (await this.safeResolve(
+            ORGANIZATION_ENTITY_TYPES.SUB_ENVIRONMENT,
+            subEnvironmentId
+        ))?.environment || null;
     }
 
     async getEnvironmentForRoom(roomId) {
-        return (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ROOM, roomId))?.environment || null;
+        return (await this.safeResolve(
+            ORGANIZATION_ENTITY_TYPES.ROOM,
+            roomId
+        ))?.environment || null;
     }
 
     async getSystemForEnvironment(environmentId) {
-        return (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ENVIRONMENT, environmentId))?.system || null;
+        return (await this.safeResolve(
+            ORGANIZATION_ENTITY_TYPES.ENVIRONMENT,
+            environmentId
+        ))?.system || null;
     }
 
     async getDescendantRoomIdsForSubEnvironment(subEnvironmentId) {
@@ -94,11 +157,7 @@ class MongoHierarchyAdapter {
     }
 
     async getDescendantRoomIdsForEnvironment(environmentId) {
-        const rooms = await this.roomRepository.findByEnvironmentId(environmentId, { operationalOnly: true });
-        const resolved = await Promise.all(rooms.map(async (room) => (
-            (await this.safeResolve(ORGANIZATION_ENTITY_TYPES.ROOM, room._id)) ? room._id : null
-        )));
-        return resolved.filter(Boolean);
+        return this.findActiveRoomIdsByEnvironmentIds([environmentId]);
     }
 
     async isScopeActive(scopeType, scopeId) {

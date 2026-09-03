@@ -1,10 +1,15 @@
 const { createServer } = require('node:http');
-const { exportJWK, generateKeyPair, SignJWT } = require('jose');
 const { loadLocalAuthConfig } = require('./config.js');
 const { createDevelopmentSubject, normalizeDevelopmentPersonalNumber } = require('./identity.js');
 
 const JSON_LIMIT = 1024;
 const KEY_ID = 'tamar-local-development-rs256';
+
+let josePromise = null;
+const loadJose = () => {
+    josePromise ||= import('jose');
+    return josePromise;
+};
 
 const json = (response, statusCode, body, extraHeaders = {}) => {
     response.writeHead(statusCode, {
@@ -36,6 +41,7 @@ const readJsonBody = (request) => new Promise((resolve, reject) => {
 });
 
 const createLocalIdentityProvider = async ({ source = process.env } = {}) => {
+    const { exportJWK, generateKeyPair, SignJWT } = await loadJose();
     const config = loadLocalAuthConfig(source);
     const { publicKey, privateKey } = await generateKeyPair('RS256');
     const jwk = await exportJWK(publicKey);

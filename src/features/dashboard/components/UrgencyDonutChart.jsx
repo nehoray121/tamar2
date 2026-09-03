@@ -1,95 +1,108 @@
 import React, { useState } from 'react';
 
-const UrgencyDonutChart = ({ data, onSegmentClick, isExpanded = false, hideCenter = false, totalOverride }) => {
-    const [hoveredSegment, setHoveredSegment] = useState(null);
-    const chartSize = isExpanded ? 172 : 154;
-    const labelPadding = isExpanded ? 42 : 30;
-    const size = chartSize + (labelPadding * 2);
-    const strokeWidth = isExpanded ? 28 : 26;
-    const radius = (chartSize - strokeWidth) / 2;
-    const segmentTotal = data.reduce((sum, item) => sum + item.value, 0);
+const UrgencyDonutChart = ({
+    data = [],
+    onSegmentClick,
+    isExpanded = false,
+    hideCenter = false,
+    totalOverride
+}) => {
+    const [hovered, setHovered] = useState(null);
+    const items = data.filter((item) => Number(item?.value || 0) > 0);
+    const segmentTotal = items.reduce(
+        (sum, item) => sum + Number(item.value || 0),
+        0
+    );
     const total = totalOverride ?? segmentTotal;
-    const centerRadius = Math.max(0, radius - (strokeWidth / 2) - 7);
+    const size = isExpanded ? 196 : 150;
+    const strokeWidth = isExpanded ? 34 : 20;
     const center = size / 2;
-    const chartOffsetY = isExpanded ? 0 : -4;
-    const labelInset = isExpanded ? 22 : 16;
-    const showLabels = data.length <= (isExpanded ? 6 : 4);
-    let currentAngle = 0;
+    const radius = (size - strokeWidth) / 2;
 
-    const pointOnCircle = (angle, pointRadius = radius) => {
-        const radians = (angle - 90) * Math.PI / 180;
+    const point = (angle) => {
+        const radians = angle * Math.PI / 180;
         return {
-            x: center + pointRadius * Math.cos(radians),
-            y: center + pointRadius * Math.sin(radians)
+            x: center + radius * Math.cos(radians),
+            y: center + radius * Math.sin(radians)
         };
     };
 
-    const describeArc = (startAngle, endAngle) => {
-        const start = pointOnCircle(endAngle);
-        const end = pointOnCircle(startAngle);
-        const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
-        return 'M ' + start.x + ' ' + start.y + ' A ' + radius + ' ' + radius + ' 0 ' + largeArcFlag + ' 0 ' + end.x + ' ' + end.y;
+    const arc = (startAngle, endAngle) => {
+        const start = point(startAngle);
+        const end = point(endAngle);
+        const large = endAngle - startAngle > 180 ? 1 : 0;
+        return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${large} 1 ${end.x} ${end.y}`;
     };
 
-    if (segmentTotal === 0) {
-        return <div className="text-sm font-bold inquiry-muted-text">אין נתונים לתצוגה</div>;
-    }
+    let angle = -90;
 
     return (
-        <div className="relative flex items-center justify-center p-1.5">
-            <div className={(isExpanded ? 'h-40 w-40' : 'h-32 w-32') + ' donut-halo pointer-events-none absolute rounded-full bg-gradient-to-b from-blue-50 to-white shadow-inner'} style={{ transform: 'translateY(' + chartOffsetY + 'px)' }} />
-            <svg width={size} height={size} className="relative z-10 overflow-visible drop-shadow-sm" style={{ transform: 'translateY(' + chartOffsetY + 'px)' }}>
-                <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="var(--chart-track)" strokeWidth={strokeWidth} />
-                {data.map((item) => {
-                    if (item.value === 0) return null;
-                    const startAngle = currentAngle;
-                    const segmentAngle = (item.value / segmentTotal) * 360;
-                    const endAngle = startAngle + segmentAngle;
-                    const labelAngle = startAngle + (segmentAngle / 2);
-                    const outerRingRadius = radius + (strokeWidth / 2);
-                    const connectorStart = pointOnCircle(labelAngle, outerRingRadius + (isExpanded ? 10 : 6));
-                    const connectorBend = pointOnCircle(labelAngle, outerRingRadius + (isExpanded ? 28 : 20));
-                    const isRightSide = connectorBend.x >= center;
-                    const connectorEndX = Math.min(size - labelInset, Math.max(labelInset, connectorBend.x + (isRightSide ? (isExpanded ? 24 : 18) : (isExpanded ? -24 : -18))));
-                    const labelPoint = {
-                        x: Math.min(size - labelInset, Math.max(labelInset, connectorEndX + (isRightSide ? (isExpanded ? 8 : 7) : (isExpanded ? -8 : -7)))),
-                        y: Math.min(size - (isExpanded ? 24 : 16), Math.max(isExpanded ? 24 : 16, connectorBend.y))
+        <div
+            className={`tamar-claude-donut ${
+                isExpanded ? 'tamar-claude-donut--expanded' : ''
+            }`}
+        >
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                <circle
+                    cx={center}
+                    cy={center}
+                    r={radius}
+                    fill="none"
+                    stroke="var(--chart-track)"
+                    strokeWidth={strokeWidth}
+                />
+
+                {items.map((item, index) => {
+                    const degrees = segmentTotal
+                        ? (Number(item.value) / segmentTotal) * 360
+                        : 0;
+                    const start = angle;
+                    const end = angle + degrees;
+                    const active = hovered === item.label;
+                    angle = end;
+
+                    const handlers = {
+                        onMouseEnter: () => setHovered(item.label),
+                        onMouseLeave: () => setHovered(null),
+                        onClick: () => onSegmentClick?.(item)
                     };
-                    const labelAnchor = isRightSide ? 'start' : 'end';
-                    const connectorPath = 'M ' + connectorStart.x + ' ' + connectorStart.y + ' L ' + connectorBend.x + ' ' + connectorBend.y + ' L ' + connectorEndX + ' ' + connectorBend.y;
-                    const shortLabel = item.label.replace(/-\d+$/, '');
-                    const path = segmentAngle >= 359.99 ? null : describeArc(startAngle, endAngle);
-                    const isHovered = hoveredSegment === item.label;
-                    currentAngle = endAngle;
+
+                    if (degrees >= 359.99) {
+                        return (
+                            <circle
+                                key={`${item.label}-${index}`}
+                                cx={center}
+                                cy={center}
+                                r={radius}
+                                fill="none"
+                                stroke={item.color}
+                                strokeWidth={strokeWidth}
+                                className="tamar-claude-donut__segment"
+                                {...handlers}
+                            />
+                        );
+                    }
 
                     return (
-                        <g key={item.label}>
-                            {path ? (
-                                <>
-                                    <path d={path} fill="transparent" stroke={item.color} strokeLinecap="round" strokeWidth={isHovered ? strokeWidth + 3 : strokeWidth} opacity={hoveredSegment && !isHovered ? 0.84 : 1} className="transition-all duration-200" style={{ pointerEvents: 'none' }} />
-                                    <path d={path} fill="transparent" stroke="transparent" strokeLinecap="butt" strokeWidth={strokeWidth + 8} className="cursor-pointer" style={{ pointerEvents: 'stroke' }} onMouseEnter={() => setHoveredSegment(item.label)} onMouseLeave={() => setHoveredSegment(null)} onClick={() => onSegmentClick(item)} />
-                                </>
-                            ) : (
-                                <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke={item.color} strokeLinecap="round" strokeWidth={isHovered ? strokeWidth + 3 : strokeWidth} className="cursor-pointer transition-all duration-200" onMouseEnter={() => setHoveredSegment(item.label)} onMouseLeave={() => setHoveredSegment(null)} onClick={() => onSegmentClick(item)} />
-                            )}
-
-                            {showLabels && (
-                                <>
-                                    <path d={connectorPath} fill="none" stroke="var(--chart-connector)" strokeWidth="1.25" strokeLinecap="round" className="pointer-events-none" />
-                                    <text x={labelPoint.x} y={labelPoint.y} textAnchor={labelAnchor} dominantBaseline="middle" fill="var(--chart-label)" className={(isExpanded ? 'text-[11px]' : 'text-[10px]') + ' font-semibold'} style={{ pointerEvents: 'none' }}>
-                                        {shortLabel}
-                                    </text>
-                                </>
-                            )}
-                        </g>
+                        <path
+                            key={`${item.label}-${index}`}
+                            d={arc(start, end)}
+                            fill="none"
+                            stroke={item.color}
+                            strokeWidth={strokeWidth}
+                            strokeLinecap="butt"
+                            opacity={hovered && !active ? 0.76 : 1}
+                            className="tamar-claude-donut__segment"
+                            {...handlers}
+                        />
                     );
                 })}
-                <circle cx={size / 2} cy={size / 2} r={centerRadius} fill="var(--color-surface-raised)" className="cursor-default" style={{ pointerEvents: 'none' }} />
             </svg>
+
             {!hideCenter && (
-                <div className={(isExpanded ? 'px-6 py-5' : 'px-4 py-3.5') + ' donut-center absolute z-20 flex cursor-default flex-col items-center justify-center rounded-full bg-[var(--color-surface-raised)] shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur-sm'} style={{ transform: 'translateY(' + chartOffsetY + 'px)' }}>
-                    <span className={(isExpanded ? 'text-[30px]' : 'text-[28px]') + ' font-black'} style={{ color: 'var(--chart-label)' }}>{total}</span>
-                    <span className={(isExpanded ? 'text-sm' : 'text-xs') + ' font-bold'} style={{ color: 'var(--chart-label-secondary)' }}>סה״כ פניות</span>
+                <div className="tamar-claude-donut__center">
+                    <strong>{total}</strong>
+                    <span>סה״כ פניות</span>
                 </div>
             )}
         </div>

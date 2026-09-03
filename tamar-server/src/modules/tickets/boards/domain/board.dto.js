@@ -29,34 +29,51 @@ const toStateDto = (state, { category = null, capabilities } = {}) => ({
     }
 });
 
-const toTicketBoardItem = (ticket, boardType, roomId, state, category, capabilities) => ({
+const toTicketSummary = (ticket) => ({
+    id: id(ticket._id),
+    ticketNumber: ticket.ticketNumber,
+    subject: ticket.subject,
+    description: ticket.description || '',
+    priority: ticket.priority,
+    status: ticket.status,
+    currentRoomId: id(ticket.currentRoomId),
+    fieldValues: ticket.fieldValues || {},
+    version: ticket.version,
+    createdAt: ticket.createdAt,
+    updatedAt: ticket.updatedAt,
+    closedAt: ticket.closedAt || null
+});
+
+const toTicketBoardItem = (
+    ticket,
+    boardType,
+    roomId,
+    state,
+    category,
+    capabilities
+) => ({
     itemType: 'TICKET',
     boardType,
     roomId: id(roomId),
-    ticket: {
-        id: id(ticket._id),
-        ticketNumber: ticket.ticketNumber,
-        subject: ticket.subject,
-        description: ticket.description,
-        priority: ticket.priority,
-        status: ticket.status,
-        currentRoomId: id(ticket.currentRoomId),
-        version: ticket.version,
-        createdAt: ticket.createdAt,
-        updatedAt: ticket.updatedAt,
-        closedAt: ticket.closedAt || null
-    },
+    ticket: toTicketSummary(ticket),
     transfer: null,
     boardState: toStateDto(state, { category, capabilities })
 });
 
-const toTransferBoardItem = (transfer, ticket, boardType, roomId, state, category, capabilities, externalState) => ({
+const toTransferBoardItem = (
+    transfer,
+    ticket,
+    boardType,
+    roomId,
+    state,
+    category,
+    capabilities,
+    externalState
+) => ({
     itemType: 'TRANSFER',
     boardType,
     roomId: id(roomId),
-    ticket: {
-        id: id(ticket._id), ticketNumber: ticket.ticketNumber, subject: ticket.subject, status: ticket.status
-    },
+    ticket: toTicketSummary(ticket),
     transfer: {
         id: id(transfer._id),
         sequence: transfer.sequence,
@@ -66,9 +83,16 @@ const toTransferBoardItem = (transfer, ticket, boardType, roomId, state, categor
         destinationRoomId: id(transfer.destinationRoomId),
         initiatedAt: transfer.initiatedAt,
         acceptedAt: transfer.acceptedAt || null,
-        cancelledAt: transfer.cancelledAt || null
+        cancelledAt: transfer.cancelledAt || null,
+        version: transfer.version ?? null
     },
     boardState: toStateDto(state, { category, capabilities })
 });
 
-module.exports = { toCategoryDto, toCategorySummary, toStateDto, toTicketBoardItem, toTransferBoardItem };
+module.exports = {
+    toCategoryDto,
+    toCategorySummary,
+    toStateDto,
+    toTicketBoardItem,
+    toTransferBoardItem
+};
