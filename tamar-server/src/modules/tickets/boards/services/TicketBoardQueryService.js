@@ -120,6 +120,8 @@ class TicketBoardQueryService {
             { cancelledAt: range(query.resolvedFrom, query.resolvedTo) }
         ];
         const afterTicket = [];
+        // Filter the joined Ticket before sorting, pagination and the total count.
+        if (query.priority) afterTicket.push({ $match: { '_ticket.priority': query.priority } });
         if (query.externalState) afterTicket.push({ $match: { _externalState: query.externalState } });
         if (query.search) {
             const search = new RegExp(escapedRegex(query.search), 'iu');
@@ -154,9 +156,18 @@ class TicketBoardQueryService {
     }
 
     async list(actorId, roomId, boardType, query) {
-    const context = await this.authorizationService.authorize(actorId, roomId, boardType);
+        const context = await this.authorizationService.authorize(
+            actorId,
+            roomId,
+            boardType
+        );
 
-        await this.validateCategoryFilter(roomId, boardType, query.categoryId);
+        await this.validateCategoryFilter(
+            roomId,
+            boardType,
+            query.categoryId
+        );
+
         const ticketBoard = TICKET_BOARD_TYPES.includes(boardType);
         const pipeline = ticketBoard
             ? this.ticketPipeline(roomId, boardType, query)
@@ -164,27 +175,71 @@ class TicketBoardQueryService {
         const [result] = ticketBoard
             ? await this.queryRepository.aggregateTickets(pipeline)
             : await this.queryRepository.aggregateTransfers(pipeline);
-        const capabilities = this.capabilityService.forAuthorizedItem(true);
-        const items = (result?.items || []).map((item) => ticketBoard
-            ? toTicketBoardItem(item, boardType, roomId, item._boardState, item._boardCategory, capabilities)
-            : toTransferBoardItem(
-                item, item._ticket, boardType, roomId, item._boardState,
-                item._boardCategory, capabilities, deriveExternalState(item, item._ticket)
-            ));
+
+        const boardCapabilities = this.capabilityService.forAuthorizedItem(
+            true
+        );
+
+        const items = (result?.items || []).map((item) => {
+            const ticket = ticketBoard ? item : item._ticket;
+            const activeTransfer = ticketBoard ? null : item;
+            const lifecycleCapabilities = this.ticketCapabilityService
+                ? this.ticketCapabilityService.forTicket(
+                    context.access,
+                    ticket,
+                    activeTransfer
+                )
+                : {};
+
+            return ticketBoard
+                ? toTicketBoardItem(
+                    item,
+                    boardType,
+                    roomId,
+                    item._boardState,
+                    item._boardCategory,
+                    boardCapabilities,
+                    lifecycleCapabilities
+                )
+                : toTransferBoardItem(
+                    item,
+                    item._ticket,
+                    boardType,
+                    roomId,
+                    item._boardState,
+                    item._boardCategory,
+                    boardCapabilities,
+                    deriveExternalState(item, item._ticket),
+                    lifecycleCapabilities
+                );
+        });
+
         const totalItems = result?.total?.[0]?.count || 0;
+
         return {
             items,
-            pagination: pagination(query.page, query.limit, totalItems),
-            appliedFilters: { ...query, search: query.search || undefined },
-            sort: { sortBy: query.sortBy, sortDirection: query.sortDirection },
-capabilities: {
-    ...capabilities,
-    canManageCategories: Boolean(
-        context.access.global
-        || context.access.managedRoomIds.includes(String(roomId))
-    )
-}
-
+            pagination: pagination(
+                query.page,
+                query.limit,
+                totalItems
+            ),
+            appliedFilters: {
+                ...query,
+                search: query.search || undefined
+            },
+            sort: {
+                sortBy: query.sortBy,
+                sortDirection: query.sortDirection
+            },
+            capabilities: {
+                ...boardCapabilities,
+                canManageCategories: Boolean(
+                    context.access.global
+                    || context.access.managedRoomIds.includes(
+                        String(roomId)
+                    )
+                )
+            }
         };
     }
 }

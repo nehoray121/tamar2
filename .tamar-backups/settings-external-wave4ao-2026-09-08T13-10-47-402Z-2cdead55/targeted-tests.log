@@ -1,0 +1,170 @@
+TAP version 13
+# Subtest: serializes only ticket-board filters for OPEN and drops personal ordering data
+ok 1 - serializes only ticket-board filters for OPEN and drops personal ordering data
+  ---
+  duration_ms: 4.7785
+  ...
+# Subtest: serializes external priority and transfer filters while dropping ticket-only dates
+ok 2 - serializes external priority and transfer filters while dropping ticket-only dates
+  ---
+  duration_ms: 1.5672
+  ...
+# Subtest: OPEN: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 3 - OPEN: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 3.689
+  ...
+# Subtest: OPEN: clearing the priority does not serialize an empty value
+ok 4 - OPEN: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 0.8805
+  ...
+# Subtest: CLOSED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 5 - CLOSED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 0.4842
+  ...
+# Subtest: CLOSED: clearing the priority does not serialize an empty value
+ok 6 - CLOSED: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 0.8573
+  ...
+# Subtest: EXTERNAL_SENT: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 7 - EXTERNAL_SENT: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 1.6513
+  ...
+# Subtest: EXTERNAL_SENT: clearing the priority does not serialize an empty value
+ok 8 - EXTERNAL_SENT: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 0.5579
+  ...
+# Subtest: EXTERNAL_RECEIVED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 9 - EXTERNAL_RECEIVED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 1.1015
+  ...
+# Subtest: EXTERNAL_RECEIVED: clearing the priority does not serialize an empty value
+ok 10 - EXTERNAL_RECEIVED: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 0.4331
+  ...
+# Subtest: both external boards still drop unsupported ticket dates and caller identity
+ok 11 - both external boards still drop unsupported ticket dates and caller identity
+  ---
+  duration_ms: 1.0417
+  ...
+# Subtest: external priority control is not hidden, and existing page-reset effect is retained
+ok 12 - external priority control is not hidden, and existing page-reset effect is retained
+  ---
+  duration_ms: 25.9069
+  ...
+# Subtest: settings dependency panel is compact and footer is outside the scroll body
+ok 13 - settings dependency panel is compact and footer is outside the scroll body
+  ---
+  duration_ms: 22.9572
+  ...
+# Subtest: OPEN: priority is validated and retained for every canonical enum
+ok 14 - OPEN: priority is validated and retained for every canonical enum
+  ---
+  duration_ms: 4.6915
+  ...
+# Subtest: OPEN: omitted priority means no priority restriction
+ok 15 - OPEN: omitted priority means no priority restriction
+  ---
+  duration_ms: 0.7537
+  ...
+# Subtest: OPEN: invalid priorities and query injection are rejected
+ok 16 - OPEN: invalid priorities and query injection are rejected
+  ---
+  duration_ms: 2.5373
+  ...
+# Subtest: CLOSED: priority is validated and retained for every canonical enum
+ok 17 - CLOSED: priority is validated and retained for every canonical enum
+  ---
+  duration_ms: 1.2261
+  ...
+# Subtest: CLOSED: omitted priority means no priority restriction
+ok 18 - CLOSED: omitted priority means no priority restriction
+  ---
+  duration_ms: 0.7051
+  ...
+# Subtest: CLOSED: invalid priorities and query injection are rejected
+ok 19 - CLOSED: invalid priorities and query injection are rejected
+  ---
+  duration_ms: 1.2268
+  ...
+# Subtest: EXTERNAL_SENT: priority is validated and retained for every canonical enum
+ok 20 - EXTERNAL_SENT: priority is validated and retained for every canonical enum
+  ---
+  duration_ms: 0.7339
+  ...
+# Subtest: EXTERNAL_SENT: omitted priority means no priority restriction
+ok 21 - EXTERNAL_SENT: omitted priority means no priority restriction
+  ---
+  duration_ms: 0.3407
+  ...
+# Subtest: EXTERNAL_SENT: invalid priorities and query injection are rejected
+ok 22 - EXTERNAL_SENT: invalid priorities and query injection are rejected
+  ---
+  duration_ms: 1.8011
+  ...
+# Subtest: EXTERNAL_RECEIVED: priority is validated and retained for every canonical enum
+ok 23 - EXTERNAL_RECEIVED: priority is validated and retained for every canonical enum
+  ---
+  duration_ms: 1.0827
+  ...
+# Subtest: EXTERNAL_RECEIVED: omitted priority means no priority restriction
+ok 24 - EXTERNAL_RECEIVED: omitted priority means no priority restriction
+  ---
+  duration_ms: 0.7751
+  ...
+# Subtest: EXTERNAL_RECEIVED: invalid priorities and query injection are rejected
+ok 25 - EXTERNAL_RECEIVED: invalid priorities and query injection are rejected
+  ---
+  duration_ms: 0.6917
+  ...
+# Subtest: EXTERNAL_SENT: priority intersects with transfer filters without broadening allowed fields
+ok 26 - EXTERNAL_SENT: priority intersects with transfer filters without broadening allowed fields
+  ---
+  duration_ms: 3.3441
+  ...
+# Subtest: EXTERNAL_SENT: filters the joined Ticket before pagination AND total counting
+ok 27 - EXTERNAL_SENT: filters the joined Ticket before pagination AND total counting
+  ---
+  duration_ms: 12.4432
+  ...
+# Subtest: EXTERNAL_SENT: authorization and category access still run before the query
+ok 28 - EXTERNAL_SENT: authorization and category access still run before the query
+  ---
+  duration_ms: 2.8418
+  ...
+# Subtest: EXTERNAL_RECEIVED: priority intersects with transfer filters without broadening allowed fields
+ok 29 - EXTERNAL_RECEIVED: priority intersects with transfer filters without broadening allowed fields
+  ---
+  duration_ms: 0.6861
+  ...
+# Subtest: EXTERNAL_RECEIVED: filters the joined Ticket before pagination AND total counting
+ok 30 - EXTERNAL_RECEIVED: filters the joined Ticket before pagination AND total counting
+  ---
+  duration_ms: 1.4647
+  ...
+# Subtest: EXTERNAL_RECEIVED: authorization and category access still run before the query
+ok 31 - EXTERNAL_RECEIVED: authorization and category access still run before the query
+  ---
+  duration_ms: 0.933
+  ...
+# Subtest: OPEN and CLOSED retain their Ticket-level priority predicate
+ok 32 - OPEN and CLOSED retain their Ticket-level priority predicate
+  ---
+  duration_ms: 0.8852
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 324.1625

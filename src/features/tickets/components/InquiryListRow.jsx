@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createInquiryRowActivation } from '../utils/inquiryRowActivation.js';
 import Icon from '../../../components/common/Icon.jsx';
 import InquiryPinButton from './InquiryPinButton.jsx';
 import InquiryCategoryBadge from './InquiryCategoryBadge.jsx';
@@ -103,7 +104,7 @@ const configuredFieldValue = (ticket, field) => {
 };
 
 const LightBlueIcon = ({ children }) => (
-    <span className="inquiry-icon-chip flex h-7 w-7 shrink-0 items-center justify-center rounded-lg">
+    <span data-row-no-open="true" className="inquiry-icon-chip flex h-7 w-7 shrink-0 items-center justify-center rounded-lg">
         {children}
     </span>
 );
@@ -138,8 +139,6 @@ const InquiryRowField = ({ icon, value, className = '' }) => (
         <span className="inquiry-secondary-text truncate text-[12px] font-bold">{value}</span>
     </div>
 );
-
-const isInteractiveElement = (target) => Boolean(target?.closest?.('button, a, input, select, textarea, label, [role="button"], [data-interactive="true"]'));
 
 const SelectionCheckbox = ({ ticketId, selected, onToggleSelection }) => (
     <label className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center" onClick={(event) => event.stopPropagation()}>
@@ -228,6 +227,7 @@ const InquiryListRow = ({
     onTogglePin,
     onAssignCategory,
     onCloseInquiry,
+    onReopenInquiry,
     loading,
     selectionMode,
     selected,
@@ -243,7 +243,16 @@ const InquiryListRow = ({
 }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const triggerRef = useRef(null);
+    // One click opens the existing viewer; a short delay preserves double-click selection.
+    const activationRef = useRef(null);
+    if (!activationRef.current) activationRef.current = createInquiryRowActivation();
+    const activation = activationRef.current;
+    activation.configure({ ticket, onView, selectionMode, onToggleSelection, onEnterSelectionMode, onDragStart });
+    useEffect(() => () => activation.cancel(), [activation]);
+    useEffect(() => { activation.cancel(); }, [activation, ticket.boardItemId, selectionMode, menuOpen]);
     const showCloseAction = viewType === 'open' && Boolean(onCloseInquiry);
+    const showReopenAction = viewType === 'history'
+        && Boolean(onReopenInquiry);
     const shouldShowExternalSubmissionStatus = viewType === 'external' && toggleState === 'sent' && (ticket?.isOutgoingExternal ?? true);
     const submissionStatus = shouldShowExternalSubmissionStatus ? getSubmissionStatus(ticket) : null;
 const definitionsById = new Map(
@@ -278,14 +287,19 @@ const gridCols = [
             data-board-item-id={ticket.boardItemId}
             data-board-type={ticket.boardType}
             draggable={draggable}
-            onDragStart={onDragStart}
+            onPointerDown={activation.onPointerDown}
+            onPointerMove={activation.onPointerMove}
+            onPointerCancel={activation.onPointerCancel}
+            onDragStart={activation.onDragStart}
+            onClick={activation.onClick}
+            onKeyDown={activation.onKeyDown}
+            tabIndex={0}
+            aria-label={`פנייה ${ticket.displayId || ticket.ticketId}`}
+            aria-haspopup={selectionMode ? undefined : 'dialog'}
             onDragOver={onDragOver}
             onDrop={onDrop}
-            onDoubleClick={(event) => {
-                if (isInteractiveElement(event.target)) return;
-                onEnterSelectionMode?.(ticket.boardItemId);
-            }}
-            className={`group grid min-h-[56px] w-full items-center gap-x-3 gap-y-2 rounded-2xl px-3 py-2 transition ${selected ? 'inquiry-row-surface inquiry-row-selected' : 'inquiry-row-surface'}`}
+            onDoubleClick={activation.onDoubleClick}
+            className={`group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60 grid min-h-[56px] w-full items-center gap-x-3 gap-y-2 rounded-2xl px-3 py-2 transition ${selected ? 'inquiry-row-surface inquiry-row-selected' : 'inquiry-row-surface'}`}
             style={{ gridTemplateColumns: gridCols }}
         >
             {selectionMode && (
@@ -296,7 +310,7 @@ const gridCols = [
 
             {manualMode && (
                 <div className="flex justify-center">
-                    <span className="inquiry-soft-panel flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-xl inquiry-muted-text">
+                    <span data-row-no-open="true" className="inquiry-soft-panel flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-xl inquiry-muted-text">
                         <Icon name="grip" className="h-4 w-4" />
                     </span>
                 </div>
@@ -361,6 +375,17 @@ const gridCols = [
                         onClick={() => onCloseInquiry(ticket)}
                         className="border-emerald-100 bg-emerald-100 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-200 dark:border-emerald-400/40 dark:bg-emerald-500/20 dark:text-emerald-200 dark:hover:bg-emerald-500/30"
                     />
+                )}
+
+                {showReopenAction && (
+                    <span data-testid="board-item-reopen">
+                        <ActionIconButton
+                            title="החזר פנייה לפתוחות"
+                            icon="refresh"
+                            onClick={() => onReopenInquiry(ticket)}
+                            className="border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20"
+                        />
+                    </span>
                 )}
 
                 <ActionIconButton

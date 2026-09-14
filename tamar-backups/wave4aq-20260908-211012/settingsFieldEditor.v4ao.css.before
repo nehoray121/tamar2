@@ -1,0 +1,232 @@
+/* Tamar settings editor: 4AO footer preserved; 4AP compact content-fit layout. */
+.tamar-settings-field-editor-v4ao {
+  min-height: 0;
+  max-height: 100%;
+}
+.tamar-settings-field-editor-body-v4ao {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+.tamar-settings-field-editor-footer-v4ao {
+  flex: 0 0 auto;
+  min-height: 56px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+}
+@media (min-width: 1280px) {
+  .tamar-settings-fields-grid-v4ao {
+    height: 100%;
+    min-height: 0;
+    padding-bottom: 8px;
+    box-sizing: border-box;
+  }
+}
+@media (max-width: 1279px) {
+  .tamar-settings-field-editor-v4ao {
+    height: auto;
+    max-height: 640px;
+  }
+}
+
+/* Compact SELECT/MULTISELECT editors only. No dashboard/auth/global rules. */
+.tamar-settings-choice-editor-v4ap > .tamar-settings-field-editor-body-v4ao {
+  padding: 8px 10px;
+  /* A single fallback scroller for unusually large data / very short windows.
+     The normal three-city case fits intrinsically, without scrolling. */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.tamar-settings-choice-editor-v4ap .tamar-settings-choice-surface-v4ap {
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+.tamar-settings-choice-editor-v4ap .tamar-settings-choice-surface-v4ap > * + * {
+  margin-top: 6px;
+}
+.tamar-settings-choice-editor-v4ap .tamar-settings-choice-surface-v4ap > .border-t {
+  padding-top: 6px;
+}
+.tamar-settings-choice-editor-v4ap .tamar-settings-choice-surface-v4ap > .grid input {
+  height: 34px;
+  min-height: 34px;
+}
+.tamar-settings-choice-editor-v4ap .tamar-settings-choice-surface-v4ap > .grid label {
+  margin-bottom: 3px;
+}
+.tamar-settings-choice-editor-v4ap > .tamar-settings-field-editor-footer-v4ao {
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.tamar-dependency-editor-v4ap {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.tamar-dependency-heading-v4ap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-width: 0;
+}
+.tamar-dependency-heading-v4ap > h3 {
+  flex: 0 0 auto;
+  margin: 0;
+}
+.tamar-dependency-link-v4ap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.tamar-dependency-link-v4ap .tamar-dependency-select-v4ap {
+  width: auto;
+  min-width: 100px;
+  max-width: 200px;
+  height: 32px;
+  min-height: 32px;
+  border-radius: 10px;
+  padding-inline: 9px 28px;
+  font-size: 12px;
+}
+.tamar-dependency-child-v4ap {
+  min-width: 64px;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.tamar-dependency-unlink-v4ap { margin-inline-start: auto; }
+.tamar-dependency-help-v4ap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.tamar-dependency-help-v4ap > p { margin: 0; }
+.tamar-dependency-help-v4ap > span { flex: 0 0 auto; }
+/* Intrinsic height replaces the 132/116px viewport and its nested scrollers. */
+.tamar-dependency-map-v4ap {
+  display: grid;
+  grid-template-columns: minmax(110px, 24%) minmax(0, 1fr);
+  min-width: 0;
+  min-height: 120px;
+  height: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface-raised);
+}
+.tamar-dependency-parents-v4ap {
+  min-width: 0;
+  padding: 5px;
+  border-inline-end: 1px solid var(--color-border);
+  border-start-start-radius: 10px;
+  border-end-start-radius: 10px;
+  background: var(--color-surface-muted);
+}
+.tamar-dependency-parent-v4ap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 7px;
+  border-radius: 7px;
+  text-align: start;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.tamar-dependency-parent-v4ap > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tamar-dependency-parent-v4ap > span:last-child { flex-shrink: 0; }
+.tamar-dependency-values-v4ap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  gap: 6px;
+  padding: 8px 10px;
+}
+.tamar-dependency-values-v4ap > h4 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.tamar-dependency-chips-v4ap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+.tamar-dependency-chip-v4ap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 25px;
+  max-width: 100%;
+  padding: 2px 6px;
+  border: 1px solid var(--color-primary);
+  border-radius: 7px;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.tamar-dependency-chip-v4ap > span { min-width: 0; overflow-wrap: anywhere; }
+.tamar-dependency-chip-v4ap > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  border-radius: 4px;
+}
+.tamar-dependency-chip-v4ap > button:hover { color: var(--color-danger, #dc2626); }
+.tamar-dependency-values-v4ap .tamar-dependency-add-v4ap {
+  width: 100%;
+  height: 32px;
+  min-height: 32px;
+  margin-top: auto;
+  border-radius: 9px;
+  padding-inline: 9px 28px;
+  font-size: 11px;
+}
+.tamar-dependency-editor-v4ap :is(select, button):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+@media (max-width: 1279px) {
+  .tamar-settings-choice-editor-v4ap {
+    max-height: min(640px, calc(100dvh - 152px));
+  }
+}
+@media (max-width: 600px) {
+  .tamar-dependency-map-v4ap {
+    grid-template-columns: minmax(88px, 26%) minmax(0, 1fr);
+  }
+  .tamar-dependency-heading-v4ap { gap: 5px 8px; }
+  .tamar-dependency-values-v4ap { padding: 8px; }
+}

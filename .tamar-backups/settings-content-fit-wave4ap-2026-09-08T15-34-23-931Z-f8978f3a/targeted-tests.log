@@ -1,0 +1,215 @@
+TAP version 13
+# Subtest: shared inquiry canvas uses the audited 850px popup content width
+ok 1 - shared inquiry canvas uses the audited 850px popup content width
+  ---
+  duration_ms: 6.8216
+  ...
+# Subtest: canonical widths map to exact 12-column spans
+ok 2 - canonical widths map to exact 12-column spans
+  ---
+  duration_ms: 6.7588
+  ...
+# Subtest: mobile stacking and desktop grid are one shared responsive rule
+ok 3 - mobile stacking and desktop grid are one shared responsive rule
+  ---
+  duration_ms: 0.4497
+  ...
+# Subtest: width updates canonical field and section configuration atomically
+ok 4 - width updates canonical field and section configuration atomically
+  ---
+  duration_ms: 1.1039
+  ...
+# Subtest: unsupported widths safely converge to the existing half-width default
+ok 5 - unsupported widths safely converge to the existing half-width default
+  ---
+  duration_ms: 0.6455
+  ...
+# Subtest: builder and real popup import the same canvas and no permanent preview remains
+ok 6 - builder and real popup import the same canvas and no permanent preview remains
+  ---
+  duration_ms: 35.9262
+  ...
+# Subtest: builder and popup do not simulate scale with transform or zoom
+ok 7 - builder and popup do not simulate scale with transform or zoom
+  ---
+  duration_ms: 36.816
+  ...
+# Subtest: editing toolbar is above the full-width real field renderer
+ok 8 - editing toolbar is above the full-width real field renderer
+  ---
+  duration_ms: 5.1964
+  ...
+# Subtest: latest settings save wins even when the first response is delayed
+ok 9 - latest settings save wins even when the first response is delayed
+  ---
+  duration_ms: 9.6886
+  ...
+# Subtest: failed latest save rolls back to server truth and never reports success
+ok 10 - failed latest save rolls back to server truth and never reports success
+  ---
+  duration_ms: 3.3212
+  ...
+# Subtest: click contract for שליש updates the canonical persisted width
+ok 11 - click contract for שליש updates the canonical persisted width
+  ---
+  duration_ms: 0.9148
+  ...
+# Subtest: click contract for חצי updates the canonical persisted width
+ok 12 - click contract for חצי updates the canonical persisted width
+  ---
+  duration_ms: 0.2662
+  ...
+# Subtest: click contract for מלא updates the canonical persisted width
+ok 13 - click contract for מלא updates the canonical persisted width
+  ---
+  duration_ms: 0.155
+  ...
+# Subtest: edit and user views share one canvas instead of separate renderers
+ok 14 - edit and user views share one canvas instead of separate renderers
+  ---
+  duration_ms: 7.8326
+  ...
+# Subtest: hidden fields are omitted by the shared user-view canvas contract
+ok 15 - hidden fields are omitted by the shared user-view canvas contract
+  ---
+  duration_ms: 6.2094
+  ...
+# Subtest: field ordering and section association are persisted through canonical sections
+ok 16 - field ordering and section association are persisted through canonical sections
+  ---
+  duration_ms: 4.5466
+  ...
+# Subtest: selected width button state is derived from canonical configuration
+ok 17 - selected width button state is derived from canonical configuration
+  ---
+  duration_ms: 5.0893
+  ...
+# Subtest: RTL uses one explicit direction without row-reverse double reversal
+ok 18 - RTL uses one explicit direction without row-reverse double reversal
+  ---
+  duration_ms: 4.722
+  ...
+# Subtest: mobile stacking does not rewrite the stored desktop width
+ok 19 - mobile stacking does not rewrite the stored desktop width
+  ---
+  duration_ms: 0.8916
+  ...
+# Subtest: settings hook persists through the real repository with revision-aware queueing
+ok 20 - settings hook persists through the real repository with revision-aware queueing
+  ---
+  duration_ms: 4.7858
+  ...
+# Subtest: settings realtime refresh keeps the current page mounted and syncs silently
+ok 21 - settings realtime refresh keeps the current page mounted and syncs silently
+  ---
+  duration_ms: 3.4176
+  ...
+# Subtest: shared Button is non-submit by default while explicit submit remains possible
+ok 22 - shared Button is non-submit by default while explicit submit remains possible
+  ---
+  duration_ms: 5.351
+  ...
+# Subtest: adding a mapping preserves other parents and field attributes
+ok 23 - adding a mapping preserves other parents and field attributes
+  ---
+  duration_ms: 16.7178
+  ...
+# Subtest: removing a mapping keeps source field options
+ok 24 - removing a mapping keeps source field options
+  ---
+  duration_ms: 3.4325
+  ...
+# Subtest: changing or clearing the parent resets only dependency mappings
+ok 25 - changing or clearing the parent resets only dependency mappings
+  ---
+  duration_ms: 11.9588
+  ...
+# Subtest: cyclic dependencies still cannot be selected
+ok 26 - cyclic dependencies still cannot be selected
+  ---
+  duration_ms: 3.6874
+  ...
+# Subtest: empty additions and missing active parent do not mutate mappings
+ok 27 - empty additions and missing active parent do not mutate mappings
+  ---
+  duration_ms: 4.0216
+  ...
+# Subtest: dependent choices use intrinsic height and render all mappings
+ok 28 - dependent choices use intrinsic height and render all mappings
+  ---
+  duration_ms: 2.3634
+  ...
+# Subtest: compact presentation is conditional and the footer stays outside the body
+ok 29 - compact presentation is conditional and the footer stays outside the body
+  ---
+  duration_ms: 1.2424
+  ...
+# Subtest: stylesheet does not affect dashboard, authentication, sidebar or scale the page
+ok 30 - stylesheet does not affect dashboard, authentication, sidebar or scale the page
+  ---
+  duration_ms: 0.823
+  ...
+# Subtest: OPEN: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 31 - OPEN: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 17.0609
+  ...
+# Subtest: OPEN: clearing the priority does not serialize an empty value
+ok 32 - OPEN: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 8.0014
+  ...
+# Subtest: CLOSED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 33 - CLOSED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 0.801
+  ...
+# Subtest: CLOSED: clearing the priority does not serialize an empty value
+ok 34 - CLOSED: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 4.0839
+  ...
+# Subtest: EXTERNAL_SENT: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 35 - EXTERNAL_SENT: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 2.3665
+  ...
+# Subtest: EXTERNAL_SENT: clearing the priority does not serialize an empty value
+ok 36 - EXTERNAL_SENT: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 0.5364
+  ...
+# Subtest: EXTERNAL_RECEIVED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+ok 37 - EXTERNAL_RECEIVED: serializes HIGH, MEDIUM and LOW without changing page, search or sort
+  ---
+  duration_ms: 2.6043
+  ...
+# Subtest: EXTERNAL_RECEIVED: clearing the priority does not serialize an empty value
+ok 38 - EXTERNAL_RECEIVED: clearing the priority does not serialize an empty value
+  ---
+  duration_ms: 0.474
+  ...
+# Subtest: both external boards still drop unsupported ticket dates and caller identity
+ok 39 - both external boards still drop unsupported ticket dates and caller identity
+  ---
+  duration_ms: 1.8131
+  ...
+# Subtest: external priority control is not hidden, and existing page-reset effect is retained
+ok 40 - external priority control is not hidden, and existing page-reset effect is retained
+  ---
+  duration_ms: 58.6354
+  ...
+# Subtest: settings dependency panel fits content and footer stays outside the fallback scroll body
+ok 41 - settings dependency panel fits content and footer stays outside the fallback scroll body
+  ---
+  duration_ms: 14.8736
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 41
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 672.2175

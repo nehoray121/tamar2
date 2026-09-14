@@ -185,8 +185,8 @@ const parseCategoryListQuery = (request, _response, next) => {
 
 const parseBoardListQuery = (request, _response, next) => {
     try {
-        const common = ['page', 'limit', 'search', 'categoryId', 'categoryMode', 'pinMode', 'sortBy', 'sortDirection'];
-        const ticket = ['priority', 'createdBy', 'createdFrom', 'createdTo', 'updatedFrom', 'updatedTo', 'closedFrom', 'closedTo'];
+        const common = ['priority', 'page', 'limit', 'search', 'categoryId', 'categoryMode', 'pinMode', 'sortBy', 'sortDirection'];
+        const ticket = ['createdBy', 'createdFrom', 'createdTo', 'updatedFrom', 'updatedTo', 'closedFrom', 'closedTo'];
         const external = ['transferStatus', 'externalState', 'initiatedFrom', 'initiatedTo', 'resolvedFrom', 'resolvedTo'];
         const ticketBoard = TICKET_BOARD_TYPES.includes(request.boardParams.boardType);
         assertExactKeys(request.query, [...common, ...(ticketBoard ? ticket : external)], 'query');
@@ -204,6 +204,8 @@ const parseBoardListQuery = (request, _response, next) => {
         if (query.categoryId && categoryMode === 'UNCATEGORIZED') {
             throw boardError(400, 'INVALID_BOARD_QUERY', 'categoryId cannot be combined with UNCATEGORIZED');
         }
+        // Priority is a Ticket attribute shared by ticket and external boards.
+        if (request.query.priority) query.priority = requireEnum(request.query.priority, 'priority', TICKET_PRIORITY_VALUES);
         if (ticketBoard) {
             query.sortBy = request.query.sortBy === undefined
                 ? (request.boardParams.boardType === 'CLOSED' ? 'closedAt' : 'updatedAt')
@@ -211,7 +213,6 @@ const parseBoardListQuery = (request, _response, next) => {
             if (request.boardParams.boardType === 'OPEN' && (request.query.closedFrom || request.query.closedTo || query.sortBy === 'closedAt')) {
                 throw boardError(400, 'INVALID_BOARD_QUERY', 'Closed filters are invalid for OPEN board');
             }
-            if (request.query.priority) query.priority = requireEnum(request.query.priority, 'priority', TICKET_PRIORITY_VALUES);
             if (request.query.createdBy) query.createdBy = requireObjectId(request.query.createdBy, 'createdBy');
             for (const key of ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo', 'closedFrom', 'closedTo']) query[key] = parseDate(request.query[key], key);
             for (const [from, to] of [['createdFrom', 'createdTo'], ['updatedFrom', 'updatedTo'], ['closedFrom', 'closedTo']]) {

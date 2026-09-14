@@ -39,6 +39,38 @@ class TicketRepository {
         ).lean().exec();
     }
 
+    async reopen(id, expectedVersion, { session } = {}) {
+        return Ticket.findOneAndUpdate(
+            {
+                _id: id,
+                status: 'CLOSED',
+                version: expectedVersion,
+                activeTransferId: null
+            },
+            {
+                $set: {
+                    status: 'OPEN',
+                    closedBy: null,
+                    closedAt: null,
+                    closureSummary: null
+                },
+                $unset: {
+                    'fieldValues.treatment': 1,
+                    'fieldValues.status': 1,
+                    'fieldValues.closingDate': 1,
+                    'fieldValues.closedAt': 1,
+                    'fieldValues.closureSummary': 1
+                },
+                $inc: { version: 1 }
+            },
+            {
+                returnDocument: 'after',
+                runValidators: true,
+                session
+            }
+        ).lean().exec();
+    }
+
     async replaceAssigneesOpen(id, expectedVersion, activeAssigneeIds, { session } = {}) {
         return Ticket.findOneAndUpdate(
             { _id: id, status: 'OPEN', version: expectedVersion, activeTransferId: null },

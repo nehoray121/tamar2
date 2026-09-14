@@ -1,0 +1,57 @@
+﻿Wave: Tamar Wave 4AQ - Settings Content Vertical Fill V1.2
+Created: 2026-09-08 21:10:12
+Root: C:\Users\nehor\Desktop\tamar
+Git HEAD before: 017253b367b75327819d0ec8e73157eb03fb2d30
+
+Git status before:
+ M src/components/layout/Sidebar.jsx
+ M src/features/auth/__tests__/localAuthentication.test.js
+ M src/features/auth/local/localDevelopmentAuth.js
+ M src/features/dashboard/components/ImmediateTreatmentPanel.jsx
+ M src/features/dashboard/components/UrgencyDonutChart.jsx
+ M src/features/dashboard/components/WorkloadPanel.jsx
+ M src/features/tickets/boards/__tests__/boardQuerySerializer.test.js
+ M src/features/tickets/boards/api/boardQuerySerializer.js
+ M src/features/tickets/boards/realtime/boardSocket.js
+ M src/features/tickets/components/InquiryListRow.jsx
+ M src/features/tickets/config/ticketCapabilities.js
+ M src/pages/SettingsPage/SettingsPage.jsx
+ M src/pages/TicketListPage/TicketListPage.jsx
+ M src/pages/TicketListPage/TicketModal.jsx
+ M src/store/session.store.js
+ M src/styles.css
+ M tamar-server/docs/openapi/tickets-phase8-boards.yaml
+ M tamar-server/scripts/local-auth/server.js
+ M tamar-server/src/modules/tickets/boards/domain/board.dto.js
+ M tamar-server/src/modules/tickets/boards/domain/board.validators.js
+ M tamar-server/src/modules/tickets/boards/services/TicketBoardQueryService.js
+ M tamar-server/src/modules/tickets/controllers/TicketController.js
+ M tamar-server/src/modules/tickets/domain/constants.js
+ M tamar-server/src/modules/tickets/repositories/TicketRepository.js
+ M tamar-server/src/modules/tickets/services/TicketAuthorizationService.js
+ M tamar-server/src/modules/tickets/services/TicketCapabilityService.js
+ M tamar-server/src/modules/tickets/services/TicketService.js
+ M tamar-server/src/modules/tickets/validation/ticketValidation.js
+ M tamar-server/src/routes/tickets.routes.js
+ M tamar-server/src/services/createServiceContainer.js
+ M tamar-server/tests/local-auth.unit.test.js
+?? .tamar-backups.7z
+?? .tamar-backups/dashboard-wave4am-2026-09-07_10-19-54/
+?? .tamar-backups/dashboard-wave4am1-2026-09-07_11-03-00-f7056c2b/
+?? .tamar-backups/dashboard-wave4an1-2026-09-07_13-04-36-86ecfa0d/
+?? .tamar-backups/local-auth-no-timeout-v1-2026-09-08_17-51-33/
+?? .tamar-backups/local-auth-no-timeout-v1_1-2026-09-08_17-55-54/
+?? .tamar-backups/reopen-inquiry-v1-2026-09-03_22-20-30/
+?? .tamar-backups/settings-content-fit-wave4ap-2026-09-08T15-34-23-931Z-f8978f3a/
+?? .tamar-backups/settings-external-wave4ao-2026-09-08T13-10-47-402Z-2cdead55/
+?? "src (2).7z"
+?? src.7z
+?? src/features/settings/__tests__/settingsContentFit.v4ap.test.cjs
+?? src/features/settings/styles/
+?? src/features/tickets/__tests__/
+?? src/features/tickets/boards/__tests__/externalPriority.v4ao.test.js
+?? src/features/tickets/components/ReopenInquiryDialog.jsx
+?? src/features/tickets/services/reopenInquiryService.js
+?? tamar-server/scripts/local-auth/persistentSessions.js
+?? tamar-server/tests/reopen-ticket.unit.test.cjs
+?? tamar-server/tests/tamar-external-priority-v4ao.unit.test.cjs

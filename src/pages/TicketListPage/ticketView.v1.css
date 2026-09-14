@@ -1,0 +1,106 @@
+/* Tamar Inquiry View V1. Scoped to the viewer; no dashboard/settings/global overrides.
+   Visual reference: 20260705-darkmode-corrections/final-pass/TicketModal.jsx.
+   Layer order: list filters 80 < viewer 90 < close 100 < reopen 110. */
+.tamar-ticket-view-layer { padding: 20px; }
+.tamar-ticket-view-panel.inquiry-overlay-panel {
+    --ticket-view-bg: #F3F7FD;
+    --ticket-view-card: #ffffff;
+    --ticket-view-line: #C9E1FF;
+    --ticket-view-divider: #D9E8FA;
+    --ticket-view-primary: #0F172A;
+    --ticket-view-muted: #64748B;
+    --ticket-view-icon: #3B82F6;
+    background: var(--ticket-view-bg);
+    border-color: var(--ticket-view-line);
+    max-height: min(88vh, calc(100dvh - 40px));
+    min-width: 0;
+}
+[data-theme="dark"] .tamar-ticket-view-panel.inquiry-overlay-panel,
+.dark .tamar-ticket-view-panel.inquiry-overlay-panel {
+    --ticket-view-bg: var(--color-page, #0F172A);
+    --ticket-view-card: var(--color-surface-raised, #172033);
+    --ticket-view-line: var(--color-border-strong, #334155);
+    --ticket-view-divider: var(--color-border, #334155);
+    --ticket-view-primary: var(--color-text-primary, #F1F5F9);
+    --ticket-view-muted: var(--color-text-muted, #94A3B8);
+    --ticket-view-icon: var(--color-primary, #60A5FA);
+}
+.tamar-ticket-view-header, .tamar-ticket-view-tabs {
+    background: var(--ticket-view-card);
+    border-color: var(--ticket-view-divider);
+}
+.tamar-ticket-view-header { gap: 12px; }
+.tamar-ticket-view-title h2 { overflow-wrap: anywhere; }
+.tamar-ticket-view-header [data-testid="ticket-details-close"] { flex-shrink: 0; }
+.tamar-ticket-view-scroll { overscroll-behavior: contain; overflow-x: hidden; }
+.tamar-ticket-readview [data-inquiry-section] {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+}
+.tamar-ticket-readview [data-inquiry-grid] { padding: 0; align-items: stretch; }
+.tamar-ticket-readview-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px;
+    color: var(--ticket-view-primary);
+}
+.tamar-ticket-readview-heading > span { color: var(--ticket-view-icon); }
+.tamar-ticket-readview-heading h3 { margin: 0; font-size: 13px; font-weight: 900; }
+.tamar-ticket-detail-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 68px;
+    height: 100%;
+    min-width: 0;
+    border: 1px solid var(--ticket-view-line);
+    border-radius: 12px;
+    background: var(--ticket-view-card);
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(30,64,175,.05);
+}
+.tamar-ticket-detail-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--ticket-view-line);
+    border-radius: 8px;
+    background: var(--color-primary-soft, #EFF6FF);
+    color: var(--ticket-view-icon);
+}
+.tamar-ticket-detail-copy { flex: 1; min-width: 0; margin: 0; }
+.tamar-ticket-detail-copy dt {
+    margin: 0 0 4px;
+    color: var(--ticket-view-muted);
+    font-size: 11px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+.tamar-ticket-detail-copy dd {
+    margin: 0;
+    color: var(--ticket-view-primary);
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+    text-align: right;
+}
+.tamar-ticket-detail-card--long { align-items: flex-start; }
+.tamar-ticket-detail-card--long dd { font-weight: 700; line-height: 1.85; }
+@media (max-width: 639px) {
+    .tamar-ticket-view-layer { padding: 10px; }
+    .tamar-ticket-view-panel.inquiry-overlay-panel { max-height: calc(100dvh - 20px); }
+    .tamar-ticket-view-header { padding: 12px; align-items: flex-start; }
+    .tamar-ticket-view-title { gap: 8px; }
+    .tamar-ticket-view-title h2 { width: 100%; font-size: 17px; }
+    .tamar-ticket-view-tabs { padding-inline: 12px; column-gap: 16px; }
+    .tamar-ticket-view-scroll { padding: 12px; }
+}

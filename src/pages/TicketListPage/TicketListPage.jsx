@@ -7,6 +7,7 @@ import { InquiryListRow } from '../../features/tickets/components/InquiryListRow
 import InquiryCategoriesDropdown from '../../features/tickets/components/InquiryCategoriesDropdown.jsx';
 import InquiryBulkActions from '../../features/tickets/components/InquiryBulkActions.jsx';
 import CloseInquiryDialog from '../../features/tickets/components/CloseInquiryDialog.jsx';
+import ReopenInquiryDialog from '../../features/tickets/components/ReopenInquiryDialog.jsx';
 import { useInquiryOrganization } from '../../features/tickets/hooks/useInquiryOrganization.js';
 import { resolveBoardTypeFromView } from '../../features/tickets/boards/domain/boardTypes.js';
 import { INQUIRY_RUNTIME_STATE } from '../../features/tickets/boards/domain/inquiryRuntimeState.js';
@@ -68,6 +69,7 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
     );
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [closingTicket, setClosingTicket] = useState(null);
+    const [reopeningTicket, setReopeningTicket] = useState(null);
     const [searchQuery, setSearchQuery] = useState(
         () => dashboardListTarget?.search || ''
     );
@@ -129,6 +131,7 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
         setCurrentPage(1);
         setSelectedTicket(null);
         setClosingTicket(null);
+        setReopeningTicket(null);
         closeAllDropdowns();
 
         if (viewType === 'external') {
@@ -279,22 +282,20 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                             </div>
                         )}
                     </div>
-                    {!externalBoard && (
-                        <div className="relative shrink-0 overflow-visible">
-                            <button type="button" onClick={() => { closeAllDropdowns(); setPriorityDropdownOpen(!priorityDropdownOpen); }} className={toolbarButton}>
-                                <Icon name="filter" className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                                {priorityFilter}
-                                <Icon name="chevronDown" className="h-3 w-3 text-[var(--color-primary)]" />
-                            </button>
-                            {priorityDropdownOpen && (
-                                <div className={`${dropdownMenu} right-0 w-[190px]`}>
-                                    {priorityOptions.map((option) => (
-                                        <button type="button" key={option} onClick={() => { setPriorityFilter(option); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{option}</button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <div className="relative shrink-0 overflow-visible">
+                        <button data-testid="inquiry-priority-filter" aria-label="סינון לפי דחיפות" aria-expanded={priorityDropdownOpen} type="button" onClick={() => { closeAllDropdowns(); setPriorityDropdownOpen(!priorityDropdownOpen); }} className={toolbarButton}>
+                            <Icon name="filter" className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                            {priorityFilter}
+                            <Icon name="chevronDown" className="h-3 w-3 text-[var(--color-primary)]" />
+                        </button>
+                        {priorityDropdownOpen && (
+                            <div className={`${dropdownMenu} right-0 w-[190px]`}>
+                                {priorityOptions.map((option) => (
+                                    <button type="button" key={option} onClick={() => { setPriorityFilter(option); closeAllDropdowns(); }} className="inquiry-menu-item block min-h-9 w-full rounded-lg px-3 py-2 text-right text-[12px] font-bold transition hover:bg-[var(--color-surface-muted)]">{option}</button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     {showPinFilter && (
                     <div className="relative shrink-0 overflow-visible">
                         <button type="button" onClick={() => { closeAllDropdowns(); setPinDropdownOpen(!pinDropdownOpen); }} className={toolbarButton}>
@@ -367,6 +368,12 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                         onTogglePin={task.canChangePin ? organization.togglePin : undefined}
                         onAssignCategory={task.canChangeCategory ? organization.assignCategory : undefined}
                         onCloseInquiry={viewType === 'open' ? setClosingTicket : undefined}
+                        onReopenInquiry={
+                            viewType === 'history'
+                            && task.capabilities?.canReopen
+                                ? setReopeningTicket
+                                : undefined
+                        }
                         loading={organization.loadingIds.includes(task.boardItemId)}
                         selectionMode={organization.selectionMode}
                         selected={organization.selectedIds.includes(task.boardItemId)}
@@ -395,6 +402,7 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                     transferContext={toggleState}
                     onClose={() => setSelectedTicket(null)}
                     onCloseInquiry={() => setClosingTicket(selectedTicket)}
+                    onReopenInquiry={setReopeningTicket}
                     onTransferred={() => {
                         setSelectedTicket(null);
                         organization.refresh();
@@ -409,6 +417,20 @@ const TicketListPage = ({ title, description, showToggle = false, viewType = 'de
                 onClose={() => setClosingTicket(null)}
                 onClosed={(ticket) => {
                     setSelectedTicket((current) => current?.ticketId === ticket.id ? null : current);
+                    organization.refresh();
+                }}
+            />
+            <ReopenInquiryDialog
+                open={Boolean(reopeningTicket)}
+                ticket={reopeningTicket}
+                onClose={() => setReopeningTicket(null)}
+                onReopened={(ticket) => {
+                    setSelectedTicket((current) => (
+                        current?.ticketId === ticket.id
+                            ? null
+                            : current
+                    ));
+                    setReopeningTicket(null);
                     organization.refresh();
                 }}
             />

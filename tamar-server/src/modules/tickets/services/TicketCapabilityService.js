@@ -37,6 +37,9 @@ class TicketCapabilityService {
         const canClose = canView
             && !closed
             && this.authorizationService.canClose(access, ticket);
+        const canReopen = canView
+            && closed
+            && this.authorizationService.canReopen(access, ticket);
         const canAssign = canView
             && !closed
             && !pending
@@ -68,6 +71,7 @@ class TicketCapabilityService {
             canView,
             canEdit,
             canClose,
+            canReopen,
             canAssign,
             canTransfer,
             canAcceptTransfer,

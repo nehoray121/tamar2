@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "root": "C:\\Users\\nehor\\Desktop\\tamar",
+  "createdAt": "2026-09-09T10:12:36.929Z",
+  "status": "ROLLED_BACK",
+  "files": [
+    {
+      "path": "src/features/tickets/__tests__/inquiryView.v1.test.js",
+      "before": null,
+      "after": "5c86719cab9c59d9a213055fe8f564bacd2846b53d395bb222d61b22aae7634e",
+      "afterNormalized": "5c86719cab9c59d9a213055fe8f564bacd2846b53d395bb222d61b22aae7634e"
+    },
+    {
+      "path": "src/features/tickets/components/CloseInquiryDialog.jsx",
+      "before": "211bcdd5ceac4dec637b1ee457e271abc79144d1a69f4deb394d6508b6ba1c3b",
+      "after": "e8f54c4c6aa0c070c23b7b68d4f55ab85df189ae2677a1f85a7fb66d8c838fe1",
+      "afterNormalized": "a7be875f5ea29d4e2bba82f9f8197250b2224318c396c30c1abf86ccbe7f9524"
+    },
+    {
+      "path": "src/features/tickets/components/InquiryListRow.jsx",
+      "before": "d19345590d22f369d63fd93d263146d37d93c59a40f6eb929c7361cfeb3f655a",
+      "after": "1c66ac6487763c4d55e6d365f9b7cc28c1709a59e5ec13e947d640f7aa43d644",
+      "afterNormalized": "1c66ac6487763c4d55e6d365f9b7cc28c1709a59e5ec13e947d640f7aa43d644"
+    },
+    {
+      "path": "src/features/tickets/components/ReopenInquiryDialog.jsx",
+      "before": "14939ad5ee5fab497aa773311b5f5a36ed371470c6e171f82385d0bdb8c57d8a",
+      "after": "48af47c98762fc129123ef33e4c95ec1d2a1225afdd20a5baafed75efcc1d144",
+      "afterNormalized": "48af47c98762fc129123ef33e4c95ec1d2a1225afdd20a5baafed75efcc1d144"
+    },
+    {
+      "path": "src/features/tickets/utils/inquiryRowActivation.js",
+      "before": null,
+      "after": "3b09558603895095f19faed69d46aa0b2b055e45d6b1cb3bf33145ab79612375",
+      "afterNormalized": "3b09558603895095f19faed69d46aa0b2b055e45d6b1cb3bf33145ab79612375"
+    },
+    {
+      "path": "src/pages/TicketListPage/InquiryDetailReadView.jsx",
+      "before": null,
+      "after": "24bb8e091cc714378b0bd79d4c621def26da4db2b5caeaab29e06e6225e5ac11",
+      "afterNormalized": "24bb8e091cc714378b0bd79d4c621def26da4db2b5caeaab29e06e6225e5ac11"
+    },
+    {
+      "path": "src/pages/TicketListPage/TicketModal.jsx",
+      "before": "a4eb4802004de2fd8431ba75d0175b4c50bf591a564ae63bc9a1c480114c51cf",
+      "after": "3154841a00715f8f9b271ded201b96659cbbd59f857aa3168b17f12c01213cea",
+      "afterNormalized": "3154841a00715f8f9b271ded201b96659cbbd59f857aa3168b17f12c01213cea"
+    },
+    {
+      "path": "src/pages/TicketListPage/inquiryDetailPresentation.js",
+      "before": null,
+      "after": "f5aa69decac66ebb7b6233dca7eee0078cba01e87690c662b0bf9a248f5c6450",
+      "afterNormalized": "f5aa69decac66ebb7b6233dca7eee0078cba01e87690c662b0bf9a248f5c6450"
+    },
+    {
+      "path": "src/pages/TicketListPage/ticketView.v1.css",
+      "before": null,
+      "after": "d322e8a44fb153b165830140e19e90f9470f99801ca6ad0e31e01b6056f51a5c",
+      "afterNormalized": "d322e8a44fb153b165830140e19e90f9470f99801ca6ad0e31e01b6056f51a5c"
+    }
+  ],
+  "rollback": {
+    "restored": [
+      "src/pages/TicketListPage/ticketView.v1.css",
+      "src/pages/TicketListPage/inquiryDetailPresentation.js",
+      "src/pages/TicketListPage/TicketModal.jsx",
+      "src/pages/TicketListPage/InquiryDetailReadView.jsx",
+      "src/features/tickets/utils/inquiryRowActivation.js",
+      "src/features/tickets/components/ReopenInquiryDialog.jsx",
+      "src/features/tickets/components/InquiryListRow.jsx",
+      "src/features/tickets/components/CloseInquiryDialog.jsx",
+      "src/features/tickets/__tests__/inquiryView.v1.test.js"
+    ],
+    "alreadyOriginal": [],
+    "conflicts": []
+  }
+}
