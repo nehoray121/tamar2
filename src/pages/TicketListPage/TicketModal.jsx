@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { InquiryDetailCard, InquiryDetailHeading } from './InquiryDetailReadView.jsx';
+import './ticketView.v1.css';
 import Icon from '../../components/common/Icon.jsx';
 import { InquiryUrgencyBadge, LightBlueIcon } from '../../features/tickets/components/InquiryListRow.jsx';
 import { getTicketCapabilities, getTicketModalTabs } from '../../features/tickets/config/ticketCapabilities.js';
@@ -39,7 +42,8 @@ const ModalActionButton = ({ children, icon, onClick, tone = 'default' }) => {
     const tones = {
         default: 'inquiry-control inquiry-secondary-text',
         primary: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700',
-        success: 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:text-emerald-300'
+        success: 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:text-emerald-300',
+        warning: 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200'
     };
 
     return (
@@ -134,11 +138,30 @@ const SendInquiryView = ({ ticket, onTransferred }) => {
     );
 };
 
+const ticketHistoryEventLabels = Object.freeze({
+    TICKET_CREATED: 'הפנייה נוצרה',
+    TICKET_UPDATED: 'פרטי הפנייה עודכנו',
+    TICKET_CLOSED: 'הפנייה נסגרה',
+    TICKET_REOPENED: 'הפנייה נפתחה מחדש',
+    TICKET_ASSIGNEES_UPDATED: 'שיוך המטפלים עודכן',
+    TICKET_TRANSFER_INITIATED: 'העברת הפנייה התחילה',
+    TICKET_TRANSFER_ACCEPTED: 'העברת הפנייה התקבלה',
+    TICKET_TRANSFER_CANCELLED: 'העברת הפנייה בוטלה'
+});
+
 const formatDateTime = (value) => value
     ? new Date(value).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })
     : 'לא זמין';
 
-const TicketModal = ({ ticket, viewType, onClose, onCloseInquiry, onTransferred, onUpdated }) => {
+const TicketModal = ({
+    ticket,
+    viewType,
+    onClose,
+    onCloseInquiry,
+    onReopenInquiry,
+    onTransferred,
+    onUpdated
+}) => {
     const [detail, setDetail] = useState(null);
     const [detailStatus, setDetailStatus] = useState('loading');
     const [detailError, setDetailError] = useState('');
@@ -248,6 +271,10 @@ const resolvedTicket = detail || ticket.ticket || ticket;
         ...viewCapabilities,
         canEdit: Boolean(serverCapabilities.canEdit),
         canClose: Boolean(serverCapabilities.canClose),
+        canReopen: Boolean(
+            viewCapabilities.canReopen
+            && serverCapabilities.canReopen
+        ),
             canChat: Boolean(serverCapabilities.canWriteChat),
     canSend: Boolean(viewCapabilities.canSend && serverCapabilities.canTransfer),
     canAcceptTransfer: Boolean(serverCapabilities.canAcceptTransfer),
@@ -377,24 +404,24 @@ const resolveTransfer = async (action) => {
     }
 };
 
-return (
+return createPortal(
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5" dir="rtl">
+        <div data-tamar-inquiry-layer="view" className="tamar-ticket-view-layer fixed inset-0 z-[90] flex items-center justify-center p-5" dir="rtl">
             <div className="inquiry-backdrop absolute inset-0" onClick={onClose} />
 
-            <div data-testid="ticket-details-modal" className="inquiry-overlay-panel relative z-10 flex max-h-[88vh] w-full max-w-[1000px] flex-col overflow-hidden rounded-2xl">
-                <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-5 py-3">
-                    <div className="flex items-center gap-3">
+            <div data-testid="ticket-details-modal" role="dialog" aria-modal="true" aria-label="פרטי הפנייה" className="tamar-ticket-view-panel inquiry-overlay-panel relative z-10 flex max-h-[88vh] w-full max-w-[1000px] flex-col overflow-hidden rounded-2xl">
+                <div className="tamar-ticket-view-header flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-5 py-3">
+                    <div className="tamar-ticket-view-title flex min-w-0 flex-wrap items-center gap-3">
                         <h2 className="text-[22px] font-black tracking-tight inquiry-primary-text">{displayTicket.displayId || displayTicket.ticketNumber || displayTicket.id}</h2>
                         <span className="inline-flex h-8 items-center rounded-lg bg-emerald-500 px-4 text-[12px] font-black text-white shadow-sm">{status}</span>
                         <InquiryUrgencyBadge priority={ticket.priority || 'בינונית-2'} />
                     </div>
-                    <button data-testid="ticket-details-close" type="button" onClick={onClose} className="inquiry-control flex h-8 w-8 items-center justify-center rounded-lg p-0 inquiry-muted-text hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-300">
+                    <button data-testid="ticket-details-close" aria-label="סגור צפייה בפנייה" type="button" onClick={onClose} className="inquiry-control flex h-8 w-8 items-center justify-center rounded-lg p-0 inquiry-muted-text hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-300">
                         <Icon name="close" className="h-4 w-4" />
                     </button>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-6 border-b border-[var(--color-border)] px-5">
+                <div className="tamar-ticket-view-tabs flex shrink-0 flex-wrap items-center gap-x-6 border-b border-[var(--color-border)] px-5">
                     {modalTabs.map((tab) => (
                         <button
                             key={tab.id}
@@ -409,15 +436,24 @@ return (
                 </div>
 
                 <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-                    <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+                    <div data-testid="ticket-details-scroll" className="tamar-ticket-view-scroll min-h-0 flex-1 overflow-y-auto px-6 py-4">
                         {detailError && <div className="mx-auto mb-3 max-w-[850px] rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-600 dark:text-red-300">{detailError}</div>}
                         {detailStatus === 'loading' && <div className="mx-auto mb-3 max-w-[850px] text-xs font-bold inquiry-muted-text">טוען את פרטי הפנייה…</div>}
                         {activeTab === 'info' && (
                             <div className="mx-auto max-w-[850px] space-y-4">
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     {capabilities.canEdit && !isEditing && <ModalActionButton icon="filePlus" onClick={startEditing}>עריכת פנייה</ModalActionButton>}
                                     {capabilities.canChat && <ModalActionButton icon="chat" onClick={() => setIsChatOpen(true)}>{chatTitle}</ModalActionButton>}
                                     {capabilities.canClose && <ModalActionButton icon="check" tone="success" onClick={onCloseInquiry}>סגירת פנייה</ModalActionButton>}
+                                    {capabilities.canReopen && (
+                                        <ModalActionButton
+                                            icon="refresh"
+                                            tone="warning"
+                                            onClick={() => onReopenInquiry?.(displayTicket)}
+                                        >
+                                            החזרה לפתוחות
+                                        </ModalActionButton>
+                                    )}
 {capabilities.canAcceptTransfer && (
     <ModalActionButton
         icon="check"
@@ -445,6 +481,13 @@ return (
                                 </div>
 
                                 <InquiryFormCanvas
+                                    className={isEditing ? '' : 'tamar-ticket-readview'}
+                                    renderSectionHeader={isEditing ? undefined : ({ section, sectionIndex }) => (
+                                        <InquiryDetailHeading section={section} sectionIndex={sectionIndex} />
+                                    )}
+                                    renderField={isEditing ? undefined : ({ field }) => (
+                                        <InquiryDetailCard field={field} value={layoutValues[field.id]} />
+                                    )}
                                     fields={layoutFields}
                                     sections={layoutSections}
                                     values={layoutValues}
@@ -487,7 +530,11 @@ return (
                     </time>
                 </div>
                 <div className="mt-1 text-[12px] font-bold inquiry-secondary-text">
-                    {entry.eventType} · {entry.changedFields?.join(', ') || 'ללא שינויי שדות'}
+                    {ticketHistoryEventLabels[entry.eventType]
+                        || entry.eventType}
+                    {' · '}
+                    {entry.changedFields?.join(', ')
+                        || 'ללא שינויי שדות'}
                 </div>
             </article>
         ))}
@@ -523,7 +570,8 @@ return (
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

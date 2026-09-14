@@ -13,6 +13,7 @@ const WORKFLOW_EVENTS = [
     'ticket:created',
     'ticket:updated',
     'ticket:closed',
+    'ticket:reopened',
     'transfer:initiated',
     'transfer:accepted',
     'transfer:cancelled'
@@ -50,6 +51,7 @@ const workflowBoardTypes = Object.freeze({
     'ticket:created': new Set([BOARD_TYPES.OPEN]),
     'ticket:updated': new Set(Object.values(BOARD_TYPES)),
     'ticket:closed': new Set(Object.values(BOARD_TYPES)),
+    'ticket:reopened': new Set(Object.values(BOARD_TYPES)),
     'transfer:initiated': new Set([
         BOARD_TYPES.OPEN,
         BOARD_TYPES.EXTERNAL_SENT,

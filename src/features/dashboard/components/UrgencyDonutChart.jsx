@@ -14,8 +14,8 @@ const UrgencyDonutChart = ({
         0
     );
     const total = totalOverride ?? segmentTotal;
-    const size = isExpanded ? 196 : 150;
-    const strokeWidth = isExpanded ? 34 : 20;
+    const size = isExpanded ? 196 : 176;
+    const strokeWidth = isExpanded ? 34 : 22;
     const center = size / 2;
     const radius = (size - strokeWidth) / 2;
 

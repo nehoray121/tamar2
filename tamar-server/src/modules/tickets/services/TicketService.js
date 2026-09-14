@@ -297,6 +297,146 @@ class TicketService {
         return toTicketDto(result.ticket, this.capabilityService.forTicket(result.access, result.ticket), summaries);
     }
 
+    async reopen(userId, ticketId, expectedVersion) {
+        const result = await this.transactionRunner.run(async (session) => {
+            const access = await this.authorizationService.resolveAccess(
+                userId,
+                { session }
+            );
+            const ticket = await this.ticketRepository.findById(
+                ticketId,
+                { session }
+            );
+
+            if (
+                !ticket
+                || !this.authorizationService.canView(access, ticket)
+            ) {
+                throw ticketNotFound();
+            }
+
+            if (ticket.status !== TICKET_STATUSES.CLOSED) {
+                throw ticketError(
+                    409,
+                    'TICKET_NOT_CLOSED',
+                    'Only a closed ticket can be reopened'
+                );
+            }
+
+            if (!this.authorizationService.canReopen(access, ticket)) {
+                throw ticketError(
+                    403,
+                    'TICKET_REOPEN_FORBIDDEN',
+                    'You cannot reopen this ticket'
+                );
+            }
+
+            if (ticket.version !== expectedVersion) {
+                throw ticketError(
+                    409,
+                    'VERSION_CONFLICT',
+                    'Ticket version is stale'
+                );
+            }
+
+            await this.operationalRoomLineage(
+                ticket.currentRoomId,
+                session
+            );
+
+            const lifecycleFieldKeys = [
+                'treatment',
+                'status',
+                'closingDate',
+                'closedAt',
+                'closureSummary'
+            ];
+            const fieldValues = ticket.fieldValues || {};
+            const clearedFieldValues = lifecycleFieldKeys.filter(
+                (key) => Object.prototype.hasOwnProperty.call(
+                    fieldValues,
+                    key
+                )
+            );
+
+            const reopened = await this.ticketRepository.reopen(
+                ticketId,
+                expectedVersion,
+                { session }
+            );
+
+            if (!reopened) {
+                throw ticketError(
+                    409,
+                    'VERSION_CONFLICT',
+                    'Ticket changed while it was being reopened'
+                );
+            }
+
+            const changedFields = [
+                'status',
+                'closedBy',
+                'closedAt',
+                'closureSummary',
+                ...clearedFieldValues.map(
+                    (key) => `fieldValues.${key}`
+                )
+            ];
+
+            await this.historyRepository.append(
+                this.historyPayload(
+                    reopened,
+                    TICKET_HISTORY_EVENTS.REOPENED,
+                    userId,
+                    this.authorizationService.actorRoleContext(
+                        access,
+                        ticket
+                    ),
+                    expectedVersion,
+                    changedFields,
+                    {
+                        status: {
+                            before: TICKET_STATUSES.CLOSED,
+                            after: TICKET_STATUSES.OPEN
+                        }
+                    },
+                    {
+                        source: 'TICKET_API',
+                        clearedFieldValues,
+                        treatmentCleared: clearedFieldValues.includes(
+                            'treatment'
+                        )
+                    }
+                ),
+                { session }
+            );
+
+            return { ticket: reopened, access };
+        });
+
+        this.realtimePublisher.publish(
+            'ticket:reopened',
+            result.ticket
+        );
+        this.realtimePublisher.publish(
+            'ticket:history:created',
+            result.ticket
+        );
+
+        const summaries = await this.assigneeSummaryService.forTicket(
+            result.ticket
+        );
+
+        return toTicketDto(
+            result.ticket,
+            this.capabilityService.forTicket(
+                result.access,
+                result.ticket
+            ),
+            summaries
+        );
+    }
+
     async history(userId, ticketId, query) {
         const [access, ticket] = await Promise.all([
             this.authorizationService.resolveAccess(userId), this.ticketRepository.findById(ticketId)

@@ -4,35 +4,40 @@ const ticketCapabilitiesByView = {
         canEdit: true,
         canChat: true,
         canSend: true,
-        canClose: true
+        canClose: true,
+        canReopen: false
     },
     my_tasks: {
         canView: true,
         canEdit: true,
         canChat: true,
         canSend: true,
-        canClose: true
+        canClose: true,
+        canReopen: false
     },
     history: {
         canView: true,
         canEdit: false,
         canChat: true,
         canSend: false,
-        canClose: false
+        canClose: false,
+        canReopen: true
     },
     external: {
         canView: true,
         canEdit: true,
         canChat: true,
         canSend: false,
-        canClose: false
+        canClose: false,
+        canReopen: false
     },
     default: {
         canView: true,
         canEdit: false,
         canChat: true,
         canSend: false,
-        canClose: false
+        canClose: false,
+        canReopen: false
     }
 };
 

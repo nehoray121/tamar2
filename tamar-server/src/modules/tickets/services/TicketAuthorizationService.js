@@ -119,6 +119,12 @@ class TicketAuthorizationService {
             && this.canAccessCurrentRoom(access, ticket);
     }
 
+    canReopen(access, ticket) {
+        return ticket.status === 'CLOSED'
+            && !ticket.activeTransferId
+            && this.canAccessCurrentRoom(access, ticket);
+    }
+
     hasAssignmentAuthority(access, ticket) {
         return !ticket.activeTransferId
             && this.hasManagementAuthority(access, ticket);

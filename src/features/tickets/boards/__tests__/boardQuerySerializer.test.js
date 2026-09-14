@@ -17,13 +17,15 @@ test('serializes only ticket-board filters for OPEN and drops personal ordering 
     assert.equal(query.has('userId'), false);
 });
 
-test('serializes external filters and drops ticket-only filters', () => {
+test('serializes external priority and transfer filters while dropping ticket-only dates', () => {
     const query = new URLSearchParams(serializeBoardQuery('EXTERNAL_RECEIVED', {
         externalState: 'PROCESSING',
         priority: 'LOW',
+        createdFrom: '2026-01-01',
         pinMode: 'PINNED'
     }));
     assert.equal(query.get('externalState'), 'PROCESSING');
     assert.equal(query.get('pinMode'), 'PINNED');
-    assert.equal(query.has('priority'), false);
+    assert.equal(query.get('priority'), 'LOW');
+    assert.equal(query.has('createdFrom'), false);
 });

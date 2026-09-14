@@ -22,15 +22,14 @@ test('LOCAL-AUTH-FE-002 local login accepts the approved seven-digit identity wi
     assert.equal(ui.includes('maxLength={9}'), true);
 });
 
-test('LOCAL-AUTH-FE-003 local token and personal number remain memory-only', async () => {
-    const source = [
-        await read('src/features/auth/local/localDevelopmentAuth.js'),
-        await read('src/features/auth/local/LocalDevelopmentAuthUi.jsx')
-    ].join('\n');
-    assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB/i);
-    assert.doesNotMatch(source, /console\.(?:log|warn|error)/);
-    assert.doesNotMatch(source, /role selector|SUPER_ADMIN/i);
-    assert.equal(source.includes("let accessToken = ''"), true);
+test('LOCAL-AUTH-FE-003 local persistent session has no application timeout and stores no personal number', async () => {
+    const source = await read('src/features/auth/local/localDevelopmentAuth.js');
+    assert.equal(source.includes("tamar:local-persistent-session:v1"), true);
+    assert.equal(source.includes("requestSession('refresh'"), true);
+    assert.equal(source.includes('sessionExpiresAt'), false);
+    assert.equal(source.includes('localStorage.setItem(STORAGE_KEY, token)'), true);
+    assert.equal(source.includes('localStorage.setItem(STORAGE_KEY, personalNumber)'), false);
+    assert.doesNotMatch(source, /setTimeout|setInterval/);
 });
 
 test('LOCAL-AUTH-FE-004 local provider URL is loopback validated and no SSO fallback exists', async () => {

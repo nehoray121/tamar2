@@ -3,6 +3,7 @@ const asyncHandler = require('../utils/asyncHandler.js');
 const {
     parseCloseTicket,
     parseReserveTicketNumber,
+    parseReopenTicket,
     parseCreateTicket,
     parseIfMatch,
     parseTicketHistoryQuery,
@@ -19,6 +20,7 @@ const {
  * GET   /api/tickets/:id
  * PATCH /api/tickets/:id
  * POST  /api/tickets/:id/close
+ * POST  /api/tickets/:id/reopen
  * GET   /api/tickets/:id/history
  */
 function createTicketRoutes({
@@ -33,6 +35,7 @@ function createTicketRoutes({
     router.get('/:id', ...protectedRoute, parseTicketId, asyncHandler(controller.get));
     router.patch('/:id', ...protectedRoute, parseTicketId, parseIfMatch, parseUpdateTicket, asyncHandler(controller.update));
     router.post('/:id/close', ...protectedRoute, parseTicketId, parseIfMatch, parseCloseTicket, asyncHandler(controller.close));
+    router.post('/:id/reopen', ...protectedRoute, parseTicketId, parseIfMatch, parseReopenTicket, asyncHandler(controller.reopen));
     router.get('/:id/history', ...protectedRoute, parseTicketId, parseTicketHistoryQuery, asyncHandler(controller.history));
 
     return router;

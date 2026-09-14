@@ -18,6 +18,9 @@ const WorkloadPanel = ({
                 expanded ? 'tamar-claude-dashboard-card--bottom-expanded' : ''
             }`}
             dir="rtl"
+            data-dashboard-panel="workload"
+            data-panel-expanded={expanded ? 'true' : 'false'}
+            data-panel-empty={rows.length === 0 ? 'true' : 'false'}
         >
             <div className="tamar-claude-card-header">
                 <div className="tamar-claude-card-header__main">

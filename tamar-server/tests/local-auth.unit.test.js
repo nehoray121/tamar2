@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { after, before, test } = require('node:test');
-const { importJWK, jwtVerify } = require('jose');
+let importJWK;
+let jwtVerify;
 const { AUTH_RUNTIME_MODES, loadEnvironment } = require('../src/config/env.js');
 const { createLocalIdentityProvider } = require('../scripts/local-auth/server.js');
 const { createDevelopmentSubject, normalizeDevelopmentPersonalNumber } = require('../scripts/local-auth/identity.js');
@@ -73,6 +74,7 @@ test('backend database and issuer guards hard-separate development, test and pro
 let provider;
 let origin;
 before(async () => {
+    ({ importJWK, jwtVerify } = await import('jose'));
     provider = await createLocalIdentityProvider({ source: localSource() });
     await new Promise((resolve, reject) => {
         provider.server.once('error', reject);
@@ -136,4 +138,49 @@ test('local token endpoint rejects invalid input, extra authority fields and non
         body: JSON.stringify({ personalNumber: '990000001' })
     });
     assert.equal(external.status, 403);
+});
+
+
+test('persistent local session has no expiry and can refresh after provider restart', async () => {
+    const source = localSource({ LOCALAPPDATA: require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), 'tamar-local-auth-test-')) });
+    const first = await createLocalIdentityProvider({ source });
+    await new Promise((resolve, reject) => {
+        first.server.once('error', reject);
+        first.server.listen(0, '127.0.0.1', resolve);
+    });
+    const firstOrigin = 'http://127.0.0.1:' + first.server.address().port;
+    const login = await fetch(firstOrigin + '/session/login', {
+        method: 'POST',
+        headers: { Origin: 'http://127.0.0.1:5174', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personalNumber: '1234567' })
+    });
+    const loginBody = await login.json();
+    assert.equal(login.status, 200);
+    assert.equal(typeof loginBody.sessionToken, 'string');
+    assert.equal(loginBody.sessionExpiresAt, null);
+    await new Promise((resolve) => first.server.close(resolve));
+
+    const second = await createLocalIdentityProvider({ source });
+    await new Promise((resolve, reject) => {
+        second.server.once('error', reject);
+        second.server.listen(0, '127.0.0.1', resolve);
+    });
+    const secondOrigin = 'http://127.0.0.1:' + second.server.address().port;
+    const refresh = await fetch(secondOrigin + '/session/refresh', {
+        method: 'POST',
+        headers: { Origin: 'http://127.0.0.1:5174', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken: loginBody.sessionToken })
+    });
+    const refreshBody = await refresh.json();
+    assert.equal(refresh.status, 200);
+    assert.equal(typeof refreshBody.accessToken, 'string');
+    assert.equal(refreshBody.sessionExpiresAt, null);
+
+    const logout = await fetch(secondOrigin + '/session/logout', {
+        method: 'POST',
+        headers: { Origin: 'http://127.0.0.1:5174', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken: loginBody.sessionToken })
+    });
+    assert.equal(logout.status, 200);
+    await new Promise((resolve) => second.server.close(resolve));
 });

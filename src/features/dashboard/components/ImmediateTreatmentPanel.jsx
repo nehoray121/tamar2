@@ -17,6 +17,9 @@ const ImmediateTreatmentPanel = ({
                 expanded ? 'tamar-claude-dashboard-card--bottom-expanded' : ''
             }`}
             dir="rtl"
+            data-dashboard-panel="attention"
+            data-panel-expanded={expanded ? 'true' : 'false'}
+            data-panel-empty={items.length === 0 ? 'true' : 'false'}
         >
             <div className="tamar-claude-card-header">
                 <div className="tamar-claude-card-header__main">

@@ -96,6 +96,14 @@ const parseCloseTicket = (request, _response, next) => {
         next();
     } catch (error) { next(error); }
 };
+const parseReopenTicket = (request, _response, next) => {
+    try {
+        const body = request.body ?? {};
+        assertExactKeys(body, []);
+        request.ticketInput = {};
+        next();
+    } catch (error) { next(error); }
+};
 const parseTicketListQuery = (request, _response, next) => {
     try {
         assertExactKeys(request.query, LIST_QUERY_KEYS, 'query');
@@ -144,4 +152,4 @@ const parseTicketHistoryQuery = (request, _response, next) => {
     }
 };
 
-module.exports = { parseReserveTicketNumber, parseTicketId, parseIfMatch, parseCreateTicket, parseUpdateTicket, parseCloseTicket, parseTicketListQuery, parseTicketHistoryQuery };
+module.exports = { parseReserveTicketNumber, parseTicketId, parseIfMatch, parseCreateTicket, parseUpdateTicket, parseCloseTicket, parseReopenTicket, parseTicketListQuery, parseTicketHistoryQuery };

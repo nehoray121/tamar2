@@ -16599,105 +16599,326 @@ top: auto !important;
   height: 17px !important;
 }
 
-.tamar-claude-dashboard-card:not(
-    .tamar-claude-dashboard-card--bottom-expanded
-  )
-  > .tamar-claude-attention-list:has(
-    > .tamar-claude-empty
-  ) {
-  min-height: 0 !important;
-  height: auto !important;
-  max-height: none !important;
-
-  flex: 0 0 auto !important;
-  overflow: hidden !important;
-
-  padding: 10px 16px 14px !important;
-}
-
-.tamar-claude-dashboard-card:not(
-    .tamar-claude-dashboard-card--bottom-expanded
-  )
-  > .tamar-claude-attention-list
-  > .tamar-claude-empty {
-  width: 100% !important;
-
-  min-height: 92px !important;
-  height: 92px !important;
-  max-height: 92px !important;
-
-  flex: 0 0 92px !important;
-
-  box-sizing: border-box !important;
-
-  margin: 0 !important;
-  padding: 12px 16px !important;
-
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.tamar-claude-dashboard-card--bottom-expanded
-  > .tamar-claude-attention-list
-  > .tamar-claude-empty {
-  height: auto !important;
-  max-height: none !important;
-  flex: 1 1 auto !important;
-}
 /* tamar-dashboard-design-wave4ak:v1:end */
 
-/* tamar-dashboard-design-wave4al:v1:start */
-/* ==========================================================
-   Wave 4AL
-   The bottom workload / immediate-treatment cards were visually
-   cut by the fixed dashboard stage boundary. Keep them inside
-   their normal grid tracks so their 18px bottom corners remain
-   fully visible, matching chart and KPI cards.
-   ========================================================== */
+/* tamar-dashboard-design-wave4am1:v1:start */
+/* Repair based on the uploaded src.7z. Only the standard two-column dashboard
+   and the existing sidebar count are affected; primary chart expansion is not. */
 
-/* Only the LOWER cell of each NON-expanded dashboard column. */
-.dashboard-column-v4e:not(.dashboard-column-v4e--expanded)
-  > .dashboard-column-v4e__cell:last-child {
+/* The former 230px + 230px row minima could exceed the clipped stage.
+   Keep usable row minima, and allow the stage to scroll on short windows. */
+.dashboard-page-v4b > .dashboard-main-v4b {
   min-height: 0 !important;
+  flex: 1 1 0 !important;
+  overflow: hidden !important;
+}
+
+.dashboard-main-v4b > .dashboard-stage-v4b {
+  --tamar-top-row-min: 230px;
+  --tamar-bottom-row-min: 174px;
+  --tamar-card-gap: 16px;
+  min-height: 0 !important;
+  flex: 1 1 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  padding-bottom: 12px !important;
+  overscroll-behavior-y: contain;
+}
+
+/* Room for two real rows when present, without shrinking or losing records. */
+.dashboard-main-v4b > .dashboard-stage-v4b:has(
+  [data-dashboard-panel="workload"][data-panel-expanded="false"]
+  .tamar-claude-workload-row:nth-child(2)
+) {
+  --tamar-bottom-row-min: 252px;
+}
+.dashboard-main-v4b > .dashboard-stage-v4b:has(
+  [data-dashboard-panel="attention"][data-panel-expanded="false"]
+  .tamar-claude-attention-row:nth-child(2)
+) {
+  --tamar-bottom-row-min: 252px;
+}
+
+.dashboard-main-v4b > .dashboard-stage-v4b > .dashboard-columns-v4e {
+  height: 100% !important;
+  min-height: calc(var(--tamar-top-row-min) + var(--tamar-bottom-row-min) + var(--tamar-card-gap)) !important;
+  gap: var(--tamar-card-gap) !important;
+  align-items: stretch !important;
+}
+
+.dashboard-main-v4b .dashboard-column-v4e:not(.dashboard-column-v4e--expanded) {
+  min-height: 0 !important;
+  grid-template-rows: minmax(var(--tamar-top-row-min), 1.15fr) minmax(var(--tamar-bottom-row-min), 1fr) !important;
+  gap: var(--tamar-card-gap) !important;
+}
+
+.dashboard-main-v4b .dashboard-column-v4e__cell {
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Actual workload/attention elements, not speculative class names. */
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel] {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  box-sizing: border-box !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel][data-panel-expanded="false"]
+  > .tamar-claude-card-header {
+  min-height: 64px !important;
+  height: auto !important;
+  flex: 0 0 auto !important;
+  padding: 12px 16px !important;
+}
+
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel] > .tamar-claude-workload-list,
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel] > .tamar-claude-attention-list {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  flex: 1 1 0 !important;
+  gap: 8px !important;
+  padding: 12px 16px !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: transparent !important;
+}
+
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel="workload"][data-panel-expanded="false"]
+  > .tamar-claude-workload-list--scroll {
+  flex: 0 1 180px !important;
+  max-height: 180px !important;
+}
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel="attention"][data-panel-expanded="false"]
+  > .tamar-claude-attention-list--scroll {
+  flex: 0 1 140px !important;
+  max-height: 140px !important;
+}
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel] .tamar-claude-workload-row {
+  flex-shrink: 0 !important;
+}
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel] .tamar-claude-attention-row {
+  flex-shrink: 0 !important;
+}
+
+/* Compact empty state in normal cards. The frame is never larger than its body. */
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel][data-panel-empty="true"] > div:last-child {
+  justify-content: center !important;
+}
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel][data-panel-expanded="false"] .tamar-claude-empty {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: 80px !important;
+  max-height: 100% !important;
+  flex: 0 1 80px !important;
+  box-sizing: border-box !important;
+  padding: 10px 14px !important;
+  margin: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  text-align: center;
+}
+
+/* Expanded lower cards keep the full column and a flexible, taller empty area. */
+.dashboard-main-v4b .tamar-claude-dashboard-card[data-dashboard-panel][data-panel-expanded="true"] .tamar-claude-empty {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  flex: 1 1 0 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+}
+
+/* Preserve the existing single-column breakpoint, with reachable card bottoms. */
+@media (max-width: 1080px) {
+  .dashboard-main-v4b > .dashboard-stage-v4b > .dashboard-columns-v4e {
+    height: auto !important;
+    min-height: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .dashboard-main-v4b .dashboard-column-v4e:not(.dashboard-column-v4e--expanded) {
+    grid-template-rows: 270px var(--tamar-bottom-row-min) !important;
+    grid-auto-rows: auto !important;
+  }
+  .dashboard-main-v4b .dashboard-column-v4e--expanded {
+    height: max(360px, calc(100dvh - 270px)) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+}
+
+/* Recover useful vertical room on short desktops without shrinking chart geometry.
+   Primary chart expansion has a different header tree and is not selected here. */
+@media (min-width: 1081px) and (max-height: 720px) {
+  .dashboard-page-v4b:has(> .dashboard-main-v4b) {
+    padding-block: 12px !important;
+    gap: 12px !important;
+  }
+  .dashboard-page-v4b > .tamar-claude-page-header {
+    min-height: 54px !important;
+  }
+  .dashboard-page-v4b > .dashboard-main-v4b {
+    gap: 12px !important;
+  }
+}
+
+/* The original live badge prop now sits next to the original people icon.
+   No bell, no second counter, no new counter variable. */
+.tamar-v22-sidebar-item .tamar-sidebar-icon-group-v4am1 {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: visible;
+}
+.tamar-v22-sidebar-item .tamar-sidebar-count-v4am1 {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 1px solid var(--color-surface-raised, #fff);
+  border-radius: 999px;
+  background: var(--color-danger, #dc2626);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  direction: ltr;
+}
+/* tamar-dashboard-design-wave4am1:v1:end */
+
+/* tamar-dashboard-wave4an:v1:start */
+/* External inquiries count: sit slightly above the people icon, not beside it. */
+.tamar-v22-sidebar-item .tamar-sidebar-icon-group-v4am1 {
+  position: relative !important;
+  display: inline-flex !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px !important;
+  align-items: center !important;
+  justify-content: center !important;
   overflow: visible !important;
 }
 
-/*
-  Pull the card bottom edge 12px above the stage clipping boundary.
-  This does not change expanded cards.
-*/
-.dashboard-column-v4e:not(.dashboard-column-v4e--expanded)
-  > .dashboard-column-v4e__cell:last-child
-  > .tamar-claude-card {
-  height: calc(100% - 12px) !important;
-  max-height: calc(100% - 12px) !important;
-
-  align-self: start !important;
-
-  border-bottom-left-radius: 18px !important;
-  border-bottom-right-radius: 18px !important;
-  border-radius: 18px !important;
-
-  overflow: hidden !important;
+.tamar-v22-sidebar-item .tamar-sidebar-count-v4am1 {
+  position: absolute !important;
+  inset-block-start: -10px !important;
+  inset-inline-end: -11px !important;
+  z-index: 2 !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 4px !important;
+  box-shadow: 0 0 0 2px var(--color-surface-raised, #ffffff) !important;
 }
 
-/* Keep the visual gap clean and consistent with the dashboard page. */
-.dashboard-column-v4e:not(.dashboard-column-v4e--expanded)
-  > .dashboard-column-v4e__cell:last-child::after {
-  content: "";
-  display: block;
-  height: 12px;
-  pointer-events: none;
+/* Donut card polish: keep the chart crisp and improve the collapsed composition. */
+.tamar-claude-card:has(.tamar-claude-urgency-body) > .tamar-claude-urgency-body {
+  grid-template-columns: minmax(280px, 1fr) 176px !important;
+  column-gap: 28px !important;
+  row-gap: 12px !important;
+  align-items: center !important;
+  align-content: center !important;
+  padding: 10px 24px 18px !important;
 }
 
-/* Expanded cards must continue filling the complete column. */
-.dashboard-column-v4e--expanded
-  > .tamar-claude-card,
-.dashboard-column-v4e--expanded
-  > .dashboard-column-v4e__cell
-  > .tamar-claude-card {
-  height: 100% !important;
-  max-height: none !important;
-  border-radius: 18px !important;
+.tamar-claude-urgency-body .tamar-claude-urgency-legend {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  gap: 12px !important;
 }
-/* tamar-dashboard-design-wave4al:v1:end */
+
+.tamar-claude-urgency-body .tamar-claude-urgency-legend__row {
+  display: grid !important;
+  grid-template-columns: 12px minmax(0,1fr) auto auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 14px !important;
+  background: var(--color-surface-subtle, #f8fbff) !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-urgency-legend__row > span:nth-child(2) {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-urgency-legend__row > span:nth-child(3) {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--color-text-muted) !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-urgency-legend__row strong {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-donut,
+.tamar-claude-urgency-body .tamar-claude-donut svg {
+  width: 176px !important;
+  height: 176px !important;
+  min-width: 176px !important;
+  min-height: 176px !important;
+  max-width: 176px !important;
+  max-height: 176px !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-donut {
+  justify-self: end !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-donut__center {
+  inset: 25px !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-donut__center strong {
+  font-size: 29px !important;
+  line-height: 1 !important;
+}
+
+.tamar-claude-urgency-body .tamar-claude-donut__center span {
+  margin-top: 6px !important;
+  font-size: 11px !important;
+}
+
+@media (max-width: 1180px) {
+  .tamar-claude-card:has(.tamar-claude-urgency-body) > .tamar-claude-urgency-body {
+    grid-template-columns: minmax(220px,1fr) 164px !important;
+    column-gap: 18px !important;
+    padding-inline: 16px !important;
+  }
+
+  .tamar-claude-urgency-body .tamar-claude-donut,
+  .tamar-claude-urgency-body .tamar-claude-donut svg {
+    width: 164px !important;
+    height: 164px !important;
+    min-width: 164px !important;
+    min-height: 164px !important;
+    max-width: 164px !important;
+    max-height: 164px !important;
+  }
+}
+/* tamar-dashboard-wave4an:v1:end */

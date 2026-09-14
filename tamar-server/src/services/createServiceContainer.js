@@ -342,6 +342,7 @@ const createServiceContainer = ({ config, logger } = {}) => {
     const boardQueryService = new TicketBoardQueryService({
         authorizationService: boardAuthorizationService,
         capabilityService: boardCapabilityService,
+        ticketCapabilityService,
         categoryRepository: boardCategoryRepository,
         queryRepository: boardQueryRepository
     });

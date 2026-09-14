@@ -1,0 +1,44 @@
+/* Tamar 4AO: settings field editor only; no dashboard or global overrides. */
+.tamar-settings-dependency-viewport-v4ao {
+  height: 132px;
+  min-height: 132px;
+  max-height: 132px;
+}
+.tamar-settings-field-editor-v4ao {
+  min-height: 0;
+  max-height: 100%;
+}
+.tamar-settings-field-editor-body-v4ao {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+.tamar-settings-field-editor-footer-v4ao {
+  flex: 0 0 auto;
+  min-height: 56px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+}
+@media (min-width: 1280px) {
+  .tamar-settings-fields-grid-v4ao {
+    height: 100%;
+    min-height: 0;
+    padding-bottom: 8px;
+    box-sizing: border-box;
+  }
+}
+@media (max-width: 1279px) {
+  .tamar-settings-field-editor-v4ao {
+    height: auto;
+    max-height: 640px;
+  }
+}
+@media (max-height: 720px) {
+  .tamar-settings-dependency-viewport-v4ao {
+    height: 116px;
+    min-height: 116px;
+    max-height: 116px;
+  }
+}

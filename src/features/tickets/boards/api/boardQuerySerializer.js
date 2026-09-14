@@ -1,7 +1,7 @@
 import { BOARD_TYPES, isExternalBoard, requireBoardType } from '../domain/boardTypes.js';
 
-const commonFields = ['page', 'limit', 'search', 'categoryId', 'categoryMode', 'pinMode', 'sortBy', 'sortDirection'];
-const ticketFields = ['priority', 'createdBy', 'createdFrom', 'createdTo', 'updatedFrom', 'updatedTo', 'closedFrom', 'closedTo'];
+const commonFields = ['priority', 'page', 'limit', 'search', 'categoryId', 'categoryMode', 'pinMode', 'sortBy', 'sortDirection'];
+const ticketFields = ['createdBy', 'createdFrom', 'createdTo', 'updatedFrom', 'updatedTo', 'closedFrom', 'closedTo'];
 const externalFields = ['transferStatus', 'externalState', 'initiatedFrom', 'initiatedTo', 'resolvedFrom', 'resolvedTo'];
 
 const isPresent = (value) => value !== undefined && value !== null && value !== '';

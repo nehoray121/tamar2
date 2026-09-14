@@ -36,6 +36,15 @@ class TicketController {
         setTicketHeaders(response, data.version);
         response.json({ success: true, data });
     };
+    reopen = async (request, response) => {
+        const data = await this.ticketService.reopen(
+            request.user._id,
+            request.ticketId,
+            request.expectedTicketVersion
+        );
+        setTicketHeaders(response, data.version);
+        response.json({ success: true, data });
+    };
     history = async (request, response) => {
         setTicketHeaders(response);
         response.json({ success: true, data: await this.ticketService.history(request.user._id, request.ticketId, request.ticketQuery) });

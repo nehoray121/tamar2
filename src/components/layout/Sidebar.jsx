@@ -16,28 +16,28 @@ const SidebarNavItem = ({
         className="tamar-v22-sidebar-item flex w-full items-center justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
     >
         <span className="flex min-w-0 items-center gap-2.5">
-            <Icon
-                name={icon}
-                className="h-4 w-4 shrink-0"
-                color={isActive ? 'var(--color-primary)' : 'var(--color-text-muted)'}
-            />
+            <span className="tamar-sidebar-icon-group-v4am1">
+                <Icon
+                    name={icon}
+                    className="h-4 w-4 shrink-0"
+                    color={isActive ? 'var(--color-primary)' : 'var(--color-text-muted)'}
+                />
+                {badge !== undefined && badge !== null && (
+                    <span
+                        className="tamar-sidebar-count-v4am1"
+                        aria-label={`פניות שהתקבלו: ${badge}`}
+                        title={`פניות שהתקבלו: ${badge}`}
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                    >
+                        {badge}
+                    </span>
+                )}
+            </span>
             <span className="truncate">{label}</span>
         </span>
-        {badge !== undefined && badge !== null && (
-            <span
-                className="tamar-v22-sidebar-notification"
-                aria-label={`פניות שהתקבלו: ${badge}`}
-                title={`פניות שהתקבלו: ${badge}`}
-            >
-                <Icon
-                    name="bell"
-                    className="tamar-v22-sidebar-notification__bell"
-                />
-                <span className="tamar-v22-sidebar-notification__count">
-                    {badge}
-                </span>
-            </span>
-        )}
+
     </button>
 );
 

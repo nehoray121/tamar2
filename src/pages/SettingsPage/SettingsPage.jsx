@@ -4,6 +4,7 @@ import Icon from '../../components/common/Icon.jsx';
 import { PageErrorState, PageLoadingState } from '../../components/common/PageLoadingState.jsx';
 import { useRoomSettings } from '../../features/settings/hooks/useRoomSettings.js';
 import InquiryLayoutBuilder from '../../features/settings/components/InquiryLayoutBuilder.jsx';
+import '../../features/settings/styles/settingsFieldEditor.v4ao.css';
 import { useSessionStore } from '../../store/session.store.js';
 import {
     cloneSettingsField,
@@ -353,58 +354,76 @@ const DependencyEditor = ({ field, fields, onChange, compact = false }) => {
     };
     if (compact) {
         return (
-            <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="tamar-dependency-editor-v4ap">
+                <div className="tamar-dependency-heading-v4ap">
                     <h3 className="text-[12px] font-black text-[var(--color-text-primary)]">אפשרויות תלויות</h3>
-                    {parentField && <button type="button" onClick={() => onChange({ ...field, parentId: undefined, dependencyMap: {} })} className="text-[11px] font-bold text-red-500 transition hover:text-red-600">הסר קשר</button>}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <select value={field.parentId || ''} onChange={(event) => setParent(event.target.value)} className="h-8 min-w-[110px] rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 text-[11px] font-bold text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)]">
-                        <option value="">ללא תלות</option>
-                        {candidates.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
-                    </select>
-                    <span className="text-[13px] font-black text-[var(--color-primary)]">←</span>
-                    <div className="flex h-8 min-w-[84px] items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 text-[11px] font-bold text-[var(--color-text-primary)]">
-                        {field.name}
+                    <div className="tamar-dependency-link-v4ap">
+                        <select
+                            aria-label="שדה משפיע"
+                            value={field.parentId || ''}
+                            onChange={(event) => setParent(event.target.value)}
+                            className="inquiry-input-surface tamar-dependency-select-v4ap"
+                        >
+                            <option value="">ללא תלות</option>
+                            {candidates.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
+                        </select>
+                        <span aria-hidden="true" className="text-[13px] font-black text-[var(--color-primary)]">←</span>
+                        <span className="tamar-dependency-child-v4ap">{field.name}</span>
                     </div>
+                    {parentField && (
+                        <button type="button" onClick={() => onChange({ ...field, parentId: undefined, dependencyMap: {} })} className="tamar-dependency-unlink-v4ap text-[11px] font-bold text-red-500 transition hover:text-red-600">
+                            הסר קשר
+                        </button>
+                    )}
                 </div>
-                <p className="text-[10px] font-semibold text-[var(--color-text-muted)]">בחירת {parentField?.name || 'שדה משפיע'} מסננת את אפשרויות {field.name}, אך אינה בוחרת תשובה אוטומטית.</p>
-                {parentField && <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold text-[var(--color-text-muted)]">{mappedParentCount} מתוך {childOptions.length} תשובות הוגדרו</span>
-                    </div>
-                    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] shadow-sm">
-                        <div className="flex h-[176px] min-h-[176px]">
-                            <div className="w-[34%] shrink-0 border-l border-[var(--color-border)] bg-[var(--color-surface-muted)]">
-                                <div className="h-full overflow-y-auto p-1">
-                                    {parentOptions.map((parentOption) => {
-                                        const count = (field.dependencyMap?.[parentOption] || []).length;
-                                        return <button key={parentOption} type="button" onClick={() => setActiveParentOption(parentOption)} className={cn('flex h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-[11px] font-bold transition', activeParentOption === parentOption ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)]')}><span className="truncate">{parentOption}</span><span className="text-[10px] font-black opacity-75">{count}</span></button>;
-                                    })}
-                                </div>
+                <div className="tamar-dependency-help-v4ap">
+                    <p>בחירת {parentField?.name || 'שדה משפיע'} מסננת את אפשרויות {field.name}, אך אינה בוחרת תשובה אוטומטית.</p>
+                    {parentField && <span>{mappedParentCount} מתוך {childOptions.length} תשובות הוגדרו</span>}
+                </div>
+                {parentField && (
+                    <div className="tamar-dependency-map-v4ap">
+                        <div className="tamar-dependency-parents-v4ap" role="group" aria-label="אפשרויות השדה המשפיע">
+                            {parentOptions.map((parentOption) => {
+                                const count = (field.dependencyMap?.[parentOption] || []).length;
+                                return (
+                                    <button
+                                        key={parentOption}
+                                        type="button"
+                                        aria-pressed={activeParentOption === parentOption}
+                                        onClick={() => setActiveParentOption(parentOption)}
+                                        className={cn('tamar-dependency-parent-v4ap', activeParentOption === parentOption ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)]')}
+                                    >
+                                        <span>{parentOption}</span>
+                                        <span className="text-[10px] font-black opacity-75">{count}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="tamar-dependency-values-v4ap">
+                            <h4>אילו אפשרויות יוצגו כאשר נבחרה "{activeParentOption}"?</h4>
+                            <div className="tamar-dependency-chips-v4ap">
+                                {selectedValues.map((option) => (
+                                    <span key={option} className="tamar-dependency-chip-v4ap">
+                                        <span>{option}</span>
+                                        <button type="button" onClick={() => toggleMapping(activeParentOption, option)} aria-label={`הסר ${option}`}>
+                                            <Icon name="close" className="h-3 w-3" />
+                                        </button>
+                                    </span>
+                                ))}
+                                {!selectedValues.length && <span className="text-[11px] font-semibold italic text-[var(--color-text-muted)]">לא נבחרו אפשרויות.</span>}
                             </div>
-                            <div className="flex min-w-0 flex-1 flex-col p-3 overflow-y-auto">
-                                <h4 className="mb-2 text-center text-[12px] font-black leading-5 text-[var(--color-text-primary)]">אילו אפשרויות יוצגו כאשר נבחרה "{activeParentOption}"?</h4>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {selectedValues.map((option) => <span key={option} className="inline-flex h-6 items-center gap-1 rounded-md border border-[var(--color-primary)] bg-[var(--color-primary-soft)] px-2 text-[10px] font-bold text-[var(--color-primary)]"><span className="truncate">{option}</span><button type="button" onClick={() => toggleMapping(activeParentOption, option)} className="transition hover:text-red-500" aria-label={`הסר ${option}`}><Icon name="close" className="h-3 w-3" /></button></span>)}
-                                    {!selectedValues.length && <span className="text-[11px] font-semibold italic text-[var(--color-text-muted)]">לא נבחרו אפשרויות.</span>}
-                                </div>
-                                <div className="mt-auto pt-2">
-                                    <select value={pendingOption} onChange={(event) => addPendingOption(event.target.value)} className="h-8 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 text-[11px] font-semibold text-[var(--color-text-secondary)] outline-none transition focus:border-[var(--color-primary)]">
-                                        <option value="">בחירת אפשרויות שיוצגו...</option>
-                                        {availableValues.map((option) => <option key={option} value={option}>{option}</option>)}
-                                    </select>
-                                </div>
-                            </div>
+                            <select
+                                aria-label="בחירת אפשרויות שיוצגו"
+                                value={pendingOption}
+                                onChange={(event) => addPendingOption(event.target.value)}
+                                className="inquiry-input-surface tamar-dependency-add-v4ap"
+                            >
+                                <option value="">בחירת אפשרויות שיוצגו...</option>
+                                {availableValues.map((option) => <option key={option} value={option}>{option}</option>)}
+                            </select>
                         </div>
                     </div>
-                    {/* <div className="space-y-1">
-                        <div className="text-[10px] font-black text-[var(--color-text-muted)]">תצוגה מקדימה</div>
-                        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-2">
-                            <DependencyPreview field={field} parentField={parentField} />
-                        </div>
-                    </div> */}
-                </div>}
+                )}
             </div>
         );
     }
@@ -498,14 +517,14 @@ const FieldEditor = ({ field, fields, settings, setSettings, onChange, onDelete,
         const template = typeById[type] || typeById.text;
         onChange({ ...field, type, typeLabel: template.typeLabel || template.name, options: selectorTypes.has(type) ? (field.options?.length ? field.options : ['אפשרות 1', 'אפשרות 2']) : [], parentId: selectorTypes.has(type) ? field.parentId : undefined, dependencyMap: selectorTypes.has(type) ? field.dependencyMap || {} : {}, linkConfig: type === 'link' ? { label: field.name, url: field.linkConfig?.url || '', targetType: 'external', displayStyle: 'button', openInNewTab: true } : {} });
     };
-    return <SectionShell title={field.isNew ? 'הגדרת שדה חדש' : `עריכת שדה: ${field.name}`} meta={usesCompactSelectEditor ? null : getTypeLabel(field)} className="h-full max-h-[560px]" actions={usesCompactSelectEditor ? <CompactCheckbox checked={Boolean(field.required)} disabled={field.locked && field.required} onChange={(value) => onChange({ ...field, required: value })} label="שדה חובה" /> : undefined}><div className={cn('min-h-0 flex-1', usesCompactSelectEditor ? 'space-y-2.5 p-3' : 'space-y-2 p-2')}>{usesCompactSelectEditor ? <section className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3"><div className="grid gap-2 md:grid-cols-2"><div><label className="mb-1 block text-[11px] font-bold text-[var(--color-text-secondary)]">שם השדה</label><input value={field.name || ''} onChange={(event) => onChange({ ...field, name: event.target.value })} className={cn(inputClass, 'h-9 rounded-lg px-2.5 text-[12px]')} /></div><div><label className="mb-1 block text-[11px] font-bold text-[var(--color-text-secondary)]">טקסט מנחה</label><input value={field.placeholder || ''} onChange={(event) => onChange({ ...field, placeholder: event.target.value })} className={cn(inputClass, 'h-9 rounded-lg px-2.5 text-[12px]')} /></div></div><div className="border-t border-[var(--color-border)] pt-2"><OptionEditor field={field} onAdd={onAddOption} onRename={onRenameOption} onDelete={onDeleteOption} onMove={onMoveOption} compact /></div><div className="border-t border-[var(--color-border)] pt-2"><DependencyEditor field={field} fields={fields} onChange={onChange} compact /></div></section> : <EditorSection title="מידע בסיסי" description="השם, ההנחיה וההתנהגות הבסיסית של השדה בטופס."><div className="grid gap-1.5 md:grid-cols-2"><FieldLabel label="שם השדה" help="השם שיוצג למשתמשים בטופס."><input value={field.name || ''} onChange={(event) => onChange({ ...field, name: event.target.value })} className={inputClass} /></FieldLabel><FieldLabel label="טקסט מנחה" help="הסבר קצר שמסייע למשתמש למלא את השדה."><input value={field.placeholder || ''} onChange={(event) => onChange({ ...field, placeholder: event.target.value })} className={inputClass} /></FieldLabel>
+    return <SectionShell title={field.isNew ? 'הגדרת שדה חדש' : `עריכת שדה: ${field.name}`} meta={usesCompactSelectEditor ? null : getTypeLabel(field)} className={cn('tamar-settings-field-editor-v4ao h-full max-h-[560px]', usesCompactSelectEditor && 'tamar-settings-choice-editor-v4ap')} actions={usesCompactSelectEditor ? <CompactCheckbox checked={Boolean(field.required)} disabled={field.locked && field.required} onChange={(value) => onChange({ ...field, required: value })} label="שדה חובה" /> : undefined}><div className={cn('tamar-settings-field-editor-body-v4ao min-h-0 flex-1', usesCompactSelectEditor ? 'space-y-2.5 p-3' : 'space-y-2 p-2')}>{usesCompactSelectEditor ? <section className="tamar-settings-choice-surface-v4ap space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3"><div className="grid gap-2 md:grid-cols-2"><div><label className="mb-1 block text-[11px] font-bold text-[var(--color-text-secondary)]">שם השדה</label><input value={field.name || ''} onChange={(event) => onChange({ ...field, name: event.target.value })} className={cn(inputClass, 'h-9 rounded-lg px-2.5 text-[12px]')} /></div><div><label className="mb-1 block text-[11px] font-bold text-[var(--color-text-secondary)]">טקסט מנחה</label><input value={field.placeholder || ''} onChange={(event) => onChange({ ...field, placeholder: event.target.value })} className={cn(inputClass, 'h-9 rounded-lg px-2.5 text-[12px]')} /></div></div><div className="border-t border-[var(--color-border)] pt-2"><OptionEditor field={field} onAdd={onAddOption} onRename={onRenameOption} onDelete={onDeleteOption} onMove={onMoveOption} compact /></div><div className="border-t border-[var(--color-border)] pt-2"><DependencyEditor field={field} fields={fields} onChange={onChange} compact /></div></section> : <EditorSection title="מידע בסיסי" description="השם, ההנחיה וההתנהגות הבסיסית של השדה בטופס."><div className="grid gap-1.5 md:grid-cols-2"><FieldLabel label="שם השדה" help="השם שיוצג למשתמשים בטופס."><input value={field.name || ''} onChange={(event) => onChange({ ...field, name: event.target.value })} className={inputClass} /></FieldLabel><FieldLabel label="טקסט מנחה" help="הסבר קצר שמסייע למשתמש למלא את השדה."><input value={field.placeholder || ''} onChange={(event) => onChange({ ...field, placeholder: event.target.value })} className={inputClass} /></FieldLabel>
         {/* <FieldLabel label="סוג השדה"><select value={field.type} onChange={(event) => changeType(event.target.value)} disabled={!canChangeType} className={inputClass}>{fieldTemplates.map((template) => <option key={template.type} value={template.type}>{template.name}</option>)}{field.type === 'phone' && <option value="phone">טלפון</option>}{field.type === 'user' && <option value="user">משתמש</option>}</select></FieldLabel> */}
         {/* <FieldLabel label="קבוצת שדות"><select value={field.group || 'room'} onChange={(event) => onChange({ ...field, group: event.target.value })} className={inputClass}><option value="system">שדות מערכת</option><option value="room">שדות חדר</option></select></FieldLabel> */}
     </div><div className="mt-2 grid gap-2 md:grid-cols-2"><ToggleSwitch checked={Boolean(field.required)} disabled={field.locked && field.required} onChange={(value) => onChange({ ...field, required: value })} label="שדה חובה" description="לא ניתן לפרסם את הפנייה ללא מילוי השדה." /><ToggleSwitch checked={fieldVisible(field)} onChange={(value) => onChange({ ...field, active: value, visible: value, showInNewInquiry: value })} label="שדה פעיל" description="שדה כבוי לא יוצג בטופס הפנייה החדשה." /></div></EditorSection>}{selectorTypes.has(field.type) && !usesCompactSelectEditor && <EditorSection title="אפשרויות בחירה" description="הוספה, עריכה, מחיקה וסידור של אפשרויות הבחירה."><OptionEditor field={field} onAdd={onAddOption} onRename={onRenameOption} onDelete={onDeleteOption} onMove={onMoveOption} /></EditorSection>}{selectorTypes.has(field.type) && !usesCompactSelectEditor && <EditorSection title="תלות בין שדות" description="סינון אפשרויות לפי בחירה בשדה משפיע, למשל עיר -> שכונה."><DependencyEditor field={field} fields={fields} onChange={onChange} /></EditorSection>}
         {/* <EditorSection title="תצוגה ומיקום" description="קביעה היכן השדה יוצג ואיך יתפוס מקום בפריסות השונות."><div className="grid gap-1.5 md:grid-cols-2"><ToggleSwitch checked={field.showInNewInquiry !== false} onChange={(value) => onChange({ ...field, showInNewInquiry: value })} label="הצגה בטופס פנייה חדשה" />
             <ToggleSwitch checked={field.showInRow !== false} onChange={(value) => onChange({ ...field, showInRow: value })} label="הצגה בשורת פנייה" /><ToggleSwitch checked={field.showInDetails !== false} onChange={(value) => onChange({ ...field, showInDetails: value })} label="הצגה בפרטי פנייה" /><FieldLabel label="רוחב שדה"><select value={field.width || 'חצי רוחב'} onChange={(event) => onChange({ ...field, width: event.target.value })} disabled={isCanonicalIncidentDescriptionField(field)} className={inputClass}>{widthOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></FieldLabel></div>{isCanonicalIncidentDescriptionField(field) && <div className="mt-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[12px] font-bold text-blue-700 dark:border-blue-400/25 dark:bg-blue-500/10 dark:text-blue-200">שדה תיאור התקלה הקנוני מוצג אוטומטית ברוחב מלא. שדות טקסט חופשי אחרים נשארים רגילים אלא אם הוגדר אחרת.</div>}</EditorSection> */}
         {/* <EditorSection title="הרשאות וטווח" description="ניהול ירושה מהמערכת, מהסביבה או מהחדר."><ScopeControls settings={settings} setSettings={setSettings} compact /><div className="mt-2 grid gap-2 md:grid-cols-2"><FieldLabel label="טווח השדה"><select value={field.scope || 'system'} onChange={(event) => onChange({ ...field, scope: event.target.value })} className={inputClass}><option value="system">מערכת</option><option value="environment">סביבה</option><option value="subEnvironment">תת-סביבה</option><option value="room">חדר</option></select></FieldLabel><div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3 text-[12px] font-semibold leading-5 text-[var(--color-text-muted)]">שינוי מקומי אינו משנה את הגדרת האב. איפוס הורשה מחזיר את החדר להתנהגות האב.</div></div></EditorSection> */}
-        {field.type === 'link' && <EditorSection title="הגדרות קישור" description="יעד, סגנון תצוגה והתנהגות פתיחה של קישור פנימי או חיצוני."><LinkSettings field={field} onChange={onChange} /></EditorSection>}<div className="flex flex-wrap justify-between gap-2 items-center  "><ToolbarButton icon="trash" tone="danger" disabled={field.locked} title={field.locked ? 'שדה מוגן ואינו ניתן למחיקה' : 'מחיקת שדה'} onClick={() => onDelete(field)}>מחיקת שדה</ToolbarButton><span className="text-[11px] font-bold text-[var(--color-text-muted)]">השינויים נשמרים אוטומטית.</span></div></div></SectionShell>;
+        {field.type === 'link' && <EditorSection title="הגדרות קישור" description="יעד, סגנון תצוגה והתנהגות פתיחה של קישור פנימי או חיצוני."><LinkSettings field={field} onChange={onChange} /></EditorSection>}</div><div className="tamar-settings-field-editor-footer-v4ao flex flex-wrap justify-between gap-2 items-center"><ToolbarButton icon="trash" tone="danger" disabled={field.locked} title={field.locked ? 'שדה מוגן ואינו ניתן למחיקה' : 'מחיקת שדה'} onClick={() => onDelete(field)}>מחיקת שדה</ToolbarButton><span className="text-[11px] font-bold text-[var(--color-text-muted)]">השינויים נשמרים אוטומטית.</span></div></SectionShell>;
 };
 const GeneralSettings = ({ settings, setSettings }) => {
     const [selectedTemplateId, setSelectedTemplateId] = useState(settings.incidentDescriptionTemplates?.[0]?.id || '');
@@ -668,7 +687,7 @@ const SettingsPage = () => {
     const saveClass = saveStatus === 'error' ? 'text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-300' : saveStatus === 'saving' ? 'text-blue-700 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-200' : 'text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-300';
     if (loadError) return <div className="inquiry-page-surface flex h-full min-h-0 flex-col overflow-hidden p-3" dir="rtl"><PageErrorState onRetry={reload} /></div>;
     if (!loaded) return <div className="inquiry-page-surface flex h-full min-h-0 flex-col overflow-hidden p-3" dir="rtl"><PageLoadingState /></div>;
-    return <div className="inquiry-page-surface flex h-full min-h-0 flex-col overflow-hidden p-3" dir="rtl"><header className="mb-3 shrink-0"><div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-[24px] font-black tracking-tight text-[var(--color-text-primary)]">הגדרות - {selectedRoom?.name || ''}</h1><p className="mt-1 text-[13px] font-semibold text-[var(--color-text-secondary)]">בעמוד זה ניתן לערוך את השדות, התצוגה וההתנהגות של החדר.</p></div><span className={cn('rounded-full px-3 py-1 text-[12px] font-black', saveClass)}>{saveLabel}</span></div><nav className="mt-4 flex flex-wrap items-center gap-5 border-b border-[var(--color-border-strong)]">{tabs.map((tab) => <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={cn('relative pb-2.5 text-[13px] font-black transition focus:outline-none  focus:ring-blue-400/25', activeTab === tab.id ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]')}>{tab.label}{activeTab === tab.id && <span className="absolute inset-x-0 bottom-[-1px] h-0.5 rounded-full bg-[var(--color-primary)]" />}</button>)}</nav></header><main className={`min-h-0 flex-1 ${activeTab === 'fields' ? 'overflow-y-hidden pt-1.5' : 'overflow-auto'}`}>{activeTab === 'fields' && <div dir="ltr" className="mx-auto grid max-w-[1460px] gap-3 overflow-visible xl:grid-cols-[minmax(250px,0.82fr)_minmax(480px,1.85fr)_minmax(220px,0.68fr)]"><div dir="rtl" className="min-h-0"><ActiveFieldsPanel fields={fields} selectedId={selectedField?.id} query={fieldSearch} setQuery={setFieldSearch} onSelect={(field) => setSelectedFieldId(field.id)} onReorder={reorderField} onMove={moveField} onDuplicate={duplicateField} onToggleActive={toggleActive} onDelete={deleteField} /></div><div dir="rtl" className="min-h-0"><FieldEditor field={selectedField} fields={fields} settings={settings} setSettings={setSettings} onChange={updateField} onDelete={deleteField} onAddOption={addOption} onRenameOption={renameOption} onDeleteOption={deleteOption} onMoveOption={moveOption} /></div><div dir="rtl" className="min-h-0"><TemplatePanel onCreate={createField} /></div></div>}{activeTab === 'display' && <InquiryLayoutBuilder settings={settings} setSettings={setSettings} fields={fields} tableFields={tableFields} sections={sections} saveStatus={saveStatus} />}{activeTab === 'general' && <GeneralSettings settings={settings.general || {}} setSettings={setGeneralSettings} />}</main></div>;
+    return <div className="inquiry-page-surface flex h-full min-h-0 flex-col overflow-hidden p-3" dir="rtl"><header className="mb-3 shrink-0"><div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-[24px] font-black tracking-tight text-[var(--color-text-primary)]">הגדרות - {selectedRoom?.name || ''}</h1><p className="mt-1 text-[13px] font-semibold text-[var(--color-text-secondary)]">בעמוד זה ניתן לערוך את השדות, התצוגה וההתנהגות של החדר.</p></div><span className={cn('rounded-full px-3 py-1 text-[12px] font-black', saveClass)}>{saveLabel}</span></div><nav className="mt-4 flex flex-wrap items-center gap-5 border-b border-[var(--color-border-strong)]">{tabs.map((tab) => <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={cn('relative pb-2.5 text-[13px] font-black transition focus:outline-none  focus:ring-blue-400/25', activeTab === tab.id ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]')}>{tab.label}{activeTab === tab.id && <span className="absolute inset-x-0 bottom-[-1px] h-0.5 rounded-full bg-[var(--color-primary)]" />}</button>)}</nav></header><main className={`min-h-0 flex-1 ${activeTab === 'fields' ? 'overflow-auto pt-1.5' : 'overflow-auto'}`}>{activeTab === 'fields' && <div dir="ltr" className="tamar-settings-fields-grid-v4ao mx-auto grid max-w-[1460px] gap-3 overflow-visible xl:grid-cols-[minmax(250px,0.82fr)_minmax(480px,1.85fr)_minmax(220px,0.68fr)]"><div dir="rtl" className="min-h-0"><ActiveFieldsPanel fields={fields} selectedId={selectedField?.id} query={fieldSearch} setQuery={setFieldSearch} onSelect={(field) => setSelectedFieldId(field.id)} onReorder={reorderField} onMove={moveField} onDuplicate={duplicateField} onToggleActive={toggleActive} onDelete={deleteField} /></div><div dir="rtl" className="min-h-0"><FieldEditor field={selectedField} fields={fields} settings={settings} setSettings={setSettings} onChange={updateField} onDelete={deleteField} onAddOption={addOption} onRenameOption={renameOption} onDeleteOption={deleteOption} onMoveOption={moveOption} /></div><div dir="rtl" className="min-h-0"><TemplatePanel onCreate={createField} /></div></div>}{activeTab === 'display' && <InquiryLayoutBuilder settings={settings} setSettings={setSettings} fields={fields} tableFields={tableFields} sections={sections} saveStatus={saveStatus} />}{activeTab === 'general' && <GeneralSettings settings={settings.general || {}} setSettings={setGeneralSettings} />}</main></div>;
 };
 
 export default SettingsPage;

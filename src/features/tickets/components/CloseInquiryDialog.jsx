@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from '../../../components/common/Icon.jsx';
 import { closeInquiryService } from '../services/closeInquiryService.js';
 import { notificationSoundService } from '../services/notificationSoundService.js';
@@ -29,8 +30,8 @@ const CloseInquiryDialog = ({ ticket, open, closeSound = 'off', onClose, onClose
         }
     };
 
-    return (
-        <div className="inquiry-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4" dir="rtl" onMouseDown={onClose}>
+    return createPortal(
+        <div data-tamar-inquiry-layer="close" className="inquiry-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4" dir="rtl" onMouseDown={onClose}>
             <div className="inquiry-overlay-panel w-full max-w-md rounded-2xl p-4" onMouseDown={(event) => event.stopPropagation()}>
                 <div className="mb-4 flex items-center justify-between">
                     <button type="button" onClick={onClose} className="inquiry-control flex h-8 w-8 items-center justify-center rounded-lg p-0 inquiry-muted-text">
@@ -48,7 +49,8 @@ const CloseInquiryDialog = ({ ticket, open, closeSound = 'off', onClose, onClose
                     <button type="button" onClick={submit} disabled={submitting} className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white disabled:opacity-50">{submitting ? 'סוגר...' : 'סגור פנייה'}</button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

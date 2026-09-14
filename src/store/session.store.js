@@ -279,7 +279,11 @@ export const useSessionStore = create((set, get) => ({
         if (runtime.mode !== 'local-personal-number') return;
         initializationSequence += 1;
         initializationPromise = null;
-        runtime.clear();
+        if (typeof runtime.logout === 'function') {
+            await runtime.logout();
+        } else {
+            runtime.clear();
+        }
         closeBoardSocket();
         persistSelection(null, null);
         syncViewUrl('hierarchy');
